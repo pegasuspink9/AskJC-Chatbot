@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "ts-node-dev --respawn --transpile-only --project tsconfig.json src/index.ts"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "prisma": "^6.14.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}
