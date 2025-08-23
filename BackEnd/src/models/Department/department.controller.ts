@@ -8,9 +8,8 @@ export const getAllDepartments = async (req: Request, res: Response) => {
   try {
     const departments: Department[] = await prisma.department.findMany({
       include: {
-        teachers: true,
-        courses: true,
         faqs: true,
+        program: true,
       },
     });
 
@@ -27,9 +26,8 @@ export const getDepartmentById = async (req: Request, res: Response) => {
     const department = await prisma.department.findUnique({
       where: { id: Number(id) },
       include: {
-        teachers: true,
-        courses: true,
         faqs: true,
+        program: true,
       },
     });
 

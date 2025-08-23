@@ -56,40 +56,12 @@ model Feedback {
   query Query @relation(fields: [query_id], references: [id])
 }
 
-model Teacher {
-  id               Int     @id @default(autoincrement())
-  department_id    Int
-  employee_name    String?
-  teachers_details String?
-  office_location  String?
-
-  department Department @relation(fields: [department_id], references: [id])
+model Greeting {
+  id      Int    @id @default(autoincrement())
+  message String?
 }
 
-model Department {
-  id             Int      @id @default(autoincrement())
-  name           String?
-  tuition_fee    Decimal?
-  head_name      String?
-  description    String?
-  building       String?
-  floor          String?
-  career_path    String?
-  created_at     DateTime?
-
-  teachers Teacher[]
-  courses  Course[]
-  faqs     Faq[]
-}
-
-model Course {
-  id            Int     @id @default(autoincrement())
-  department_id Int
-  name          String?
-  total_course  Int?
-
-  department Department @relation(fields: [department_id], references: [id])
-}
+//okay na ning sa mabaw
 
 model Faq {
   id            Int    @id @default(autoincrement())
@@ -100,6 +72,9 @@ model Faq {
 
   department Department       @relation(fields: [department_id], references: [id])
   keywords   QuestionKeyword[]
+  offices    Office[]
+  studentOrgs  StudentOrg[]
+  contact       Contact[]
 }
 
 model QuestionKeyword {
@@ -109,11 +84,6 @@ model QuestionKeyword {
   created_at DateTime?
 
   faq Faq @relation(fields: [faq_id], references: [id])
-}
-
-model Greeting {
-  id      Int    @id @default(autoincrement())
-  message String?
 }
 
 model SchoolDetail {
@@ -127,18 +97,7 @@ model SchoolDetail {
   address         String?
   accreditation   String?
 
-  contacts   Contact[]
   school_faqs SchoolFaq[]
-}
-
-model Contact {
-  id               Int    @id @default(autoincrement())
-  school_detail_id Int
-  info             String?
-  website          String?
-  number           String?
-
-  school_detail SchoolDetail @relation(fields: [school_detail_id], references: [id])
 }
 
 model SchoolFaq {
@@ -154,4 +113,90 @@ model SchoolFaq {
   updated_at       DateTime?
 
   school_detail SchoolDetail @relation(fields: [school_detail_id], references: [id])
+}
+
+
+// na finalize na ning ubos
+
+model Office { //incomplete data
+  id                Int       @id @default(autoincrement())
+  name              String    @unique //Example: BURSAR
+  description       String?   // The Bursar’s Office handles school payments, such as tuition and other fees, and assists students and parents with billing and receipts
+  location_building String?   //SJC Main Building
+  location_floor    String?   //Ground Floor
+  operating_hours   String?   //Mon-Friday, 8:30AM - 5:00PM and Sat, 8:30AM - 12:00PM
+  contact_email     String?   
+  contact_phone     String?   //0961 426 3942
+  fb_page           String?   //https://www.facebook.com/SJCteller
+
+  faqs              Faq[]
+}
+
+model StudentOrg { //fb_page links nalang kuwang
+  id            Int @id @default(autoincrement())
+  name          String
+  description   String
+  fb_page       String?
+
+  faqs          Faq[]
+}
+
+model Contact {
+  id               Int    @id @default(autoincrement())
+  name             String //Example: Saint Josep College or College of Computer Studies
+  fb_page          String? //link
+  email            String? 
+
+  faq              Faq[]
+}
+
+model Course {
+  id            Int     @id @default(autoincrement())
+  program_id    Int?    //optional, null for minor subjects
+  course_code   String  @unique
+  course_name   String
+  units         Int
+
+  program       Program? @relation(fields: [program_id], references: [id])
+}
+
+model Department {
+  id             Int      @id @default(autoincrement())
+  name           String?
+  head_name      String?
+  description    String?
+  building       String?
+  floor          String?
+  career_path    String?
+
+  faqs     Faq[]
+
+  program   Program[]
+}
+
+model Program {
+  id    Int     @id @default(autoincrement())
+  department_id     Int
+  program_type     ProgramType 
+  program       String
+  tuition_fee      Decimal
+
+  department    Department      @relation(fields: [department_id], references: [id])
+  courses  Course[]
+}
+
+enum ProgramType {
+  undergraduate
+  graduate
+  seniorhighschool
+  other
+}
+
+model SchoolOfficial {
+  id         Int      @id @default(autoincrement())
+  name       String
+  title      String?
+  department String?
+  category   String
+  created_at DateTime  @default(now())
 }

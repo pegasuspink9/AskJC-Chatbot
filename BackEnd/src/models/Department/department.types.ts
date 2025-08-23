@@ -1,6 +1,5 @@
 export interface Department {
   name: string | null;
-  tuition_fee: number | null;
   head_name: string | null;
   description: string | null;
   building: string | null;
@@ -10,7 +9,6 @@ export interface Department {
 
 export interface CreateDepartment {
   name?: string;
-  tuition_fee?: number;
   head_name?: string;
   description?: string;
   building?: string;
@@ -20,7 +18,6 @@ export interface CreateDepartment {
 
 export interface UpdateDepartment {
   name?: string;
-  tuition_fee?: number;
   head_name?: string;
   description?: string;
   building?: string;

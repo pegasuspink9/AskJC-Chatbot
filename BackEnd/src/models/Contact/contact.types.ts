@@ -1,16 +1,18 @@
 export interface Contact {
   id: number;
-  school_detail_id: number;
-  info?: string | null;
-  website?: string | null;
-  number?: string | null;
+  name: string;
+  fb_page?: string | null;
+  email?: string | null;
 }
 
 export interface CreateContact {
-  school_detail_id: number;
-  info?: string;
-  website?: string;
-  number?: string;
+  name: string;
+  fb_page?: string | null;
+  email?: string | null;
 }
 
-export interface UpdateContact extends Partial<CreateContact> {}
+export interface UpdateContact {
+  name?: string;
+  fb_page?: string | null;
+  email?: string | null;
+}

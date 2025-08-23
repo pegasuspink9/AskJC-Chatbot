@@ -6,7 +6,7 @@ import { CreateSchoolDetail, UpdateSchoolDetail } from "./schoolDetail.types";
 export const getSchoolDetails = async (_: Request, res: Response) => {
   try {
     const schools = await prisma.schoolDetail.findMany({
-      include: { contacts: true, school_faqs: true },
+      include: { school_faqs: true },
     });
     return successResponse(res, schools, "School details fetched");
   } catch (error) {
@@ -18,7 +18,7 @@ export const getSchoolDetailById = async (req: Request, res: Response) => {
   try {
     const school = await prisma.schoolDetail.findUnique({
       where: { id: Number(req.params.id) },
-      include: { contacts: true, school_faqs: true },
+      include: { school_faqs: true },
     });
     if (!school)
       return errorResponse(res, "School detail not found", "Not Found", 404);

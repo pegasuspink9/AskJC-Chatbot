@@ -1,17 +1,21 @@
 export interface Course {
   id: number;
-  department_id: number;
-  name?: string | null;
-  total_course?: number | null;
+  program_id?: number | null;
+  course_code: string;
+  course_name: string;
+  units: number;
 }
 
 export interface CreateCourse {
-  department_id: number;
-  name?: string;
-  total_course?: number;
+  program_id?: number | null;
+  course_code: string;
+  course_name: string;
+  units: number;
 }
 
 export interface UpdateCourse {
-  name?: string;
-  total_course?: number;
+  program_id?: number | null;
+  course_code?: string;
+  course_name?: string;
+  units?: number;
 }

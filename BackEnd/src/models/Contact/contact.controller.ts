@@ -6,7 +6,7 @@ import { CreateContact, UpdateContact } from "./contact.types";
 export const getContacts = async (_: Request, res: Response) => {
   try {
     const contacts = await prisma.contact.findMany({
-      include: { school_detail: true },
+      include: { faq: true },
     });
     return successResponse(res, contacts, "Contacts fetched");
   } catch (error) {

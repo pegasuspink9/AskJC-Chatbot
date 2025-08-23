@@ -6,7 +6,7 @@ import { CreateCourse, UpdateCourse } from "./course.types";
 export const getCourses = async (_: Request, res: Response) => {
   try {
     const courses = await prisma.course.findMany({
-      include: { department: true },
+      include: { program: true },
     });
     return successResponse(res, courses, "Courses fetched");
   } catch (error) {
@@ -18,7 +18,7 @@ export const getCourseById = async (req: Request, res: Response) => {
   try {
     const course = await prisma.course.findUnique({
       where: { id: Number(req.params.id) },
-      include: { department: true },
+      include: { program: true },
     });
     if (!course)
       return errorResponse(res, "Course not found", "Not Found", 404);
