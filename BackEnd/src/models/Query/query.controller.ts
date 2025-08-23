@@ -1,6 +1,6 @@
 import { prisma } from "../../../prisma/client";
 import { Request, Response } from "express";
-import { getOrCreateUser } from "models/User/user.controller";
+import { getOrCreateUser } from "../User/user.controller";
 import { CreateQuery } from "./query.types";
 import { successResponse, errorResponse } from "../../../utils/response";
 
