@@ -1,15 +1,17 @@
 export const LightColors = {
   primary: '#007AFF',
   secondary: '#5856D6',
-  success: '#34C759',
+  success: '#014211ff',
   danger: '#FF3B30',
-  warning: '#FF9500',
+  warning: '#343301ff',
   info: '#5AC8FA',
   light: '#F2F2F7',
   dark: '#1C1C1E',
   white: '#FFFFFF',
   black: '#000000',
   background: '#FFFFFF',
+  usermessage: 'rgba(1, 53, 0, 0.55)',
+  botmessage: 'rgba(139, 91, 7, 0.33)2)',
   surface: '#F9FAFB',
   text: '#1C1C1E',
   textSecondary: '#6B7280',
@@ -31,15 +33,17 @@ export const LightColors = {
 export const DarkColors = {
   primary: '#0A84FF',
   secondary: '#5E5CE6',
-  success: '#32D74B',
+  success: '#1ad536ff',
   danger: '#FF453A',
   warning: '#FF9F0A',
   info: '#64D2FF',
   light: '#1C1C1E',
   dark: '#F2F2F7',
-  white: '#FFFFFF',  // Fixed: white should always be white
-  black: '#000000',  // Fixed: black should always be black
+  white: '#FFFFFF',  
+  black: '#000000',  
   background: '#000000',
+  usermessage: 'rgba(5, 158, 2, 0.55)',
+  botmessage: 'rgba(197, 127, 5, 0.42)',
   surface: '#1C1C1E',
   text: '#FFFFFF',
   textSecondary: '#8E8E93',
@@ -58,15 +62,9 @@ export const DarkColors = {
   },
 } as const;
 
-// Dynamic Colors function with error checking
 export const getColors = (isDark: boolean) => {
   const colors = isDark ? DarkColors : LightColors;
   
-  // Debug logging to help identify issues
-  if (__DEV__) {
-    console.log('Theme colors:', colors);
-    console.log('Colors.white:', colors.white);
-  }
   
   return colors;
 };

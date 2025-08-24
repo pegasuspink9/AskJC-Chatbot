@@ -15,13 +15,11 @@ export interface Message {
 
 export type RootStackParamList = {
   Home: undefined;
-  Chatting: undefined;
 };
 
 
 export type RootTabParamList = {
   Home: undefined;
-  Chats: undefined;
 };
 
 export type HomeStackParamList = {

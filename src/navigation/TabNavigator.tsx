@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getColors } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
 import { RootTabParamList } from '../types';
-import { HomeScreen, ChatScreen } from '../screens';
+import { HomeScreen } from '../screens';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
@@ -24,14 +24,6 @@ const TabNavigator: React.FC = () => {
         component={HomeScreen}
         options={{
           title: 'Home',
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen 
-        name="Chats" 
-        component={ChatScreen}
-        options={{
-          title: 'Chats',
           headerShown: false,
         }}
       />
