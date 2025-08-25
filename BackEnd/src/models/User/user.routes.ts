@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getOrCreateUser } from "./user.controller";
+import { getOrCreateUserFromRequest } from "./user.controller";
 
 const router = Router();
 
-router.post("/get-or-create", getOrCreateUser);
+router.post("/get-or-create", getOrCreateUserFromRequest);
 
 export default router;

@@ -31,7 +31,7 @@ export const getKeywordById = async (req: Request, res: Response) => {
 export const createQuestionKeyword = async (req: Request, res: Response) => {
   try {
     const data: CreateQuestionKeyword = req.body;
-    const keyword = await prisma.questionKeyword.create({ data });
+    const keyword = await prisma.questionKeyword.createMany({ data });
     return successResponse(res, keyword, "Keyword created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create keyword");

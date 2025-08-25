@@ -38,9 +38,7 @@ export const createSession = async (req: Request, res: Response) => {
 
     if (!user_id) {
       const guestUser = await prisma.user.create({
-        data: {
-          created_at: new Date(),
-        },
+        data: { created_at: new Date() },
       });
       user_id = guestUser.id;
     } else {
@@ -50,16 +48,23 @@ export const createSession = async (req: Request, res: Response) => {
       });
     }
 
-    const session = await prisma.chatbotSession.create({
-      data: {
-        user_id,
-        total_queries: 0,
-        response_time: new Date(),
-      },
+    let session = await prisma.chatbotSession.findFirst({
+      where: { user_id },
+      orderBy: { id: "desc" },
     });
 
-    return successResponse(res, { session, user_id }, "Session created");
+    if (!session) {
+      session = await prisma.chatbotSession.create({
+        data: {
+          user_id,
+          total_queries: 0,
+          response_time: new Date(),
+        },
+      });
+    }
+
+    return successResponse(res, { session, user_id }, "Session ready");
   } catch (error) {
-    return errorResponse(res, error, "Failed to create session");
+    return errorResponse(res, error, "Failed to create/get session");
   }
 };

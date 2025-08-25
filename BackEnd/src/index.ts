@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import userRoutes from "./models/User/user.routes";
 import queryRoutes from "./models/Query/query.routes";
 import sessionRoutes from "./models/ChatbotSession/chatbotSession.routes";
@@ -15,10 +16,12 @@ import contactRoutes from "./models/Contact/contact.routes";
 import schoolOfficialRoutes from "./models/SchoolOfficial/schoolOfficial.routes";
 import programRoutes from "./models/Program/program.routes";
 import officeRoutes from "./models/Office/office.routes";
+import scholarshipRoutes from "./models/Scholarship/scholarship.routes";
 
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 const cors = require("cors");
 app.use(
@@ -41,6 +44,7 @@ app.use("/query", queryRoutes);
 app.use("/session", sessionRoutes);
 app.use("/feedback", feedbackRoutes);
 
+app.use("/scholarship", scholarshipRoutes);
 app.use("/office", officeRoutes);
 app.use("/student-org", studentOrgRoutes);
 app.use("/contact", contactRoutes);
