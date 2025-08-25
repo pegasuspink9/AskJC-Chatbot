@@ -6,6 +6,7 @@ import { successResponse, errorResponse } from "../../../utils/response";
 import { extractKeywords } from "../../../utils/extractKeywords";
 import { getScholarshipFaqAnswer } from "models/chatbot/Scholarship/scholarship.service";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
+import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.service";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -66,93 +67,38 @@ export const getQueriesByUserId = async (req: Request, res: Response) => {
 export const createQuery = async (req: Request, res: Response) => {
   try {
     const data: CreateQuery = req.body;
-
     const user = await getOrCreateUserFromRequest(req, res);
 
-    let session = await prisma.chatbotSession.findFirst({
-      where: { user_id: user.id },
-    });
-
-    if (!session) {
-      session = await prisma.chatbotSession.create({
-        data: { user_id: user.id },
-      });
-    }
-
-    const keywords = extractKeywords(data.query_text);
-
-    const query = await prisma.query.create({
-      data: {
-        user_id: user.id,
-        chatbot_session_id: session.id,
-        query_text: data.query_text,
-        users_data_inputed: keywords,
-        created_at: new Date(),
-      },
-    });
-
-    const { result: chatbotResponse, duration: responseTime } =
+    const { result: chatbotData, duration: responseTime } =
       await measureResponseTime(async () => {
-        let response = "";
-
-        const matchedFaqs = await prisma.faq.findMany({
-          where: {
-            OR: [
-              {
-                keywords: {
-                  some: {
-                    keyword: { in: keywords },
-                  },
-                },
-              },
-              {
-                question: {
-                  contains: data.query_text,
-                  mode: "insensitive",
-                },
-              },
-            ],
-          },
-          include: {
-            scholarships: true,
-            keywords: true,
-          },
-        });
-
-        if (matchedFaqs.length > 0) {
-          for (const faq of matchedFaqs) {
-            if (faq.category === "Scholarship") {
-              const scholarshipAnswer = await getScholarshipFaqAnswer(
-                faq.id,
-                data.query_text
-              );
-              response += scholarshipAnswer + "\n";
-            } else {
-              response += (faq.answer || "") + "\n";
-            }
-          }
-        } else {
-          response = "Sorry, I couldn’t find an answer for that.";
-        }
-
-        return response.trim();
+        // This single call handles Dialogflow and all fallback logic
+        return await handleChatbotMessage(user.id, data.query_text);
       });
 
-    await prisma.chatbotSession.update({
-      where: { id: session.id },
+    const chatbotResponse = chatbotData.answer;
+    const queryId = chatbotData.queryId;
+
+    // Update the session in the database
+    await prisma.chatbotSession.updateMany({
+      where: { user_id: user.id },
       data: {
         chatbot_response: chatbotResponse,
         response_time: new Date(),
-        total_queries: { increment: 1 },
       },
     });
 
     return successResponse(
       res,
-      { queryId: query.id, chatbotResponse, responseTime },
+      {
+        queryId,
+        chatbotResponse,
+        // THIS IS THE CORRECTED LINE:
+        responseTime: responseTime,
+      },
       "Query created"
     );
   } catch (error) {
+    console.error("Error in createQuery:", error);
     return errorResponse(res, error, "Failed to create query");
   }
 };

@@ -1,5 +1,6 @@
 import { prisma } from "../../../../prisma/client";
 import { extractKeywords } from "../../../../utils/extractKeywords";
+import { getDialogflowResponse } from "../../../../helper/diagflow.service";
 
 export async function getScholarshipFaqAnswer(
   faqId: number,
@@ -148,6 +149,17 @@ export const handleChatbotMessage = async (
     },
   });
 
+  const dialogflowResponse = await getDialogflowResponse(message);
+
+  if (dialogflowResponse) {
+    console.log("Dialogflow returned a response. Sending it back.");
+    return {
+      answer: dialogflowResponse,
+      source: "dialogflow",
+      queryId: query.id,
+    };
+  }
+
   const faq = await prisma.faq.findFirst({
     where: {
       keywords: { some: { keyword: { in: keywords } } },
@@ -163,23 +175,6 @@ export const handleChatbotMessage = async (
     return {
       answer: faq.answer || "Answer not available.",
       source: "faq",
-      queryId: query.id,
-    };
-  }
-
-  const scholarship = await prisma.scholarship.findFirst({
-    where: {
-      OR: [
-        { name: { contains: message, mode: "insensitive" } },
-        { description: { contains: message, mode: "insensitive" } },
-      ],
-    },
-  });
-
-  if (scholarship) {
-    return {
-      answer: scholarship.description || "No description available.",
-      source: "scholarship",
       queryId: query.id,
     };
   }

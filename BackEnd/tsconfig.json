@@ -13,5 +13,5 @@
     },
     "types": ["node", "cookie-parser"]
   },
-  "include": ["src/**/*", "types", "types/express.d.ts"]
+  "include": ["src/**/*", "types", "types/express.d.ts", "dialogflow.d.ts"]
 }
