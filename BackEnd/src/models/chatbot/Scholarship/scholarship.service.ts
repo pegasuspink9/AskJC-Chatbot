@@ -1,6 +1,10 @@
 import { prisma } from "../../../../prisma/client";
 import { extractKeywords } from "../../../../utils/extractKeywords";
-import { getDialogflowResponse } from "../../../../helper/diagflow.service";
+import {
+  getDialogflowResponse,
+  DialogflowResponse,
+} from "../../../../helper/diagflow.service";
+import { getGenerativeResponse } from "../../../../helper/gemini.service";
 
 export async function getScholarshipFaqAnswer(
   faqId: number,
@@ -135,8 +139,8 @@ export const handleChatbotMessage = async (
 
   const session = await prisma.chatbotSession.upsert({
     where: { user_id: userId },
-    update: { response_time: new Date(), total_queries: { increment: 1 } },
-    create: { user_id: userId, response_time: new Date(), total_queries: 1 },
+    update: { response_time: new Date() },
+    create: { user_id: userId, response_time: new Date(), total_queries: 0 },
   });
 
   const query = await prisma.query.create({
@@ -149,13 +153,16 @@ export const handleChatbotMessage = async (
     },
   });
 
-  const dialogflowResponse = await getDialogflowResponse(message);
+  const dialogflowResult = await getDialogflowResponse(message);
 
-  if (dialogflowResponse) {
-    console.log("Dialogflow returned a response. Sending it back.");
+  if (
+    dialogflowResult &&
+    dialogflowResult.intent !== "Default Fallback Intent"
+  ) {
+    console.log("Dialogflow returned a specific intent. Sending it back.");
     return {
-      answer: dialogflowResponse,
-      source: "dialogflow",
+      answer: dialogflowResult.fulfillmentText,
+      source: "dialogflow-intent",
       queryId: query.id,
     };
   }
@@ -168,21 +175,27 @@ export const handleChatbotMessage = async (
   });
 
   if (faq) {
+    console.log("Found a match in the local FAQ database.");
     if (faq.category === "Scholarship") {
       const answer = await getScholarshipFaqAnswer(faq.id, message);
       return { answer, source: "faq-scholarship", queryId: query.id };
     }
     return {
-      answer: faq.answer || "Answer not available.",
-      source: "faq",
+      answer:
+        faq.answer || "I found some information but it seems to be incomplete.",
+      source: "faq-general",
       queryId: query.id,
     };
   }
 
+  console.log(
+    "No specific answer found. Asking Gemini for a creative response..."
+  );
+  const generativeAnswer = await getGenerativeResponse(message);
+
   return {
-    answer:
-      "I'm not sure about that. Would you like me to connect you with an admin?",
-    source: "fallback",
+    answer: generativeAnswer,
+    source: "generative-fallback",
     queryId: query.id,
   };
 };
