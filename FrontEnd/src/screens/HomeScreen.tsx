@@ -52,7 +52,7 @@ const HomeScreen: React.FC = () => {
     resetChat,
     typingDots,
     handleSuggestionPress,
-    shouldShowSuggestions
+    shouldShowSuggestions,
   } = useChatLogic();
 
   // Sidebar animations
@@ -72,6 +72,7 @@ const HomeScreen: React.FC = () => {
     }
   }, [drawerVisible, slideAnim]);
 
+  //SideBar
   const openDrawer = () => {
     setModalVisible(true);
     setDrawerVisible(true);
@@ -211,7 +212,6 @@ const HomeScreen: React.FC = () => {
             introInput={introInput}
             setIntroInput={setIntroInput}
             onSubmit={handleIntroSubmit}
-            // Pass hamburger menu props to LandingScreen
             onOpenDrawer={openDrawer}
           />
         ) : (

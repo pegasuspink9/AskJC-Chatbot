@@ -7,7 +7,7 @@ export const useChatLogic = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  // Track which messages have had their suggestions used
+  
   const [usedSuggestions, setUsedSuggestions] = useState<Set<string>>(new Set());
 
   // Typing animation state
@@ -148,11 +148,10 @@ export const useChatLogic = () => {
     setMessages([]);
     setInputText('');
     setIsTyping(false);
-    setUsedSuggestions(new Set()); // Reset used suggestions
+    setUsedSuggestions(new Set()); 
   };
 
   const addUserMessage = (text: string) => {
-    // Hide all previous suggestions when user sends a new message
     setMessages(prev => {
       const allBotMessageIds = prev.filter(msg => !msg.isUser).map(msg => msg.id);
       setUsedSuggestions(prevUsed => new Set([...prevUsed, ...allBotMessageIds]));
@@ -184,20 +183,16 @@ export const useChatLogic = () => {
   }, delay);
   };
 
-  // Handle suggestion press - hide all previous suggestions and add user message
   const handleSuggestionPress = (messageId: string, suggestion: string) => {
-    // Hide all previous suggestions when user clicks a suggestion
     setMessages(prev => {
       const allBotMessageIds = prev.filter(msg => !msg.isUser).map(msg => msg.id);
       setUsedSuggestions(prevUsed => new Set([...prevUsed, ...allBotMessageIds]));
       return prev;
     });
     
-    // Add the suggestion as a user message
     addUserMessage(suggestion);
   };
 
-  // Check if suggestions should be shown for a message
   const shouldShowSuggestions = (messageId: string) => {
     return !usedSuggestions.has(messageId);
   };
