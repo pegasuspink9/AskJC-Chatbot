@@ -7,6 +7,8 @@ export const useChatLogic = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  // Track which messages have had their suggestions used
+  const [usedSuggestions, setUsedSuggestions] = useState<Set<string>>(new Set());
 
   // Typing animation state
   const dot1Opacity = useRef(new Animated.Value(0.3)).current;
@@ -88,6 +90,13 @@ export const useChatLogic = () => {
   const sendMessage = async () => {
     if (!inputText.trim()) return;
 
+    // Hide all previous suggestions when user sends a new message
+    setMessages(prev => {
+      const allBotMessageIds = prev.filter(msg => !msg.isUser).map(msg => msg.id);
+      setUsedSuggestions(prevUsed => new Set([...prevUsed, ...allBotMessageIds]));
+      return prev;
+    });
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       text: inputText.trim(),
@@ -139,6 +148,58 @@ export const useChatLogic = () => {
     setMessages([]);
     setInputText('');
     setIsTyping(false);
+    setUsedSuggestions(new Set()); // Reset used suggestions
+  };
+
+  const addUserMessage = (text: string) => {
+    // Hide all previous suggestions when user sends a new message
+    setMessages(prev => {
+      const allBotMessageIds = prev.filter(msg => !msg.isUser).map(msg => msg.id);
+      setUsedSuggestions(prevUsed => new Set([...prevUsed, ...allBotMessageIds]));
+      return prev;
+    });
+
+    const newMessage: ChatMessage = {
+    id: Date.now().toString(),
+    text: text,
+    isUser: true,
+    timestamp: new Date(),
+  };
+  
+  setMessages(prev => [...prev, newMessage]);
+  setInputText('');
+  setIsTyping(true);
+  
+  const delay = 1500 + Math.random() * 1500;
+  setTimeout(() => {
+    const botResponse: ChatMessage = {
+      id: (Date.now() + 1).toString(),
+      text: getAutoResponse(text), 
+      isUser: false,
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, botResponse]);
+    
+    setIsTyping(false);
+  }, delay);
+  };
+
+  // Handle suggestion press - hide all previous suggestions and add user message
+  const handleSuggestionPress = (messageId: string, suggestion: string) => {
+    // Hide all previous suggestions when user clicks a suggestion
+    setMessages(prev => {
+      const allBotMessageIds = prev.filter(msg => !msg.isUser).map(msg => msg.id);
+      setUsedSuggestions(prevUsed => new Set([...prevUsed, ...allBotMessageIds]));
+      return prev;
+    });
+    
+    // Add the suggestion as a user message
+    addUserMessage(suggestion);
+  };
+
+  // Check if suggestions should be shown for a message
+  const shouldShowSuggestions = (messageId: string) => {
+    return !usedSuggestions.has(messageId);
   };
 
   return {
@@ -154,5 +215,8 @@ export const useChatLogic = () => {
       dot2Opacity,
       dot3Opacity,
     },
+    addUserMessage,
+    handleSuggestionPress,
+    shouldShowSuggestions
   };
 };

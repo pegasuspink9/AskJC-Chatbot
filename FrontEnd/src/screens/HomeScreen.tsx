@@ -51,6 +51,8 @@ const HomeScreen: React.FC = () => {
     addInitialMessage,
     resetChat,
     typingDots,
+    handleSuggestionPress,
+    shouldShowSuggestions
   } = useChatLogic();
 
   // Sidebar animations
@@ -165,7 +167,12 @@ const HomeScreen: React.FC = () => {
 
   // Render functions
   const renderMessage = ({ item }: { item: ChatMessage }) => (
-    <MessageItem item={item} Colors={Colors} />
+    <MessageItem 
+      item={item} 
+      Colors={Colors} 
+      onSuggestionPress={handleSuggestionPress}
+      shouldShowSuggestions={shouldShowSuggestions}
+    />
   );
 
   const renderTypingIndicator = () => (

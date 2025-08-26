@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Animated,
   Platform,
+  TouchableOpacity
 } from 'react-native';
 import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
@@ -12,6 +13,8 @@ import { Message as ChatMessage } from '../../types/index';
 interface MessageItemProps {
   item: ChatMessage;
   Colors: any;
+  onSuggestionPress?: (messageId: string, suggestion: string) => void;
+  shouldShowSuggestions?: (messageId: string) => boolean;
 }
 
 interface TypingIndicatorProps {
@@ -22,7 +25,12 @@ interface TypingIndicatorProps {
   dot3Opacity: Animated.Value;
 }
 
-export const MessageItem: React.FC<MessageItemProps> = ({ item, Colors }) => {
+export const MessageItem: React.FC<MessageItemProps> = ({ 
+  item, 
+  Colors, 
+  onSuggestionPress,
+  shouldShowSuggestions 
+}) => {
   const formatTime = (timestamp: Date): string => {
     try {
       return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -31,15 +39,28 @@ export const MessageItem: React.FC<MessageItemProps> = ({ item, Colors }) => {
     }
   };
 
+  const suggestions = ['Tuition fee', 'Enrollment Process', 'Exam Date'];
+
+  const handleSuggestionPress = (suggestion: string) => {
+    if (onSuggestionPress) {
+      onSuggestionPress(item.id, suggestion);
+    }
+  };
+
+  // Check if suggestions should be shown for this message
+  const showSuggestions = !item.isUser && shouldShowSuggestions && shouldShowSuggestions(item.id);
+
   return (
     <View style={[
       styles(Colors).messageContainer,
       item.isUser ? styles(Colors).userMessageContainer : styles(Colors).botMessageContainer
     ]}>
+      
       <View style={[
         styles(Colors).messageBubble,
         item.isUser ? styles(Colors).userMessageBubble : styles(Colors).botMessageBubble
       ]}>
+        
         <Text style={[
           styles(Colors).messageText,
           item.isUser ? styles(Colors).userMessageText : styles(Colors).botMessageText
@@ -47,6 +68,24 @@ export const MessageItem: React.FC<MessageItemProps> = ({ item, Colors }) => {
           {item.text}
         </Text>
       </View>
+
+      {showSuggestions && (
+        <View style={styles(Colors).suggestionsContainer}>
+          {suggestions.map((suggestion, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles(Colors).suggestionButton}
+              onPress={() => handleSuggestionPress(suggestion)} 
+              activeOpacity={0.7} 
+            >
+              <Text style={styles(Colors).suggestionText}>
+                {suggestion}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       <Text style={[
         styles(Colors).timestamp,
         item.isUser ? styles(Colors).userTimestamp : styles(Colors).botTimestamp
@@ -150,6 +189,28 @@ const styles = (Colors: any) => StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.textSecondary,
     marginHorizontal: 2,
+  },
+  suggestionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    maxWidth: '80%',
+    marginTop: Spacing?.sm,
+  },
+  suggestionButton: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,         
+    borderColor: Colors.border,
+    borderRadius: BorderRadius?.md,   
+    paddingHorizontal: Spacing?.sm, 
+    paddingVertical: Spacing?.xs,  
+    marginVertical: 2,
+    marginRight: Spacing?.sm,
+    alignSelf: 'flex-start',      
+  },
+  suggestionText: {
+    fontSize: FontSizes?.xs,          
+    color: Colors.textSecondary,   
+    fontFamily: FontFamilies?.regular,
   },
 });
 
