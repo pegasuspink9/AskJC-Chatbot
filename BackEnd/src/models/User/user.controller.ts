@@ -1,12 +1,37 @@
-import { PrismaClient } from "@prisma/client";
+import { v4 as uuidv4 } from "uuid";
+import { Request, Response } from "express";
+import { prisma } from "../../../prisma/client";
 
-const prisma = new PrismaClient();
+export const getOrCreateUserFromRequest = async (
+  req: Request,
+  res: Response
+) => {
+  let deviceId = req.cookies.device_id;
 
-export const getOrCreateUser = async (user_id?: number) => {
-  if (user_id) {
-    const user = await prisma.user.findUnique({ where: { id: user_id } });
-    if (user) return user;
+  if (!deviceId) {
+    deviceId = uuidv4();
+    res.cookie("device_id", deviceId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 365,
+    });
   }
 
-  return await prisma.user.create({ data: {} });
+  let user = await prisma.user.findUnique({
+    where: { device_id: deviceId },
+  });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: { device_id: deviceId },
+    });
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { last_active: new Date() },
+  });
+
+  return user;
 };

@@ -5,7 +5,9 @@ import { CreateFaq, UpdateFaq } from "./faq.types";
 
 export const getFaqs = async (_: Request, res: Response) => {
   try {
-    const faqs = await prisma.faq.findMany({ include: { department: true } });
+    const faqs = await prisma.faq.findMany({
+      include: { keywords: true, department: true },
+    });
     return successResponse(res, faqs, "FAQs fetched");
   } catch (error) {
     return errorResponse(res, error, "Failed to fetch FAQs");
@@ -28,7 +30,7 @@ export const getFaqById = async (req: Request, res: Response) => {
 export const createFaq = async (req: Request, res: Response) => {
   try {
     const data: CreateFaq = req.body;
-    const faq = await prisma.faq.create({ data });
+    const faq = await prisma.faq.createMany({ data });
     return successResponse(res, faq, "FAQ created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create FAQ");

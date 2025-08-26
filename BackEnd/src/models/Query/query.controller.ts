@@ -1,8 +1,12 @@
 import { prisma } from "../../../prisma/client";
 import { Request, Response } from "express";
-import { getOrCreateUser } from "../User/user.controller";
 import { CreateQuery } from "./query.types";
+import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
+import { extractKeywords } from "../../../utils/extractKeywords";
+import { getScholarshipFaqAnswer } from "models/chatbot/Scholarship/scholarship.service";
+import { measureResponseTime } from "../../../utils/responseTimeCounter";
+import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.service";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -20,37 +24,81 @@ export const getQueryById = async (req: Request, res: Response) => {
   }
 };
 
-export const createQuery = async (req: Request, res: Response) => {
+export const getQueriesByUserId = async (req: Request, res: Response) => {
   try {
-    const data: CreateQuery = req.body;
+    const { userId } = req.params;
 
-    const user = await getOrCreateUser(data.user_id);
-
-    let session;
-
-    if (data.chatbot_session_id) {
-      session = await prisma.chatbotSession.findUnique({
-        where: { id: data.chatbot_session_id },
-      });
-    }
-
-    if (!session) {
-      session = await prisma.chatbotSession.create({
-        data: { user_id: user.id },
-      });
-    }
-
-    const query = await prisma.query.create({
-      data: {
-        user_id: user.id,
-        chatbot_session_id: session.id,
-        query_text: data.query_text,
-        created_at: new Date(),
+    const queries = await prisma.query.findMany({
+      where: { user_id: Number(userId) },
+      select: {
+        id: true,
+        user_id: true,
+        query_text: true,
+        session: {
+          select: {
+            chatbot_response: true,
+          },
+        },
       },
     });
 
-    return successResponse(res, query, "Query created");
+    if (!queries || queries.length === 0) {
+      return errorResponse(
+        res,
+        "No queries found for this user",
+        "Not Found",
+        404
+      );
+    }
+
+    const formattedQueries = queries.map((q) => ({
+      queryId: q.id,
+      userId: q.user_id,
+      queryText: q.query_text,
+      chatbotResponse: q.session?.chatbot_response ?? null,
+    }));
+
+    return successResponse(res, formattedQueries, "User queries fetched");
   } catch (error) {
+    return errorResponse(res, error, "Failed to fetch user queries");
+  }
+};
+
+export const createQuery = async (req: Request, res: Response) => {
+  try {
+    const data: CreateQuery = req.body;
+    const user = await getOrCreateUserFromRequest(req, res);
+
+    const { result: chatbotData, duration: responseTime } =
+      await measureResponseTime(async () => {
+        // This single call handles Dialogflow and all fallback logic
+        return await handleChatbotMessage(user.id, data.query_text);
+      });
+
+    const chatbotResponse = chatbotData.answer;
+    const queryId = chatbotData.queryId;
+
+    // Update the session in the database
+    await prisma.chatbotSession.updateMany({
+      where: { user_id: user.id },
+      data: {
+        chatbot_response: chatbotResponse,
+        response_time: new Date(),
+      },
+    });
+
+    return successResponse(
+      res,
+      {
+        queryId,
+        chatbotResponse,
+        // THIS IS THE CORRECTED LINE:
+        responseTime: responseTime,
+      },
+      "Query created"
+    );
+  } catch (error) {
+    console.error("Error in createQuery:", error);
     return errorResponse(res, error, "Failed to create query");
   }
 };

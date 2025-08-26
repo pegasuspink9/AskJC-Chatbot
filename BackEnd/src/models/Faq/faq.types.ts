@@ -1,19 +1,20 @@
 export interface Faq {
   id: number;
-  department_id: number;
+  department_id?: number;
   question?: string | null;
   answer?: string | null;
   category?: string | null;
 }
 
 export interface CreateFaq {
-  department_id: number;
-  question?: string;
+  department_id?: number;
+  question: string;
   answer?: string;
-  category?: string;
+  category: string;
 }
 
 export interface UpdateFaq {
+  department_id?: number;
   question?: string;
   answer?: string;
   category?: string;

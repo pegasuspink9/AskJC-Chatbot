@@ -41,9 +41,11 @@ export const createProgram = async (req: Request, res: Response) => {
 
 export const updateProgram = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const data: UpdateProgram = req.body;
+
     const program = await prisma.program.update({
-      where: { id: Number(req.params.body) },
+      where: { id: Number(id) },
       data,
     });
     return successResponse(res, program, "Program updated");

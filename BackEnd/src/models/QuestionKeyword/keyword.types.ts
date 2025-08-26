@@ -8,6 +8,7 @@ export interface QuestionKeyword {
 export interface CreateQuestionKeyword {
   faq_id: number;
   keyword?: string;
+  created_at?: Date;
 }
 
 export interface UpdateQuestionKeyword {

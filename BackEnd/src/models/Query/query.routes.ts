@@ -4,6 +4,7 @@ import * as QueryController from "./query.controller";
 const router = Router();
 
 router.get("/:id", (req, res) => QueryController.getQueryById(req, res));
+router.get("/userId/:userId", QueryController.getQueriesByUserId);
 router.post("/", (req, res) => QueryController.createQuery(req, res));
 
 export default router;
