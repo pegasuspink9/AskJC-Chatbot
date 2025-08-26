@@ -1,13 +1,14 @@
+// hooks/useChatLogic.ts
 import { useState, useRef, useEffect } from 'react';
 import { Animated } from 'react-native';
 import { Message as ChatMessage } from '../../types';
+import { apiService } from '../../services/api/apiService';
 
 export const useChatLogic = () => {
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  
   const [usedSuggestions, setUsedSuggestions] = useState<Set<string>>(new Set());
 
   // Typing animation state
@@ -60,7 +61,8 @@ export const useChatLogic = () => {
     };
   }, [isTyping]);
 
-  const getAutoResponse = (userMessage: string): string => {
+  // Fallback response for API errors
+  const getFallbackResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase().trim();
 
     if (lowerMessage.includes('whoso do you think is the hottest') ||
@@ -76,15 +78,20 @@ export const useChatLogic = () => {
       return 'I can help you with a variety of things! I can answer questions, provide information, help with problem-solving, and have friendly conversations. What specifically would you like help with?';
     }
     
-    const defaultResponses = [
-      'That\'s interesting! Could you tell me more about that?',
-      'I understand. What would you like to know more about?',
-      'Thanks for sharing that with me. How can I help you with this?',
-      'I see what you\'re saying. What specific information are you looking for?',
-      'That\'s a great question! Let me think about that for you.',
-    ];
-    
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
+    return 'I apologize, but I\'m having trouble connecting to the server right now. Please try again in a moment.';
+  };
+
+  // Get response from API or fallback
+  const getResponse = async (userMessage: string): Promise<string> => {
+    try {
+      // Try to get response from API
+      const response = await apiService.sendChatQuery(userMessage);
+      return response;
+    } catch (error) {
+      // Use fallback response on error
+      console.warn('Using fallback response due to API error:', error);
+      return getFallbackResponse(userMessage);
+    }
   };
 
   const sendMessage = async () => {
@@ -109,20 +116,23 @@ export const useChatLogic = () => {
     setInputText('');
     setIsTyping(true);
 
-    const delay = 1500 + Math.random() * 1500;
-    setTimeout(() => {
+    try {
+      const botResponseText = await getResponse(currentInput);
+      
       const botResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        text: getAutoResponse(currentInput),
+        text: botResponseText,
         isUser: false,
         timestamp: new Date(),
       };
+      
       setMessages(prev => [...prev, botResponse]);
+    } finally {
       setIsTyping(false);
-    }, delay);
+    }
   };
 
-  const addInitialMessage = (text: string) => {
+  const addInitialMessage = async (text: string) => {
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       text: text.trim(),
@@ -132,16 +142,21 @@ export const useChatLogic = () => {
     setMessages([userMessage]);
     
     setIsTyping(true);
-    setTimeout(() => {
+    
+    try {
+      const botResponseText = await getResponse(text);
+      
       const botResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        text: getAutoResponse(text),
+        text: botResponseText,
         isUser: false,
         timestamp: new Date(),
       };
+      
       setMessages(prev => [...prev, botResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1500 + Math.random() * 1500);
+    }
   };
 
   const resetChat = () => {
@@ -151,7 +166,7 @@ export const useChatLogic = () => {
     setUsedSuggestions(new Set()); 
   };
 
-  const addUserMessage = (text: string) => {
+  const addUserMessage = async (text: string) => {
     setMessages(prev => {
       const allBotMessageIds = prev.filter(msg => !msg.isUser).map(msg => msg.id);
       setUsedSuggestions(prevUsed => new Set([...prevUsed, ...allBotMessageIds]));
@@ -159,28 +174,30 @@ export const useChatLogic = () => {
     });
 
     const newMessage: ChatMessage = {
-    id: Date.now().toString(),
-    text: text,
-    isUser: true,
-    timestamp: new Date(),
-  };
-  
-  setMessages(prev => [...prev, newMessage]);
-  setInputText('');
-  setIsTyping(true);
-  
-  const delay = 1500 + Math.random() * 1500;
-  setTimeout(() => {
-    const botResponse: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      text: getAutoResponse(text), 
-      isUser: false,
+      id: Date.now().toString(),
+      text: text,
+      isUser: true,
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, botResponse]);
     
-    setIsTyping(false);
-  }, delay);
+    setMessages(prev => [...prev, newMessage]);
+    setInputText('');
+    setIsTyping(true);
+    
+    try {
+      const botResponseText = await getResponse(text);
+      
+      const botResponse: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        text: botResponseText,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, botResponse]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSuggestionPress = (messageId: string, suggestion: string) => {
