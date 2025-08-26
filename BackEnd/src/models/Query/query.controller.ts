@@ -71,14 +71,12 @@ export const createQuery = async (req: Request, res: Response) => {
 
     const { result: chatbotData, duration: responseTime } =
       await measureResponseTime(async () => {
-        // This single call handles Dialogflow and all fallback logic
         return await handleChatbotMessage(user.id, data.query_text);
       });
 
     const chatbotResponse = chatbotData.answer;
     const queryId = chatbotData.queryId;
 
-    // Update the session in the database
     await prisma.chatbotSession.updateMany({
       where: { user_id: user.id },
       data: {
@@ -92,7 +90,6 @@ export const createQuery = async (req: Request, res: Response) => {
       {
         queryId,
         chatbotResponse,
-        // THIS IS THE CORRECTED LINE:
         responseTime: responseTime,
       },
       "Query created"
