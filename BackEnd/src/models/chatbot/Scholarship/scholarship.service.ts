@@ -1,139 +1,14 @@
 import { prisma } from "../../../../prisma/client";
-import { extractKeywords } from "../../../../utils/extractKeywords";
-import { getDialogflowResponse } from "../../../../helper/diagflow.service";
+import {
+  getDialogflowResponse,
+  fetchScholarshipFromDB,
+} from "../../../../helper/diagflow.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-
-export async function getScholarshipFaqAnswer(
-  faqId: number,
-  userMessage: string
-) {
-  const faq = await prisma.faq.findUnique({
-    where: { id: faqId },
-    include: { scholarships: true },
-  });
-
-  if (!faq) {
-    return "Sorry, I couldn't retrieve the necessary information.";
-  }
-
-  const msg = userMessage.toLowerCase();
-
-  // Who can I contact for scholarship assistance?
-  if (
-    msg.includes("contact") ||
-    msg.includes("assistance") ||
-    msg.includes("help")
-  ) {
-    return `You can contact the Student Affairs and Services Office (SASO) for scholarship assistance. Please visit their office for more details`;
-  }
-
-  if (msg.includes("offered")) {
-    // What scholarships are offered?
-    if (!faq.scholarships?.length) {
-      return "I could not find a list of offered scholarships at this time.";
-    }
-    return `Here are the scholarships you can apply for:\n\n- ${faq.scholarships
-      .map((s) => s.name)
-      .join("\n- ")}`;
-  }
-
-  // Are there scholarships available for new students?
-  if (
-    msg.includes("new") ||
-    msg.includes("freshman") ||
-    msg.includes("first-year")
-  ) {
-    if (!faq.scholarships?.length) {
-      return "I couldn't check for new student scholarships at this moment.";
-    }
-    const forNewStudents = faq.scholarships
-      .filter(
-        (s) =>
-          s.description?.toLowerCase().includes("incoming students") ||
-          s.name?.toLowerCase().includes("graduate discount")
-      )
-      .map((s) => `- **${s.name}**: ${s.description}`);
-
-    if (forNewStudents.length > 0) {
-      return `Yes, there are scholarships available for new students. Based on the data, these include:\n\n${forNewStudents.join(
-        "\n\n"
-      )}`;
-    } else {
-      return "Based on the provided data, there is no specific mention of scholarships exclusively for new students. However, new students may be eligible for general scholarships. Please check the eligibility for each one.";
-    }
-  }
-  if (!faq.scholarships?.length) {
-    return "Sorry, I couldn’t find information about that scholarship.";
-  }
-
-  const specificScholarship = faq.scholarships.find((s) =>
-    msg.includes(s.name.toLowerCase())
-  );
-
-  //Who can apply for [scholarship name]
-  if (specificScholarship) {
-    if (msg.includes("eligibility") || msg.includes("who can apply")) {
-      return `**${specificScholarship.name}**\n\nEligibility: ${
-        specificScholarship.eligibility_criteria ||
-        "Eligibility details not available."
-      }`;
-    }
-
-    //Whar are the requirements needed for [scholarship name]
-    if (msg.includes("requirement") || msg.includes("documents")) {
-      return `**${specificScholarship.name}**\n\nRequirements: ${
-        specificScholarship.required_document || "Requirements not available."
-      }`;
-    }
-
-    //Tell me more about SJC scholarships
-    if (
-      msg.includes("about") ||
-      msg.includes("information") ||
-      msg.includes("detail")
-    ) {
-      return `**${specificScholarship.name}**\n\n${
-        specificScholarship.description || "Description not available."
-      }`;
-    }
-  }
-
-  //Who can apply for scholarships?
-  if (msg.includes("eligibility") || msg.includes("who can apply")) {
-    return `Here’s who can apply for each scholarship:\n\n${faq.scholarships
-      .map(
-        (s) =>
-          `**${s.name}**\n${
-            s.eligibility_criteria || "Eligibility details not available."
-          }`
-      )
-      .join("\n\n")}`;
-  }
-
-  //What are the requirements for scholarships?
-  if (msg.includes("requirement") || msg.includes("documents")) {
-    return `The following documents are required:\n\n${faq.scholarships
-      .map(
-        (s) =>
-          `**${s.name}**\n${
-            s.required_document || "Requirements not available."
-          }`
-      )
-      .join("\n\n")}`;
-  }
-
-  return (
-    faq.answer ||
-    "Please visit the Student Affairs and Services Office (SASO) for more details."
-  );
-}
 
 export const handleChatbotMessage = async (
   userId: number,
   message: string
 ): Promise<{ answer: string; source: string; queryId: number }> => {
-  const keywords = extractKeywords(message);
-
   const session = await prisma.chatbotSession.upsert({
     where: { user_id: userId },
     update: { response_time: new Date() },
@@ -145,54 +20,150 @@ export const handleChatbotMessage = async (
       user_id: userId,
       chatbot_session_id: session.id,
       query_text: message,
-      users_data_inputed: keywords,
+      users_data_inputed: [],
       created_at: new Date(),
     },
   });
 
-  const dialogflowResult = await getDialogflowResponse(message);
+  let responseText =
+    "I apologize, but I'm having a bit of trouble right now. Please try again in a moment.";
+  let responseSource = "error";
 
-  if (
-    dialogflowResult &&
-    dialogflowResult.intent !== "Default Fallback Intent"
-  ) {
-    console.log("Dialogflow returned a specific intent. Sending it back.");
-    return {
-      answer: dialogflowResult.fulfillmentText,
-      source: "dialogflow-intent",
-      queryId: query.id,
-    };
-  }
+  try {
+    const dialogflowResult = await getDialogflowResponse(message);
 
-  const faq = await prisma.faq.findFirst({
-    where: {
-      keywords: { some: { keyword: { in: keywords } } },
-    },
-    include: { scholarships: true },
-  });
+    if (!dialogflowResult) {
+      console.log("Dialogflow returned null. Falling back to Gemini.");
+      responseText = await getGenerativeResponse(message);
+      responseSource = "generative-critical-fallback";
+    } else {
+      const { action, parameters, fulfillmentText } = dialogflowResult;
 
-  if (faq) {
-    console.log("Found a match in the local FAQ database.");
-    if (faq.category === "Scholarship") {
-      const answer = await getScholarshipFaqAnswer(faq.id, message);
-      return { answer, source: "faq-scholarship", queryId: query.id };
+      console.log(`Dialogflow routed to action: ${action}`);
+
+      if (fulfillmentText) {
+        responseText = fulfillmentText;
+        responseSource = "dialogflow-direct";
+      } else {
+        switch (action) {
+          case "get_scholarship_detail": {
+            const fact = await fetchScholarshipFromDB(parameters);
+
+            responseText = `Here’s what I found for **${parameters["scholarship-name"]}** (${parameters["scholarship-detail"]}):\n\n${fact}`;
+            responseSource = "database-detail";
+
+            try {
+              const prompt = `
+                The student asked: "${message}"
+
+                From the database, here is what I found about ${parameters["scholarship-name"]} (${parameters["scholarship-detail"]}):
+                "${fact}"
+
+                Please explain this clearly and conversationally.
+              `;
+              const improved = await getGenerativeResponse(prompt);
+              if (improved) {
+                responseText = improved;
+                responseSource = "generative-database-detail";
+              }
+            } catch {
+              console.warn("Gemini unavailable, sticking with DB fallback.");
+            }
+            break;
+          }
+
+          case "get_scholarship_info": {
+            const name = parameters["scholarship-name"];
+            const scholarship = await prisma.scholarship.findFirst({
+              where: { name: { contains: name, mode: "insensitive" } },
+            });
+
+            if (scholarship) {
+              const fact = scholarship.description;
+
+              responseText = `**${scholarship.name}**\n\n${fact}`;
+              responseSource = "database-info";
+
+              try {
+                const prompt = `
+                  The student asked: "${message}"
+
+                  Database description for the scholarship "${name}":
+                  "${fact}"
+
+                  Please explain this scholarship to the student in a conversational and helpful way.
+                `;
+                const improved = await getGenerativeResponse(prompt);
+                if (improved) {
+                  responseText = improved;
+                  responseSource = "generative-database-info";
+                }
+              } catch {
+                console.warn("Gemini unavailable, sticking with DB fallback.");
+              }
+            } else {
+              responseText = await getGenerativeResponse(message);
+              responseSource = "generative-fallback-info";
+            }
+            break;
+          }
+
+          case "list_scholarships_by_category": {
+            const category = parameters["scholarship-category"];
+            const scholarships = await prisma.scholarship.findMany({
+              where: { category: { equals: category, mode: "insensitive" } },
+            });
+
+            if (scholarships.length > 0) {
+              const scholarshipNames = scholarships
+                .map((s) => `- ${s.name}`)
+                .join("\n");
+
+              responseText = `Here are the scholarships in the **${category}** category:\n\n${scholarshipNames}`;
+              responseSource = "database-list";
+
+              try {
+                const prompt = `
+                  The student asked: "${message}"
+
+                  From the database, here are the scholarships in the "${category}" category:
+                  ${scholarshipNames}
+
+                  Please present this list in a friendly, easy-to-read format for the student.
+                `;
+                const improved = await getGenerativeResponse(prompt);
+                if (improved) {
+                  responseText = improved;
+                  responseSource = "generative-database-list";
+                }
+              } catch {
+                console.warn("Gemini unavailable, sticking with DB fallback.");
+              }
+            } else {
+              responseText = `I checked our records, but I couldn't find any scholarships in the "${category}" category. You can ask for another category or a list of all scholarships.`;
+              responseSource = "database-list-empty";
+            }
+            break;
+          }
+
+          default: {
+            console.log(
+              "Action not handled by database logic. Sending to Gemini."
+            );
+            responseText = await getGenerativeResponse(message);
+            responseSource = "generative-main";
+            break;
+          }
+        }
+      }
     }
-    return {
-      answer:
-        faq.answer || "I found some information but it seems to be incomplete.",
-      source: "faq-general",
-      queryId: query.id,
-    };
+  } catch (error) {
+    console.error("Error in handleChatbotMessage:", error);
   }
-
-  console.log(
-    "No specific answer found. Asking Gemini for a creative response..."
-  );
-  const generativeAnswer = await getGenerativeResponse(message);
 
   return {
-    answer: generativeAnswer,
-    source: "generative-fallback",
+    answer: responseText,
+    source: responseSource,
     queryId: query.id,
   };
 };

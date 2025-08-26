@@ -3,8 +3,6 @@ import { Request, Response } from "express";
 import { CreateQuery } from "./query.types";
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
-import { extractKeywords } from "../../../utils/extractKeywords";
-import { getScholarshipFaqAnswer } from "models/chatbot/Scholarship/scholarship.service";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
 import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.service";
 
@@ -66,31 +64,41 @@ export const getQueriesByUserId = async (req: Request, res: Response) => {
 
 export const createQuery = async (req: Request, res: Response) => {
   try {
-    const data: CreateQuery = req.body;
+    const { query_text } = req.body;
+    if (!query_text) {
+      return errorResponse(res, "query_text is required.", "Bad Request", 400);
+    }
+
     const user = await getOrCreateUserFromRequest(req, res);
+    if (!user) {
+      return errorResponse(
+        res,
+        "Could not identify or create user.",
+        "Server Error",
+        500
+      );
+    }
 
     const { result: chatbotData, duration: responseTime } =
       await measureResponseTime(async () => {
-        return await handleChatbotMessage(user.id, data.query_text);
+        return await handleChatbotMessage(user.id, query_text);
       });
-
-    const chatbotResponse = chatbotData.answer;
-    const queryId = chatbotData.queryId;
 
     await prisma.chatbotSession.updateMany({
       where: { user_id: user.id },
       data: {
-        chatbot_response: chatbotResponse,
+        chatbot_response: chatbotData.answer,
         response_time: new Date(),
+        total_queries: { increment: 1 },
       },
     });
 
     return successResponse(
       res,
       {
-        queryId,
-        chatbotResponse,
-        responseTime: responseTime,
+        queryId: chatbotData.queryId,
+        chatbotResponse: chatbotData.answer,
+        responseTime,
       },
       "Query created"
     );
