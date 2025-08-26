@@ -1,9 +1,6 @@
 import { prisma } from "../../../../prisma/client";
 import { extractKeywords } from "../../../../utils/extractKeywords";
-import {
-  getDialogflowResponse,
-  DialogflowResponse,
-} from "../../../../helper/diagflow.service";
+import { getDialogflowResponse } from "../../../../helper/diagflow.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
 
 export async function getScholarshipFaqAnswer(

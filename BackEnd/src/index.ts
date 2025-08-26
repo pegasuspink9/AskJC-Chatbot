@@ -18,6 +18,7 @@ import schoolOfficialRoutes from "./models/SchoolOfficial/schoolOfficial.routes"
 import programRoutes from "./models/Program/program.routes";
 import officeRoutes from "./models/Office/office.routes";
 import scholarshipRoutes from "./models/Scholarship/scholarship.routes";
+import officeImageRouter from "./models/OfficeImage/image.routes";
 
 const app = express();
 
@@ -33,9 +34,6 @@ app.use(
   })
 );
 
-app.use("/faq", faqRoutes);
-app.use("/keyword", keywordRoutes);
-app.use("/greet", greetRoutes);
 app.use("school-detail", schoolDetailRoutes);
 app.use("/school-faq", schoolFaqRoutes);
 
@@ -44,15 +42,19 @@ app.use("/user", userRoutes);
 app.use("/query", queryRoutes);
 app.use("/session", sessionRoutes);
 app.use("/feedback", feedbackRoutes);
+app.use("/faq", faqRoutes);
+app.use("/keyword", keywordRoutes);
+app.use("/greet", greetRoutes); //unecessary naman ni kay naa naman tay dialogflow
 
-app.use("/scholarship", scholarshipRoutes);
+app.use("/image", officeImageRouter);
+app.use("/scholarship", scholarshipRoutes); //complete data
 app.use("/office", officeRoutes);
 app.use("/student-org", studentOrgRoutes);
 app.use("/contact", contactRoutes);
 app.use("/course", couseRoutes);
 app.use("/department", departmentRoutes);
 app.use("/program", programRoutes);
-app.use("/school-official", schoolOfficialRoutes); //already added the data
+app.use("/school-official", schoolOfficialRoutes); //complete data
 
 app.listen(3000, () => {
   console.log(`Server running on http://localhost:3000`);
