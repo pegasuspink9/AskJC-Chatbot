@@ -104,13 +104,12 @@ export async function fetchScholarshipFromDB(params: any): Promise<string> {
     {
       category: "category",
       description: "description",
-      "offered by": "offeredBy",
-      eligibility: "eligibility_criteria",
-      "application process": "application_process",
-      "required documents": "required_document",
-      "award amount": "award_amount",
-      "contact office": "contact_office",
+      offeredBy: "offeredBy",
       eligibility_criteria: "eligibility_criteria",
+      application_process: "application_process",
+      required_document: "required_document",
+      award_amount: "award_amount",
+      contact_office: "contact_office",
     };
 
   const field = detailMap[scholarshipDetail.toLowerCase()];
