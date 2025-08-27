@@ -82,6 +82,16 @@ export const handleChatbotMessage = async (
             if (scholarship) {
               const fact = scholarship.description;
 
+              // 🌟🌟🌟 ADD YOUR CONSOLE.LOG HERE 🌟🌟🌟
+              console.log(
+                "------------------------------------------------------"
+              );
+              console.log("🔍 FACT from DB for scholarship-detail:", fact);
+              console.log(
+                "------------------------------------------------------"
+              );
+              // 🌟🌟🌟 ------------------------------ 🌟🌟🌟
+
               responseText = `**${scholarship.name}**\n\n${fact}`;
               responseSource = "database-info";
 
