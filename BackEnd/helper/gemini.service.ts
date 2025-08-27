@@ -1,25 +1,45 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY is not set");
+let currentIndex = 0;
+const keys = (process.env.GEMINI_API_KEYS || "")
+  .split(",")
+  .map((k) => k.trim());
+
+if (keys.length === 0) {
+  throw new Error("No Gemini API keys configured in GEMINI_API_KEYS");
 }
 
-const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+function getNextApiKey(): { apiKey: string; index: number } {
+  const key = keys[currentIndex];
+  const index = currentIndex;
+  currentIndex = (currentIndex + 1) % keys.length;
+  return { apiKey: key, index };
+}
 
-export async function getGenerativeResponse(prompt: string): Promise<string> {
-  try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text() || "I couldn’t generate a response.";
-  } catch (error: any) {
-    if (error.status === 429) {
-      console.warn("⚠️ Gemini quota exceeded. Falling back.");
-      return "";
+async function tryGenerate(prompt: string, apiKey: string, index: number) {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  const result = await model.generateContent(prompt);
+  const text = result.response.text();
+  console.log(`✅ Gemini responded using KEY-${index + 1}`);
+  return { text, apiKey: `KEY-${index + 1}` };
+}
+
+export async function getGenerativeResponse(
+  prompt: string
+): Promise<{ text: string; apiKey: string }> {
+  for (let i = 0; i < keys.length; i++) {
+    const { apiKey, index } = getNextApiKey();
+    try {
+      return await tryGenerate(prompt, apiKey, index);
+    } catch (error: any) {
+      console.error(`❌ Gemini error with KEY-${index + 1}:`, error.message);
+      if (i === keys.length - 1) {
+        // All keys failed
+        throw new Error("All Gemini API keys exhausted");
+      }
+      console.log("🔄 Retrying with next Gemini API key...");
     }
-
-    console.error("Gemini API error:", error);
-    return "";
   }
+  throw new Error("Unexpected error in Gemini key rotation");
 }

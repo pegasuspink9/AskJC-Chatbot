@@ -34,8 +34,9 @@ export const handleChatbotMessage = async (
 
     if (!dialogflowResult) {
       console.log("Dialogflow returned null. Falling back to Gemini.");
-      responseText = await getGenerativeResponse(message);
-      responseSource = "generative-critical-fallback";
+      const { text, apiKey } = await getGenerativeResponse(message);
+      responseText = text;
+      responseSource = `generative-critical-fallback (via ${apiKey})`;
     } else {
       const { action, parameters, fulfillmentText } = dialogflowResult;
 
@@ -61,10 +62,10 @@ export const handleChatbotMessage = async (
 
                 Please explain this clearly and conversationally.
               `;
-              const improved = await getGenerativeResponse(prompt);
-              if (improved) {
-                responseText = improved;
-                responseSource = "generative-database-detail";
+              const { text, apiKey } = await getGenerativeResponse(prompt);
+              if (text) {
+                responseText = text;
+                responseSource = `generative-database-detail (via ${apiKey})`;
               }
             } catch {
               console.warn("Gemini unavailable, sticking with DB fallback.");
@@ -93,17 +94,18 @@ export const handleChatbotMessage = async (
 
                   Please explain this scholarship to the student in a conversational and helpful way.
                 `;
-                const improved = await getGenerativeResponse(prompt);
-                if (improved) {
-                  responseText = improved;
-                  responseSource = "generative-database-info";
+                const { text, apiKey } = await getGenerativeResponse(prompt);
+                if (text) {
+                  responseText = text;
+                  responseSource = `generative-database-info (via ${apiKey})`;
                 }
               } catch {
                 console.warn("Gemini unavailable, sticking with DB fallback.");
               }
             } else {
-              responseText = await getGenerativeResponse(message);
-              responseSource = "generative-fallback-info";
+              const { text, apiKey } = await getGenerativeResponse(message);
+              responseText = text;
+              responseSource = `generative-fallback-info (via ${apiKey})`;
             }
             break;
           }
@@ -131,10 +133,10 @@ export const handleChatbotMessage = async (
 
                   Please present this list in a friendly, easy-to-read format for the student.
                 `;
-                const improved = await getGenerativeResponse(prompt);
-                if (improved) {
-                  responseText = improved;
-                  responseSource = "generative-database-list";
+                const { text, apiKey } = await getGenerativeResponse(prompt);
+                if (text) {
+                  responseText = text;
+                  responseSource = `generative-database-list (via ${apiKey})`;
                 }
               } catch {
                 console.warn("Gemini unavailable, sticking with DB fallback.");
@@ -150,8 +152,9 @@ export const handleChatbotMessage = async (
             console.log(
               "Action not handled by database logic. Sending to Gemini."
             );
-            responseText = await getGenerativeResponse(message);
-            responseSource = "generative-main";
+            const { text, apiKey } = await getGenerativeResponse(message);
+            responseText = text;
+            responseSource = `generative-main (via ${apiKey})`;
             break;
           }
         }
