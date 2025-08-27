@@ -72,7 +72,7 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             item.text, 
             Colors, 
             item.isUser,
-            textStyle // Pass the flattened style object instead of array
+            textStyle 
           )}
         </Text>
       </View>
@@ -197,6 +197,7 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   botMessageText: {
     color: Colors.text,
+    fontFamily: FontFamilies?.regular || 'System',
   },
   timestamp: {
     fontSize: FontSizes?.xs || 12,

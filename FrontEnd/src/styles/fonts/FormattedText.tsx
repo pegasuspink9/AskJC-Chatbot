@@ -1,12 +1,12 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { FontFamilies } from '../../constants/theme';
+import { FontFamilies, FontSizes } from '../../constants/theme';
 
 // Enhanced text parser that handles multiple formatting types
 const parseFormattedText = (text: string, Colors: any, isUser: boolean, baseTextStyle: any) => {
-  // Split by all formatting patterns while preserving the delimiters
- const formatRegex = /(\*.*?\"|\*.*?\*)/g;
-
+  // Updated regex to properly capture **text** and *text* patterns
+  const formatRegex = /(\*\*.*?\*\*|\*.*?\*)/g;
+  
   const parts = text.split(formatRegex);
   
   return parts.map((part, index) => {
@@ -15,12 +15,12 @@ const parseFormattedText = (text: string, Colors: any, isUser: boolean, baseText
     let textStyle = { ...baseTextStyle };
     let content = part;
 
-    if (part.startsWith('*') && part.endsWith('*')) {
-      // Bold text
-      content = part.slice(1, -1) + '\n';
+    if (part.startsWith('**') && part.endsWith('**')) {
+      content = part.slice(2, -2);
       textStyle = {
         ...textStyle,
         fontFamily: FontFamilies?.bold || 'System',
+        fontSize: FontSizes?.md || 15,
       };
     }
 
