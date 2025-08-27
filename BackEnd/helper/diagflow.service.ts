@@ -1,6 +1,5 @@
 import { SessionsClient, protos } from "@google-cloud/dialogflow";
 import { v4 as uuidv4 } from "uuid";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { PrismaClient } from "@prisma/client";
 
 const db = new PrismaClient();
@@ -18,14 +17,6 @@ if (!projectId) {
 }
 
 const sessionClient = new SessionsClient();
-
-const apiKey = process.env.GEMINI_API_KEY;
-if (!apiKey) {
-  throw new Error("GEMINI_API_KEY is not set");
-}
-
-const genAI = new GoogleGenerativeAI(apiKey);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
 export const getDialogflowResponse = async (
   userMessage: string
