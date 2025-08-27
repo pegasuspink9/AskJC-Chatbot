@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
+import parseFormattedText from '../../styles/fonts/FormattedText';
 
 interface MessageItemProps {
   item: ChatMessage;
@@ -47,25 +48,32 @@ export const MessageItem: React.FC<MessageItemProps> = ({
     }
   };
 
-  // Check if suggestions should be shown for this message
   const showSuggestions = !item.isUser && shouldShowSuggestions && shouldShowSuggestions(item.id);
 
+  // Create flattened text styles to avoid array issues
+  const textStyle = StyleSheet.flatten([
+    styles(Colors).messageText,
+    item.isUser ? styles(Colors).userMessageText : styles(Colors).botMessageText
+  ]);
+
   return (
-    <View style={[
+    <View style={StyleSheet.flatten([
       styles(Colors).messageContainer,
       item.isUser ? styles(Colors).userMessageContainer : styles(Colors).botMessageContainer
-    ]}>
+    ])}>
       
-      <View style={[
+      <View style={StyleSheet.flatten([
         styles(Colors).messageBubble,
         item.isUser ? styles(Colors).userMessageBubble : styles(Colors).botMessageBubble
-      ]}>
+      ])}>
         
-        <Text style={[
-          styles(Colors).messageText,
-          item.isUser ? styles(Colors).userMessageText : styles(Colors).botMessageText
-        ]}>
-          {item.text}
+        <Text style={textStyle}>
+          {parseFormattedText(
+            item.text, 
+            Colors, 
+            item.isUser,
+            textStyle // Pass the flattened style object instead of array
+          )}
         </Text>
       </View>
 
@@ -86,10 +94,10 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         </View>
       )}
 
-      <Text style={[
+      <Text style={StyleSheet.flatten([
         styles(Colors).timestamp,
         item.isUser ? styles(Colors).userTimestamp : styles(Colors).botTimestamp
-      ]}>
+      ])}>
         {formatTime(item.timestamp)}
       </Text>
     </View>
@@ -105,13 +113,36 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
 }) => {
   if (!isTyping) return null;
   
+  // Create safe animated styles with fallbacks
+  const dot1Style = {
+    ...styles(Colors).typingDot,
+    opacity: dot1Opacity || 1
+  };
+  
+  const dot2Style = {
+    ...styles(Colors).typingDot,
+    opacity: dot2Opacity || 0.7
+  };
+  
+  const dot3Style = {
+    ...styles(Colors).typingDot,
+    opacity: dot3Opacity || 0.4
+  };
+  
   return (
-    <View style={[styles(Colors).messageContainer, styles(Colors).botMessageContainer]}>
-      <View style={[styles(Colors).messageBubble, styles(Colors).botMessageBubble, styles(Colors).typingBubble]}>
+    <View style={StyleSheet.flatten([
+      styles(Colors).messageContainer, 
+      styles(Colors).botMessageContainer
+    ])}>
+      <View style={StyleSheet.flatten([
+        styles(Colors).messageBubble, 
+        styles(Colors).botMessageBubble, 
+        styles(Colors).typingBubble
+      ])}>
         <View style={styles(Colors).typingDots}>
-          <Animated.View style={[styles(Colors).typingDot, { opacity: dot1Opacity }]} />
-          <Animated.View style={[styles(Colors).typingDot, { opacity: dot2Opacity }]} />
-          <Animated.View style={[styles(Colors).typingDot, { opacity: dot3Opacity }]} />
+          <Animated.View style={dot1Style} />
+          <Animated.View style={dot2Style} />
+          <Animated.View style={dot3Style} />
         </View>
       </View>
     </View>
@@ -142,6 +173,8 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 1,
+    borderWidth: 0.5,
+    borderColor: Colors.borderColor,
   },
   botMessageBubble: {
     backgroundColor: Colors.botmessage,
@@ -151,9 +184,11 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 1,
+    borderWidth: 0.4,
+    borderColor: Colors.borderColor,
   },
   messageText: {
-    fontSize: FontSizes?.sm,
+    fontSize: FontSizes?.sm || 14,
     lineHeight: 20,
     fontFamily: FontFamilies?.regular || 'System',
   },
@@ -187,30 +222,29 @@ const styles = (Colors: any) => StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.textSecondary,
+    backgroundColor: Colors.text || '#666',
     marginHorizontal: 2,
   },
   suggestionsContainer: {
-    flexDirection: 'row',
     flexWrap: 'wrap',
     maxWidth: '80%',
-    marginTop: Spacing?.sm,
+    marginTop: Spacing?.sm || 8,
   },
   suggestionButton: {
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.suggestionBackground,
     borderWidth: 1,         
-    borderColor: Colors.border,
-    borderRadius: BorderRadius?.md,   
-    paddingHorizontal: Spacing?.sm, 
-    paddingVertical: Spacing?.xs,  
+    borderColor: Colors.borderSuggestion,
+    borderRadius: BorderRadius?.md || 8,   
+    paddingHorizontal: Spacing?.sm || 8, 
+    paddingVertical: Spacing?.xs || 4,  
     marginVertical: 2,
-    marginRight: Spacing?.sm,
+    marginRight: Spacing?.sm || 8,
     alignSelf: 'flex-start',      
   },
   suggestionText: {
-    fontSize: FontSizes?.xs,          
+    fontSize: FontSizes?.xs || 12,          
     color: Colors.textSecondary,   
-    fontFamily: FontFamilies?.regular,
+    fontFamily: FontFamilies?.regular || 'System',
   },
 });
 

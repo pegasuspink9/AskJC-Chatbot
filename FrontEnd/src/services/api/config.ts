@@ -9,15 +9,18 @@ export const API_CONFIG = {
   TIMEOUT: 30000, // 30 seconds
 };
 
-// Helper function to determine base URL based on platform
 function getBaseUrl(): string {
-  if (!__DEV__) {
+  if (process.env.NODE_ENV === 'production') {
     return 'https://your-production-api.com';
   }
   
+  // For web development
   if (typeof window !== 'undefined' && window.location) {
     return 'http://localhost:3000';
-  } else {
-    return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://10.0.10.87:3000';
   }
+  
+  // For mobile development (Expo Go)
+  return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.254.115:3000';
 }
+
+export { getBaseUrl };

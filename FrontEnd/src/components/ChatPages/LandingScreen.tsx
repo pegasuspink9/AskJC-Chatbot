@@ -139,8 +139,7 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
+    width: 330,
     marginTop: Spacing?.lg || 16,
   },
   introInput: {

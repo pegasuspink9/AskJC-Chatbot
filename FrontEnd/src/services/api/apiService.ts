@@ -1,20 +1,6 @@
 
 import { ApiResponse, ApiError } from "./types";
-
-// Helper function to get base URL
-const getBaseUrl = (): string => {
-  if (!__DEV__) {
-    // Production environment
-    return 'https://your-production-api.com';
-  }
-  
-  // Development environment - detect platform
-  if (typeof window !== 'undefined' && window.location) {
-    return 'http://localhost:3000';
-  } else {
-    return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://10.0.10.87:3000';
-  }
-};
+import { getBaseUrl } from "./config";
 
 class ApiService {
   private baseURL: string;

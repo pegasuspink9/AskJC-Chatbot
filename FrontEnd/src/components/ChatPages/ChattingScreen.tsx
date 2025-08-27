@@ -43,14 +43,17 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 }) => {
   const flatListRef = useRef<FlatList>(null);
 
+  // Create safe animated style object
+  const animatedStyle = {
+    opacity: fadeAnim || 1,
+    transform: slideAnim2 ? [{ translateY: slideAnim2 }] : [{ translateY: 0 }]
+  };
+
   return (
     <Animated.View 
       style={[
         styles(Colors).container,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim2 }]
-        }
+        animatedStyle
       ]}
     >
       <KeyboardAvoidingView
@@ -82,10 +85,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           style={styles(Colors).messagesList}
-          contentContainerStyle={[
+          contentContainerStyle={StyleSheet.flatten([
             styles(Colors).messagesContent,
             { flexGrow: 1 },
-          ]}
+          ])}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={renderTypingIndicator}
           onContentSizeChange={() => {
@@ -108,10 +111,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
               blurOnSubmit={false}
             />
             <TouchableOpacity
-              style={[
+              style={StyleSheet.flatten([
                 styles(Colors).sendButton,
                 inputText.trim() ? styles(Colors).sendButtonActive : styles(Colors).sendButtonInactive
-              ]}
+              ])}
               onPress={onSendMessage}
               disabled={!inputText.trim()}
             >
@@ -177,7 +180,7 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   messagesContent: {
     paddingHorizontal: Spacing?.md || 12,
-    paddingVertical: Spacing?.md || 12,
+    paddingVertical: Spacing?.sm || 12,
   },
   inputContainer: {
     backgroundColor: Colors.surface,
