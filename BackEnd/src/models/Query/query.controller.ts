@@ -1,10 +1,9 @@
 import { prisma } from "../../../prisma/client";
 import { Request, Response } from "express";
-import { CreateQuery } from "./query.types";
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
-import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.service";
+import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.services";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {

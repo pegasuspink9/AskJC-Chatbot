@@ -42,9 +42,9 @@ export const getDepartmentById = async (req: Request, res: Response) => {
 
 export const createDepartment = async (req: Request, res: Response) => {
   try {
-    const data: CreateDepartment = req.body;
+    const data: CreateDepartment[] = req.body;
 
-    const department: Department = await prisma.department.create({
+    const department = await prisma.department.createMany({
       data,
     });
 

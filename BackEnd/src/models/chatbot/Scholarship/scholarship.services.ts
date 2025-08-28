@@ -1,10 +1,7 @@
 import { prisma } from "../../../../prisma/client";
-import {
-  fetchScholarshipFromDB,
-  fetchListAllScholarshipsfromDB,
-} from "../../../../helper/services/scholarsip.service";
+import { fetchScholarshipFromDB } from "../../../../helper/services/scholarship.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-import { getDialogflowResponse } from "../../../../helper/dialogflow";
+import { getDialogflowResponse } from "../../../../helper/dialogflow.service";
 
 export const handleChatbotMessage = async (
   userId: number,
@@ -119,32 +116,6 @@ export const handleChatbotMessage = async (
             } else {
               responseText = `I checked our records, but I couldn't find any scholarships in the "${category}" category. You can ask for another category or a list of all scholarships.`;
               responseSource = "database-list-empty";
-            }
-            break;
-          }
-
-          case "list_all_scholarships": {
-            const fact = await fetchListAllScholarshipsfromDB();
-
-            responseText = fact;
-            responseSource = "database-list-all";
-
-            try {
-              const prompt = `
-                The student asked: "${message}"
-
-                From the database, here are all the scholarships grouped by category:
-                ${fact}
-
-                Please present this information in a friendly, easy-to-read format.
-              `;
-              const { text, apiKey } = await getGenerativeResponse(prompt);
-              if (text) {
-                responseText = text;
-                responseSource = `generative-database-list-all (via ${apiKey})`;
-              }
-            } catch {
-              console.warn("Gemini unavailable, sticking with DB fallback.");
             }
             break;
           }

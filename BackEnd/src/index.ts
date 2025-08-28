@@ -34,10 +34,10 @@ app.use(
   })
 );
 
-app.use("school-detail", schoolDetailRoutes);
 app.use("/school-faq", schoolFaqRoutes);
 
 //makes sense na ni ari nga part
+app.use("/school-detail", schoolDetailRoutes);
 app.use("/user", userRoutes);
 app.use("/query", queryRoutes);
 app.use("/session", sessionRoutes);
