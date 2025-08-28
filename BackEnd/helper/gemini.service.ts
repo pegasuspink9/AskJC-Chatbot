@@ -35,7 +35,6 @@ export async function getGenerativeResponse(
     } catch (error: any) {
       console.error(`❌ Gemini error with KEY-${index + 1}:`, error.message);
       if (i === keys.length - 1) {
-        // All keys failed
         throw new Error("All Gemini API keys exhausted");
       }
       console.log("🔄 Retrying with next Gemini API key...");
