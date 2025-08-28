@@ -1,9 +1,7 @@
 import { prisma } from "../../../../prisma/client";
 import {
-  fetchDeanInfo,
-  fetchAllDeans,
-  fetchOfficialsByCategory,
   searchSchoolOfficial,
+  getAllOfficialsWithPosition,
 } from "../../../../helper/services/schoolOfficials.database";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
@@ -85,77 +83,36 @@ export const handleChatbotMessage = async (
             break;
           }
 
-          case "get_dean_info": {
-            const deanInfo = await fetchDeanInfo(parameters);
-            responseText = deanInfo;
-            responseSource = "database-dean";
+          case "get_all_officials_with_position": {
+            const position = parameters.position_titles || parameters.position;
+            
+            console.log("🔄 Getting all officials with position:", position);
+            
+            const dbResult = await getAllOfficialsWithPosition(position);
+            responseText = dbResult;
+            responseSource = "database-all-officials-names";
 
-            // Enhance with Gemini
+            // Enhance with Gemini if available
             try {
               const prompt = `
                 Student asked: "${message}"
-                Dean information: "${deanInfo}"
                 
-                Please respond naturally and conversationally as a school assistant.
+                Database result: "${dbResult}"
+
+                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Present the list of names clearly. Make names bold with ** **. Add helpful suggestions at the end in brackets [ ]. Keep it simple and friendly.
               `;
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text && text.trim()) {
                 responseText = text;
-                responseSource = `enhanced-dean (via ${apiKey})`;
+                responseSource = `enhanced-officials-names (via ${apiKey})`;
               }
             } catch (geminiError) {
-              console.warn("Gemini enhancement failed:", geminiError);
+              console.warn("Gemini enhancement failed, using database result:", geminiError);
             }
             break;
           }
 
-          case "get_all_deans": {
-            const allDeans = await fetchAllDeans();
-            responseText = allDeans;
-            responseSource = "database-all-deans";
-            break;
-          }
-
-          case "get_officials_by_category": {
-            const category = parameters.category || parameters.department;
-            if (category) {
-              const categoryOfficials = await fetchOfficialsByCategory(category);
-              responseText = categoryOfficials;
-              responseSource = "database-category";
-            } else {
-              responseText = "Please specify which category of officials you'd like to know about.";
-              responseSource = "validation-error";
-            }
-            break;
-          }
-
-          case "greeting": {
-            responseText = "Hello! I'm here to help you find information about school officials. You can ask me about deans, directors, principals, and other staff members. What would you like to know?";
-            responseSource = "dialogflow-greeting";
-            break;
-          }
-
-          case "help": {
-            responseText = `I can help you find information about school officials! Here are some examples:
-
-            • "Who is the dean of Criminology?"
-            • "Tell me about the school president"
-            • "Who are the officials in Computer Studies?"
-            • "Show me all deans"
-            • "List Board of Trustees members"
-
-            What would you like to know?`;
-            responseSource = "dialogflow-help";
-            break;
-          }
-
-          default: {
-            console.log("Unhandled action, using Gemini fallback");
-            const { text, apiKey } = await getGenerativeResponse(message);
-            responseText = text;
-            responseSource = `generative-unhandled (via ${apiKey})`;
-            break;
-          }
+          // Add more cases here as needed
         }
       }
     }

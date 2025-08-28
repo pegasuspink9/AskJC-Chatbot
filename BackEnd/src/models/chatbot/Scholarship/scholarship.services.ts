@@ -6,7 +6,7 @@ import {
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 
-export const handleChatbotMessage = async (
+export const scholarshipMessage = async (
   userId: number,
   message: string
 ): Promise<{ answer: string; source: string; queryId: number }> => {
@@ -56,17 +56,16 @@ export const handleChatbotMessage = async (
 
             try {
               const prompt = `
-                You are a school chatbot. 
-                Do NOT say "the student asked" or "the student wants to know".
-                Answer the student's question directly, like you are talking to them.
 
                 Information you can use: ${fact}
 
                 Student's question: 
                 "${message}"
 
-                Now respond conversationally and directly.
+                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Make the highlight answer bold ** ** with new line. Also continue the conversation by giving a related question or suggestion. Put the suggestion inside the brackets [ ] make a 2 suggestions in short.
+              
                 `;
+                
 
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text) {
@@ -123,31 +122,7 @@ export const handleChatbotMessage = async (
             break;
           }
 
-          case "list_all_scholarships": {
-            const fact = await fetchListAllScholarshipsfromDB();
-
-            responseText = fact;
-            responseSource = "database-list-all";
-
-            try {
-              const prompt = `
-                The student asked: "${message}"
-
-                From the database, here are all the scholarships grouped by category:
-                ${fact}
-
-                Please present this information in a friendly, easy-to-read format.
-              `;
-              const { text, apiKey } = await getGenerativeResponse(prompt);
-              if (text) {
-                responseText = text;
-                responseSource = `generative-database-list-all (via ${apiKey})`;
-              }
-            } catch {
-              console.warn("Gemini unavailable, sticking with DB fallback.");
-            }
-            break;
-          }
+        
 
           default: {
             console.log(
