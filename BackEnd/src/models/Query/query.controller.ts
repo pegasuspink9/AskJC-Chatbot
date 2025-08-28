@@ -4,7 +4,7 @@ import { CreateQuery } from "./query.types";
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
-import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.service";
+import { handleChatbotMessage } from "models/chatbot/Shool Official/schoolOfficials";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -81,8 +81,13 @@ export const createQuery = async (req: Request, res: Response) => {
 
     const { result: chatbotData, duration: responseTime } =
       await measureResponseTime(async () => {
-        return await handleChatbotMessage(user.id, query_text);
-      });
+        try {
+          return await schoolOfficialMessage(user.id, query_text);
+        } catch (error) {
+          console.log("School official service failed, trying original:", error);
+          return await handleChatbotMessage(user.id, query_text);
+        }
+  });
 
     await prisma.chatbotSession.updateMany({
       where: { user_id: user.id },
