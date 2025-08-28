@@ -1,9 +1,10 @@
 import { prisma } from "../../../../prisma/client";
 import {
-  getDialogflowResponse,
   fetchScholarshipFromDB,
-} from "../../../../helper/diagflow.service";
+  fetchListAllScholarshipsfromDB,
+} from "../../../../helper/services/scholarsip.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
+import { getDialogflowResponse } from "../../../../helper/dialogflow";
 
 export const handleChatbotMessage = async (
   userId: number,
@@ -55,13 +56,18 @@ export const handleChatbotMessage = async (
 
             try {
               const prompt = `
-                The student asked: "${message}"
+                You are a school chatbot. 
+                Do NOT say "the student asked" or "the student wants to know".
+                Answer the student's question directly, like you are talking to them.
 
-                From the database, here is what I found about ${parameters["scholarship-name"]} (${parameters["scholarship-detail"]}):
-                "${fact}"
+                Information you can use: ${fact}
 
-                Please explain this clearly and conversationally.
-              `;
+                Student's question: 
+                "${message}"
+
+                Now respond conversationally and directly.
+                `;
+
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text) {
                 responseText = text;
@@ -69,53 +75,6 @@ export const handleChatbotMessage = async (
               }
             } catch {
               console.warn("Gemini unavailable, sticking with DB fallback.");
-            }
-            break;
-          }
-
-          case "get_scholarship_info": {
-            const name = parameters["scholarship-name"];
-            const scholarship = await prisma.scholarship.findFirst({
-              where: { name: { contains: name, mode: "insensitive" } },
-            });
-
-            if (scholarship) {
-              const fact = scholarship.description;
-
-              // 🌟🌟🌟 ADD YOUR CONSOLE.LOG HERE 🌟🌟🌟
-              console.log(
-                "------------------------------------------------------"
-              );
-              console.log("🔍 FACT from DB for scholarship-detail:", fact);
-              console.log(
-                "------------------------------------------------------"
-              );
-              // 🌟🌟🌟 ------------------------------ 🌟🌟🌟
-
-              responseText = `**${scholarship.name}**\n\n${fact}`;
-              responseSource = "database-info";
-
-              try {
-                const prompt = `
-                  The student asked: "${message}"
-
-                  Database description for the scholarship "${name}":
-                  "${fact}"
-
-                  Please explain this scholarship to the student in a conversational and helpful way.
-                `;
-                const { text, apiKey } = await getGenerativeResponse(prompt);
-                if (text) {
-                  responseText = text;
-                  responseSource = `generative-database-info (via ${apiKey})`;
-                }
-              } catch {
-                console.warn("Gemini unavailable, sticking with DB fallback.");
-              }
-            } else {
-              const { text, apiKey } = await getGenerativeResponse(message);
-              responseText = text;
-              responseSource = `generative-fallback-info (via ${apiKey})`;
             }
             break;
           }
@@ -136,12 +95,18 @@ export const handleChatbotMessage = async (
 
               try {
                 const prompt = `
-                  The student asked: "${message}"
+                  You are a school chatbot. 
+                  Do NOT say "the student asked" or "the student wants to know".
+                  Answer the student's question directly, like you are talking to them.
 
-                  From the database, here are the scholarships in the "${category}" category:
+                  Information you can use: 
+                  Scholarships in the "${category}" category:
                   ${scholarshipNames}
 
-                  Please present this list in a friendly, easy-to-read format for the student.
+                  Student's question: 
+                  "${message}"
+
+                  Now respond conversationally and directly.
                 `;
                 const { text, apiKey } = await getGenerativeResponse(prompt);
                 if (text) {
@@ -154,6 +119,32 @@ export const handleChatbotMessage = async (
             } else {
               responseText = `I checked our records, but I couldn't find any scholarships in the "${category}" category. You can ask for another category or a list of all scholarships.`;
               responseSource = "database-list-empty";
+            }
+            break;
+          }
+
+          case "list_all_scholarships": {
+            const fact = await fetchListAllScholarshipsfromDB();
+
+            responseText = fact;
+            responseSource = "database-list-all";
+
+            try {
+              const prompt = `
+                The student asked: "${message}"
+
+                From the database, here are all the scholarships grouped by category:
+                ${fact}
+
+                Please present this information in a friendly, easy-to-read format.
+              `;
+              const { text, apiKey } = await getGenerativeResponse(prompt);
+              if (text) {
+                responseText = text;
+                responseSource = `generative-database-list-all (via ${apiKey})`;
+              }
+            } catch {
+              console.warn("Gemini unavailable, sticking with DB fallback.");
             }
             break;
           }
