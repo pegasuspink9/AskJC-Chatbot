@@ -212,6 +212,3 @@ export async function fetchOfficialsByCategory(category: string): Promise<string
   }
 }
 
-// ========================================
-// File: utils/schoolOfficial.responseFormatter.ts
-// ========================================

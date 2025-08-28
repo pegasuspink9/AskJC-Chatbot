@@ -72,7 +72,7 @@ export const handleChatbotMessage = async (
                 
                 Database result: "${dbResult}"
 
-                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Make the highlight answer bold ** ** with new line.
+                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Make the highlight answer bold ** ** with new line. Also continue the conversation by giving a related question or suggestion. Put the suggestion inside the brackets [ ] make a 2 suggestions in short.
               `;
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text && text.trim()) {
