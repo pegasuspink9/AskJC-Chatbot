@@ -16,6 +16,7 @@ export const handleChatbotMessage = async (
     create: { user_id: userId, response_time: new Date(), total_queries: 0 },
   });
 
+
   const query = await prisma.query.create({
     data: {
       user_id: userId,
@@ -49,7 +50,6 @@ export const handleChatbotMessage = async (
       } else {
         switch (action) {
           case "get_school_official_info": {
-            // Map Dialogflow parameters to expected format
             const mappedParameters = {
               position: parameters.position_titles || parameters.position,
               department: parameters.departments || parameters.department,
@@ -63,14 +63,17 @@ export const handleChatbotMessage = async (
             responseText = dbResult;
             responseSource = "database-search";
 
-            // Enhance with Gemini if available
             try {
               const prompt = `
-                Student asked: "${message}"
-                
-                Database result: "${dbResult}"
+              The student asked: "${message}"
 
-                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Make the highlight answer bold ** ** with new line. Also continue the conversation by giving a related question or suggestion. Put the suggestion inside the brackets [ ] make a 2 suggestions in short.
+              Database result: "${dbResult}"
+
+              Act as a friendly front desk school assistant. 
+              - Restate the student's request briefly, then give the answer in a **clear, concise way**. 
+              - Make the key part of the answer bold using ** **. 
+              - After answering, suggest 2 short, related follow-up options in brackets [ ]. 
+              - Keep the tone conversational, helpful, and not repetitive.
               `;
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text && text.trim()) {
@@ -99,8 +102,13 @@ export const handleChatbotMessage = async (
                 
                 Database result: "${dbResult}"
 
-                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Present the list of names clearly. Make names bold with ** **. Add helpful suggestions at the end in brackets [ ]. Keep it simple and friendly.
-              `;
+                Act as a friendly front desk school assistant. 
+                - Restate the student's request briefly, then show the results in a **Markdown table** with clear columns (like Name | Position | Department). 
+                - Make the table clean and easy to read. 
+                - After the table, add one sentence summary highlighting the key info (bold important parts). 
+                - Then, suggest 2 short, related follow-up options in brackets [ ].
+                - Keep the tone conversational and helpful.
+                `;
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text && text.trim()) {
                 responseText = text;
@@ -112,7 +120,6 @@ export const handleChatbotMessage = async (
             break;
           }
 
-          // Add more cases here as needed
         }
       }
     }

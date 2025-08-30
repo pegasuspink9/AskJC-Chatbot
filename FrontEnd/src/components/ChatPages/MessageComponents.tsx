@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,8 @@ interface TypingIndicatorProps {
   dot3Opacity: Animated.Value;
 }
 
-export const MessageItem: React.FC<MessageItemProps> = ({ 
+// Memoized MessageItem component
+export const MessageItem = memo<MessageItemProps>(({ 
   item, 
   Colors, 
   onSuggestionPress,
@@ -42,11 +43,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
 
   const suggestions = ['Tuition fee', 'Enrollment Process', 'Exam Date'];
 
-  const handleSuggestionPress = (suggestion: string) => {
+  // Memoize the suggestion press handler
+  const handleSuggestionPress = useCallback((suggestion: string) => {
     if (onSuggestionPress) {
       onSuggestionPress(item.id, suggestion);
     }
-  };
+  }, [onSuggestionPress, item.id]);
 
   const showSuggestions = !item.isUser && shouldShowSuggestions && shouldShowSuggestions(item.id);
 
@@ -102,9 +104,21 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       </Text>
     </View>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for memo
+  return (
+    prevProps.item.id === nextProps.item.id &&
+    prevProps.item.text === nextProps.item.text &&
+    prevProps.item.isUser === nextProps.item.isUser &&
+    prevProps.item.timestamp === nextProps.item.timestamp &&
+    prevProps.Colors === nextProps.Colors &&
+    prevProps.onSuggestionPress === nextProps.onSuggestionPress &&
+    prevProps.shouldShowSuggestions === nextProps.shouldShowSuggestions
+  );
+});
 
-export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
+// Memoized TypingIndicator component
+export const TypingIndicator = memo<TypingIndicatorProps>(({
   Colors,
   isTyping,
   dot1Opacity,
@@ -147,7 +161,15 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
       </View>
     </View>
   );
-};
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.isTyping === nextProps.isTyping &&
+    prevProps.Colors === nextProps.Colors &&
+    prevProps.dot1Opacity === nextProps.dot1Opacity &&
+    prevProps.dot2Opacity === nextProps.dot2Opacity &&
+    prevProps.dot3Opacity === nextProps.dot3Opacity
+  );
+});
 
 const styles = (Colors: any) => StyleSheet.create({
   messageContainer: {

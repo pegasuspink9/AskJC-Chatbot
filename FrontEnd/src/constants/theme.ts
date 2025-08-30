@@ -16,6 +16,7 @@ export const LightColors = {
   text: '#1C1C1E',
   textSecondary: '#6B7280',
   border: '#E5E7EB',
+  line: 'black',
   borderSuggestion:  'rgba(139, 91, 7, 1)',
   borderColor: 'rgba(139, 91, 7, 0.16)',
   suggestionBackground:  '#634e0b0c',
@@ -52,6 +53,7 @@ export const DarkColors = {
   text: '#FFFFFF',
   textSecondary: '#8E8E93',
   border: '#38383A',
+  line: 'white',
   borderSuggestion: '#8e6c04a1',
   borderColor: 'rgba(253, 253, 253, 1)',
   gray: {

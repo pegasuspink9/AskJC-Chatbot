@@ -5,6 +5,7 @@ import {
 } from "../../../../helper/services/scholarsip.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
+import { singleLinePrompt, bulletinPrompts } from "../prompts/prompts";
 
 export const scholarshipMessage = async (
   userId: number,
@@ -51,21 +52,11 @@ export const scholarshipMessage = async (
           case "get_scholarship_detail": {
             const fact = await fetchScholarshipFromDB(parameters);
 
-            responseText = `Here’s what I found for **${parameters["scholarship-name"]}** (${parameters["scholarship-detail"]}):\n\n${fact}`;
+            responseText = `Here’s what I found for **${parameters["scholarship-name"]}**\n\n${fact}`;
             responseSource = "database-detail";
 
             try {
-              const prompt = `
-
-                Information you can use: ${fact}
-
-                Student's question: 
-                "${message}"
-
-                Talk like a front desk assistant, conversational way as a helpful school assistant. Keep it concise and natural. Make the highlight answer bold ** ** with new line. Also continue the conversation by giving a related question or suggestion. Put the suggestion inside the brackets [ ] make a 2 suggestions in short.
-              
-                `;
-                
+              const prompt = singleLinePrompt(fact, message);
 
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text) {
@@ -93,20 +84,11 @@ export const scholarshipMessage = async (
               responseSource = "database-list";
 
               try {
-                const prompt = `
-                  You are a school chatbot. 
-                  Do NOT say "the student asked" or "the student wants to know".
-                  Answer the student's question directly, like you are talking to them.
+                const prompt = bulletinPrompts(
+                  responseText,
+                  message
+                );
 
-                  Information you can use: 
-                  Scholarships in the "${category}" category:
-                  ${scholarshipNames}
-
-                  Student's question: 
-                  "${message}"
-
-                  Now respond conversationally and directly.
-                `;
                 const { text, apiKey } = await getGenerativeResponse(prompt);
                 if (text) {
                   responseText = text;
@@ -121,8 +103,6 @@ export const scholarshipMessage = async (
             }
             break;
           }
-
-        
 
           default: {
             console.log(

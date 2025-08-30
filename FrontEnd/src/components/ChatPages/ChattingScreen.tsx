@@ -1,4 +1,4 @@
-import React, { useRef, JSX } from 'react';
+import React, { useRef, useCallback, JSX } from 'react';
 import {
   View,
   Text,
@@ -43,6 +43,29 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 }) => {
   const flatListRef = useRef<FlatList>(null);
 
+  // Memoize the renderMessage function to prevent unnecessary re-renders
+  const memoizedRenderMessage = useCallback(
+    ({ item }: { item: ChatMessage }) => renderMessage({ item }),
+    [renderMessage]
+  );
+
+  // Memoize the renderTypingIndicator function
+  const memoizedRenderTypingIndicator = useCallback(
+    () => renderTypingIndicator(),
+    [renderTypingIndicator]
+  );
+
+  // Memoize the keyExtractor function
+  const keyExtractor = useCallback(
+    (item: ChatMessage) => item.id,
+    []
+  );
+
+  // Memoize the onContentSizeChange function
+  const onContentSizeChange = useCallback(() => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
   // Create safe animated style object
   const animatedStyle = {
     opacity: fadeAnim || 1,
@@ -82,18 +105,23 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
         <FlatList
           ref={flatListRef}
           data={messages}
-          renderItem={renderMessage}
-          keyExtractor={(item) => item.id}
+          renderItem={memoizedRenderMessage}
+          keyExtractor={keyExtractor}
           style={styles(Colors).messagesList}
           contentContainerStyle={StyleSheet.flatten([
             styles(Colors).messagesContent,
             { flexGrow: 1 },
           ])}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={renderTypingIndicator}
-          onContentSizeChange={() => {
-            flatListRef.current?.scrollToEnd({ animated: true });
-          }}
+          ListFooterComponent={memoizedRenderTypingIndicator}
+          onContentSizeChange={onContentSizeChange}
+          // Add these performance optimizations
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          windowSize={10}
+          getItemLayout={undefined} // Let FlatList calculate this automatically
         />
 
         {/* Input */}
