@@ -5,8 +5,9 @@ import {
 } from "../../../../helper/services/schoolOfficials.database";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
+import { tablePrompts, singleLinePrompt } from "../prompts/prompts";
 
-export const handleChatbotMessage = async (
+export const schoolOfficialsQuery = async (
   userId: number,
   message: string
 ): Promise<{ answer: string; source: string; queryId: number }> => {
@@ -15,7 +16,6 @@ export const handleChatbotMessage = async (
     update: { response_time: new Date() },
     create: { user_id: userId, response_time: new Date(), total_queries: 0 },
   });
-
 
   const query = await prisma.query.create({
     data: {
@@ -64,17 +64,8 @@ export const handleChatbotMessage = async (
             responseSource = "database-search";
 
             try {
-              const prompt = `
-              The student asked: "${message}"
+              const prompt = singleLinePrompt(message, dbResult);
 
-              Database result: "${dbResult}"
-
-              Act as a friendly front desk school assistant. 
-              - Restate the student's request briefly, then give the answer in a **clear, concise way**. 
-              - Make the key part of the answer bold using ** **. 
-              - After answering, suggest 2 short, related follow-up options in brackets [ ]. 
-              - Keep the tone conversational, helpful, and not repetitive.
-              `;
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text && text.trim()) {
                 responseText = text;
@@ -92,23 +83,14 @@ export const handleChatbotMessage = async (
             console.log("🔄 Getting all officials with position:", position);
             
             const dbResult = await getAllOfficialsWithPosition(position);
+
+
             responseText = dbResult;
             responseSource = "database-all-officials-names";
 
             // Enhance with Gemini if available
             try {
-              const prompt = `
-                Student asked: "${message}"
-                
-                Database result: "${dbResult}"
-
-                Act as a friendly front desk school assistant. 
-                - Restate the student's request briefly, then show the results in a **Markdown table** with clear columns (like Name | Position | Department). 
-                - Make the table clean and easy to read. 
-                - After the table, add one sentence summary highlighting the key info (bold important parts). 
-                - Then, suggest 2 short, related follow-up options in brackets [ ].
-                - Keep the tone conversational and helpful.
-                `;
+              const prompt = tablePrompts(message, dbResult);
               const { text, apiKey } = await getGenerativeResponse(prompt);
               if (text && text.trim()) {
                 responseText = text;

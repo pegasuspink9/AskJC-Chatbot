@@ -35,3 +35,23 @@ talk like ${botTalk}
 If listing scholarships, present the list in a bulletin-style format with bullet points (•).  
 and ${suggestion}
 `;
+
+export const tablePrompts = (
+  
+  responseText: string,
+  message: string
+) => `
+Information you can use: 
+${responseText}
+
+Student's question:
+"${message}"
+
+talk like ${botTalk}
+Present the results in a **Markdown table** with clear columns (attributes| attributes | attributes and etc.). 
+Make the table clean and easy to read. 
+
+- Make the table clean and easy to read. 
+- After the table, add one sentence summary highlighting the key info (bold important parts). 
+  and ${suggestion}
+`;
