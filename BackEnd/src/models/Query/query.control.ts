@@ -1,9 +1,12 @@
 import { prisma } from "../../../prisma/client";
 import { Request, Response } from "express";
+import { CreateQuery } from "./query.types";
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
-import { handleChatbotMessage } from "models/chatbot/Scholarship/scholarship.services";
+import { schoolOfficialsQuery } from "models/chatbot/Shool Official/schoolOfficials";
+import { scholarshipMessage } from "models/chatbot/Scholarship/scholarship.services";
+import { getDialogflowResponse } from "../../../helper/dialogflow"; // Update path
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -80,7 +83,39 @@ export const createQuery = async (req: Request, res: Response) => {
 
     const { result: chatbotData, duration: responseTime } =
       await measureResponseTime(async () => {
-        return await handleChatbotMessage(user.id, query_text);
+        try {
+          // Get intent classification from Dialogflow
+          const dialogflowResponse = await getDialogflowResponse(query_text);
+          
+          if (!dialogflowResponse) {
+            console.log("No Dialogflow response, using default service");
+            return await schoolOfficialsQuery(user.id, query_text);
+          }
+
+          console.log(`Detected intent: ${dialogflowResponse.intent}`);
+          console.log(`Confidence: ${dialogflowResponse.confidence}`);
+          console.log(`Parameters:`, dialogflowResponse.parameters);
+
+          const intentName = dialogflowResponse.intent.toLowerCase();
+          
+
+          if (intentName.includes('scholarship') || 
+              intentName.includes('financial') ||
+              intentName.includes('funding') ||
+              intentName.includes('grant')) {
+            console.log("Routing to scholarship service based on intent:", dialogflowResponse.intent);
+            return await scholarshipMessage(user.id, query_text);
+          } else {
+            console.log("Routing to school official service based on intent:", dialogflowResponse.intent);
+            return await schoolOfficialsQuery(user.id, query_text);
+          }
+        } catch (dialogflowError) {
+          console.error("Dialogflow processing failed:", dialogflowError);
+          
+          // Simple fallback - default to school official service
+          console.log("Dialogflow failed, using default school official service");
+          return await schoolOfficialsQuery(user.id, query_text);
+        }
       });
 
     await prisma.chatbotSession.updateMany({

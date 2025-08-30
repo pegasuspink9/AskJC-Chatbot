@@ -6,6 +6,7 @@ export interface DialogflowResponse {
   action: string;
   fulfillmentText: string;
   parameters: { [key: string]: any };
+  confidence: number;
 }
 
 const projectId = process.env.DIALOGFLOW_PROJECT_ID;
@@ -19,10 +20,7 @@ export const getDialogflowResponse = async (
   userMessage: string
 ): Promise<DialogflowResponse | null> => {
   const sessionId = uuidv4();
-  const sessionPath = sessionClient.projectAgentSessionPath(
-    projectId,
-    sessionId
-  );
+  const sessionPath = sessionClient.projectAgentSessionPath(projectId, sessionId);
 
   const request = {
     session: sessionPath,
@@ -38,10 +36,8 @@ export const getDialogflowResponse = async (
     const responses = await sessionClient.detectIntent(request);
     const result = responses[0]?.queryResult;
 
-    console.log("======================================================");
     console.log("📡 FULL DIALOGFLOW RAW RESPONSE:");
     console.log(JSON.stringify(result, null, 2));
-    console.log("======================================================");
 
     if (result && result.intent) {
       const parameters = structProtoToJson(result.parameters);
@@ -51,6 +47,7 @@ export const getDialogflowResponse = async (
         action: result.action || "",
         fulfillmentText: result.fulfillmentText || "",
         parameters: parameters,
+        confidence: result.intentDetectionConfidence || 0,
       };
     }
 
@@ -78,8 +75,6 @@ function structProtoToJson(
         json[key] = value.numberValue;
       } else if (value.listValue) {
         json[key] = value.listValue.values?.map((v) => v.stringValue) || [];
-      } else if (value.structValue) {
-        json[key] = structProtoToJson(value.structValue);
       } else if (value.boolValue !== undefined) {
         json[key] = value.boolValue;
       }
@@ -87,5 +82,3 @@ function structProtoToJson(
   }
   return json;
 }
-
-//attempting to commit again
