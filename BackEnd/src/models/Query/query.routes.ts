@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as QueryController from "./query.controller";
+import * as QueryController from "./query.control";
 
 const router = Router();
 

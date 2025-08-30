@@ -2,73 +2,64 @@ import { PrismaClient } from "@prisma/client";
 
 const db = new PrismaClient();
 
-//a question for a single question about scholarship
-export async function fetchScholarshipFromDB(params: any): Promise<string> {
-  let scholarshipName = params["scholarship-name"];
-  let scholarshipDetails = params["scholarship-detail"];
+export async function fetchScholarshipFromDB(params: any): Promise<any> {
+  let scholarshipName = params["scholarship_name"];
+  let requirementType = params["requirement_type"];
 
-  if (
-    !scholarshipName ||
-    !scholarshipDetails ||
-    scholarshipDetails.length === 0
-  ) {
-    return "I could not find enough details to answer your question.";
-  }
-
-  if (Array.isArray(scholarshipName)) {
-    scholarshipName = scholarshipName[0];
-  }
-
-  if (!Array.isArray(scholarshipDetails)) {
-    scholarshipDetails = [scholarshipDetails];
-  }
-
-  const detailMap: Record<string, keyof import("@prisma/client").Scholarship> =
-    {
-      category: "category",
-      description: "description",
-      offeredby: "offeredBy",
-      offeredBy: "offeredBy",
-      eligibility_criteria: "eligibility_criteria",
-      application_process: "application_process",
-      required_document: "required_document",
-      award_amount: "award_amount",
-      contact_office: "contact_office",
-    };
-
-  let responseParts: string[] = [];
-
-  for (const detail of scholarshipDetails) {
-    const field = detailMap[detail.toLowerCase()];
-    if (!field) {
-      responseParts.push(`Sorry, I don’t recognize the detail "${detail}".`);
-      continue;
-    }
-
+  if (!scholarshipName) {
     try {
-      const result = await db.scholarship.findFirst({
+      const allScholarships = await db.scholarship.findMany();
+      return allScholarships;
+    } catch (err) {
+      console.error("Database query error fetching all scholarships:", err);
+      return null;
+    }
+  }
+
+  if (Array.isArray(scholarshipName)) scholarshipName = scholarshipName[0];
+  if (requirementType && !Array.isArray(requirementType)) {
+    requirementType = [requirementType];
+  }
+
+  try {
+    let scholarship;
+
+    if (!requirementType || requirementType.length === 0) {
+      scholarship = await db.scholarship.findFirst({
         where: { name: scholarshipName },
-        select: { [field]: true },
+      });
+    } else {
+      const selectFields: any = { name: true };
+
+      requirementType.forEach((type: string) => {
+        if (type === "eligibility_criteria")
+          selectFields.eligibility_criteria = true;
+        if (type === "required_document") selectFields.required_document = true;
       });
 
-      if (result && result[field]) {
-        responseParts.push(`${detail}: ${String(result[field])}`);
-      } else {
-        responseParts.push(
-          `Sorry, I couldn't find ${detail} for ${scholarshipName}.`
-        );
-      }
-    } catch (err) {
-      console.error(`Database query error for ${detail}:`, err);
-      responseParts.push(
-        `There was an error retrieving ${detail} for ${scholarshipName}.`
-      );
+      scholarship = await db.scholarship.findFirst({
+        where: { name: scholarshipName },
+        select: selectFields,
+      });
     }
-  }
 
-  if (responseParts.length === 0) {
-    return `Sorry, I couldn't find any details for ${scholarshipName}.`;
+    return scholarship || null;
+  } catch (err) {
+    console.error(`Database query error for ${scholarshipName}:`, err);
+    return null;
   }
+}
 
-  return responseParts.join("\n");
+export async function fetchScholarshipsByCategory(
+  category: string
+): Promise<any[]> {
+  try {
+    const scholarships = await db.scholarship.findMany({
+      where: { category: { equals: category, mode: "insensitive" } },
+    });
+    return scholarships;
+  } catch (err) {
+    console.error(`Database query error for category ${category}:`, err);
+    return [];
+  }
 }
