@@ -72,3 +72,4 @@ export async function fetchScholarshipFromDB(params: any): Promise<string> {
 
   return responseParts.join("\n");
 }
+

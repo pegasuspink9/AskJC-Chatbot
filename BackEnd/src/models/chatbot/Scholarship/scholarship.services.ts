@@ -1,8 +1,5 @@
 import { prisma } from "../../../../prisma/client";
-import {
-  fetchScholarshipFromDB,
-  fetchListAllScholarshipsfromDB,
-} from "../../../../helper/services/scholarsip.service";
+import { fetchScholarshipFromDB } from "../../../../helper/services/scholarship.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { singleLinePrompt, bulletinPrompts } from "../prompts/prompts";
