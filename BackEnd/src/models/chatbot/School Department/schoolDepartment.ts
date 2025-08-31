@@ -1,12 +1,17 @@
 import { prisma } from "../../../../prisma/client";
-import {searchSchoolDepartment} from "../../../../helper/services/schoolDepartment.database";
+import { searchSchoolDepartment } from "../../../../helper/services/schoolDepartment.database";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-import { tablePrompts, singleLinePrompt, bulletinPrompts } from "../prompts/prompts";
+import {
+  tablePrompts,
+  singleLinePrompt,
+  bulletinPrompts,
+} from "../prompts/prompts";
 
 export const departmentOfficialsQuery = async (
   userId: number,
-  message: string
+  message: string,
+  conversationHistory: string[] = []
 ): Promise<{ answer: string; source: string; queryId: number }> => {
   const session = await prisma.chatbotSession.upsert({
     where: { user_id: userId },
@@ -28,17 +33,25 @@ export const departmentOfficialsQuery = async (
   let responseSource = "";
 
   try {
-    const dialogflow = await getDialogflowResponse(message);
+    const dialogflowSessionPath = `projects/${process.env.DIALOGFLOW_PROJECT_ID}/agent/sessions/${userId}`;
+    const dialogflow = await getDialogflowResponse(
+      message,
+      dialogflowSessionPath,
+      conversationHistory
+    );
 
     if (!dialogflow || dialogflow.confidence < 0.3) {
-      console.log("Low confidence or no Dialogflow result. Using Gemini fallback.");
-
-      const { text, apiKey } = await getGenerativeResponse(message);
+      console.log(
+        "Low confidence or no Dialogflow result. Using Gemini fallback."
+      );
+      const { text, apiKey } = await getGenerativeResponse(
+        message,
+        conversationHistory
+      );
       responseText = text;
       responseSource = `generative-fallback (via ${apiKey})`;
     } else {
       const { action, parameters, fulfillmentText, intent } = dialogflow;
-
       console.log(`Dialogflow Intent: ${intent}, Action: ${action}`);
       console.log("Parameters:", parameters);
 
@@ -52,7 +65,6 @@ export const departmentOfficialsQuery = async (
               name: parameters.department_name || parameters.name,
               head_name: parameters["departments-head-names"],
             };
-
             console.log("Original parameters:", parameters);
             console.log("Mapped parameters:", mappedParameters);
 
@@ -62,7 +74,10 @@ export const departmentOfficialsQuery = async (
 
             try {
               const prompt = bulletinPrompts(message, dbResult);
-              const { text, apiKey } = await getGenerativeResponse(prompt);
+              const { text, apiKey } = await getGenerativeResponse(
+                prompt,
+                conversationHistory
+              );
               if (text && text.trim()) {
                 responseText = text;
                 responseSource = `generative-database-detail (via ${apiKey})`;
@@ -86,9 +101,9 @@ export const departmentOfficialsQuery = async (
     responseSource = "error-handler";
   }
 
-   await prisma.chatbotSession.update({
+  await prisma.chatbotSession.update({
     where: { id: session.id },
-    data: { total_queries: { increment: 1 } }
+    data: { total_queries: { increment: 1 } },
   });
 
   return {
@@ -96,5 +111,4 @@ export const departmentOfficialsQuery = async (
     source: responseSource,
     queryId: query.id,
   };
-
 };

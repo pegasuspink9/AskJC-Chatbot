@@ -5,10 +5,9 @@ import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
 import { schoolOfficialsQuery } from "models/chatbot/Shool Official/schoolOfficials";
-import { scholarshipMessage } from "models/chatbot/Scholarship/scholarship.services";
-import { getDialogflowResponse } from "../../../helper/dialogflow"; // Update path
-import {departmentOfficialsQuery} from "models/chatbot/School Department/schoolDepartment";
-
+import { scholarshipQuery } from "models/chatbot/Scholarship/scholarship.services";
+import { getDialogflowResponse } from "../../../helper/dialogflow";
+import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -83,15 +82,55 @@ export const createQuery = async (req: Request, res: Response) => {
       );
     }
 
+    let chatbotSession = await prisma.chatbotSession.findUnique({
+      where: { user_id: user.id },
+    });
+
+    if (!chatbotSession) {
+      chatbotSession = await prisma.chatbotSession.create({
+        data: {
+          user_id: user.id,
+          chatbot_response: [],
+          response_time: new Date(),
+          total_queries: 0,
+        },
+      });
+    }
+
+    const CONTEXT_WINDOW_SIZE = 6;
+    const conversationHistory: string[] = chatbotSession.chatbot_response.slice(
+      -CONTEXT_WINDOW_SIZE
+    );
+
+    const query = await prisma.query.create({
+      data: {
+        user_id: user.id,
+        chatbot_session_id: chatbotSession.id,
+        query_text: query_text,
+        users_data_inputed: [query_text],
+        chatbot_response: [],
+        created_at: new Date(),
+      },
+    });
+
     const { result: chatbotData, duration: responseTime } =
       await measureResponseTime(async () => {
         try {
-          // Get intent classification from Dialogflow
-          const dialogflowResponse = await getDialogflowResponse(query_text);
-          
+          const dialogflowSessionPath = `projects/${process.env.DIALOGFLOW_PROJECT_ID}/agent/sessions/${user.id}`;
+
+          const dialogflowResponse = await getDialogflowResponse(
+            query_text,
+            dialogflowSessionPath,
+            conversationHistory
+          );
+
           if (!dialogflowResponse) {
             console.log("No Dialogflow response, using default service");
-            return await schoolOfficialsQuery(user.id, query_text);
+            return await schoolOfficialsQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
           }
 
           console.log(`Detected intent: ${dialogflowResponse.intent}`);
@@ -99,45 +138,83 @@ export const createQuery = async (req: Request, res: Response) => {
           console.log(`Parameters:`, dialogflowResponse.parameters);
 
           const intentName = dialogflowResponse.intent.toLowerCase();
-          
 
-          if (intentName.includes('scholarship') || 
-              intentName.includes('financial') ||
-              intentName.includes('funding') ||
-              intentName.includes('grant')) {
-            console.log("Routing to scholarship service based on intent:", dialogflowResponse.intent);
-            return await scholarshipMessage(user.id, query_text);
-          } else if (intentName.includes('department') ||
-                     intentName.includes('departments') ||
-                     intentName.includes('head') || intentName.includes('heads')) {
-            console.log("Routing to school department service based on intent:", dialogflowResponse.intent);
-            return await departmentOfficialsQuery(user.id, query_text);
+          if (
+            intentName.includes("scholarship") ||
+            intentName.includes("financial") ||
+            intentName.includes("funding") ||
+            intentName.includes("grant")
+          ) {
+            console.log(
+              "Routing to scholarship service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await scholarshipQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
+            intentName.includes("department") ||
+            intentName.includes("departments") ||
+            intentName.includes("head") ||
+            intentName.includes("heads")
+          ) {
+            console.log(
+              "Routing to school department service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await departmentOfficialsQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
           } else {
-            console.log("Routing to school official service based on intent:", dialogflowResponse.intent);
-            return await schoolOfficialsQuery(user.id, query_text);
+            console.log(
+              "Routing to school official service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await schoolOfficialsQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
           }
         } catch (dialogflowError) {
           console.error("Dialogflow processing failed:", dialogflowError);
-          
-          // Simple fallback - default to school official service
-          console.log("Dialogflow failed, using default school official service");
-          return await schoolOfficialsQuery(user.id, query_text);
+          console.log(
+            "Dialogflow failed, using default school official service"
+          );
+          return await schoolOfficialsQuery(
+            user.id,
+            query_text,
+            conversationHistory
+          );
         }
       });
 
-    await prisma.chatbotSession.updateMany({
-      where: { user_id: user.id },
+    await prisma.chatbotSession.update({
+      where: { id: chatbotSession.id },
       data: {
-        chatbot_response: chatbotData.answer,
+        chatbot_response: {
+          push: [query_text, chatbotData.answer],
+        },
         response_time: new Date(),
         total_queries: { increment: 1 },
+      },
+    });
+
+    await prisma.query.update({
+      where: { id: query.id },
+      data: {
+        chatbot_response: [chatbotData.answer],
       },
     });
 
     return successResponse(
       res,
       {
-        queryId: chatbotData.queryId,
+        queryId: query.id,
         chatbotResponse: chatbotData.answer,
         responseTime,
       },

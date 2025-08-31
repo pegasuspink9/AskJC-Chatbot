@@ -6,7 +6,7 @@ export interface CreateProgram {
   program_type: ProgramType;
   program: string;
   acronym?: string;
-  tuition_fee: Decimal;
+  tuition_fee?: string;
 }
 
 export interface UpdateProgram {
@@ -14,5 +14,5 @@ export interface UpdateProgram {
   program_type?: ProgramType;
   program?: string;
   acronym: string;
-  tuition_fee?: Decimal;
+  tuition_fee?: string;
 }

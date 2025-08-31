@@ -1,5 +1,4 @@
 import { SessionsClient, protos } from "@google-cloud/dialogflow";
-import { v4 as uuidv4 } from "uuid";
 
 export interface DialogflowResponse {
   intent: string;
@@ -8,7 +7,6 @@ export interface DialogflowResponse {
   parameters: { [key: string]: any };
   confidence: number;
 }
-
 const projectId = process.env.DIALOGFLOW_PROJECT_ID;
 if (!projectId) {
   throw new Error("Dialogflow project ID is not configured.");
@@ -17,20 +15,33 @@ if (!projectId) {
 const sessionClient = new SessionsClient();
 
 export const getDialogflowResponse = async (
-  userMessage: string
+  userMessage: string,
+  sessionPath: string,
+  conversationHistory: string[] = []
 ): Promise<DialogflowResponse | null> => {
-  const sessionId = uuidv4();
-  const sessionPath = sessionClient.projectAgentSessionPath(projectId, sessionId);
-
-  const request = {
+  const request: any = {
     session: sessionPath,
     queryInput: {
       text: {
         text: userMessage,
-        languageCode: "en",
+        languageCode: "en-US",
       },
     },
   };
+
+  if (conversationHistory.length > 0) {
+    const currentSessionIdForContext = sessionPath.split("/").pop();
+
+    request.queryParams = {
+      contexts: conversationHistory.map((msg, index) => ({
+        name: `projects/${projectId}/agent/sessions/${currentSessionIdForContext}/contexts/history_context_${index}`, // Use currentSessionIdForContext
+        lifespanCount: 1,
+        parameters: {
+          message: { stringValue: msg },
+        },
+      })),
+    };
+  }
 
   try {
     const responses = await sessionClient.detectIntent(request);
@@ -46,7 +57,7 @@ export const getDialogflowResponse = async (
         intent: result.intent.displayName || "Unknown Intent",
         action: result.action || "",
         fulfillmentText: result.fulfillmentText || "",
-        parameters: parameters,
+        parameters,
         confidence: result.intentDetectionConfidence || 0,
       };
     }
@@ -74,9 +85,19 @@ function structProtoToJson(
       } else if (value.numberValue) {
         json[key] = value.numberValue;
       } else if (value.listValue) {
-        json[key] = value.listValue.values?.map((v) => v.stringValue) || [];
+        json[key] =
+          value.listValue.values
+            ?.map((v) => {
+              if (v.stringValue) return v.stringValue;
+              if (v.numberValue) return v.numberValue;
+              if (v.boolValue !== undefined) return v.boolValue;
+              return null;
+            })
+            .filter((v) => v !== null) || [];
       } else if (value.boolValue !== undefined) {
         json[key] = value.boolValue;
+      } else if (value.structValue) {
+        json[key] = structProtoToJson(value.structValue);
       }
     }
   }

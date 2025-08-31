@@ -1,14 +1,17 @@
 import { prisma } from "../../../../prisma/client";
-import {
-  fetchScholarshipFromDB,
-  fetchScholarshipsByCategory,
-} from "../../../../helper/services/scholarship.service";
-import { getGenerativeResponse } from "../../../../helper/gemini.service";
+import { searchScholarships } from "../../../../helper/services/scholarship.service";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
+import { getGenerativeResponse } from "../../../../helper/gemini.service";
+import {
+  tablePrompts,
+  singleLinePrompt,
+  bulletinPrompts,
+} from "../prompts/prompts";
 
-export const scholarshipMessage = async (
+export const scholarshipQuery = async (
   userId: number,
-  message: string
+  message: string,
+  conversationHistory: string[] = []
 ): Promise<{ answer: string; source: string; queryId: number }> => {
   const session = await prisma.chatbotSession.upsert({
     where: { user_id: userId },
@@ -26,89 +29,115 @@ export const scholarshipMessage = async (
     },
   });
 
-  let responseText =
-    "I apologize, but I'm having a bit of trouble right now. Please try again in a moment.";
-  let responseSource = "error";
+  let responseText = "";
+  let responseSource = "";
 
   try {
-    const dialogflowResult = await getDialogflowResponse(message);
+    const dialogflowSessionPath = `projects/${process.env.DIALOGFLOW_PROJECT_ID}/agent/sessions/${userId}`;
 
-    if (dialogflowResult) {
-      const { action, parameters } = dialogflowResult;
+    const dialogflow = await getDialogflowResponse(
+      message,
+      dialogflowSessionPath,
+      conversationHistory
+    );
 
-      switch (action) {
-        case "get_scholarship_detail": {
-          const scholarshipData = await fetchScholarshipFromDB(parameters);
+    if (!dialogflow || dialogflow.confidence < 0.3) {
+      console.log(
+        "Low confidence or no Dialogflow result. Using Gemini fallback."
+      );
 
-          if (!scholarshipData) {
-            responseText = "Sorry, I couldn't find any scholarships right now.";
-            responseSource = "database-empty";
+      const { text, apiKey } = await getGenerativeResponse(
+        message,
+        conversationHistory
+      );
+      responseText = text;
+      responseSource = `generative-fallback (via ${apiKey})`;
+    } else {
+      const { action, parameters, fulfillmentText, intent } = dialogflow;
+
+      console.log(`Dialogflow Intent: ${intent}, Action: ${action}`);
+      console.log("Parameters:", parameters);
+
+      if (fulfillmentText && fulfillmentText.trim()) {
+        responseText = fulfillmentText;
+        responseSource = "dialogflow-direct";
+      } else {
+        switch (action) {
+          case "get_scholarship_detail":
+          case "list_scholarships_by_category":
+          case "search_scholarships": {
+            const mappedParameters = {
+              name: parameters.scholarship_name || parameters.name,
+              category: parameters.scholarship_category || parameters.category,
+              requirementType: parameters.requirement_type,
+              query_type: parameters.query_type,
+            };
+
+            console.log("Original Dialogflow parameters:", parameters);
+            console.log("Mapped scholarship parameters:", mappedParameters);
+
+            const dbResult = await searchScholarships(mappedParameters);
+            responseText = dbResult;
+            responseSource = "database-search";
+
+            try {
+              let prompt = "";
+              if (
+                dbResult.includes(
+                  "No scholarships matched your search criteria."
+                ) ||
+                dbResult.includes("I need more specific information.")
+              ) {
+                prompt = singleLinePrompt(dbResult, message);
+              } else if (
+                action === "list_scholarships_by_category" ||
+                dbResult.includes("Found")
+              ) {
+                prompt = bulletinPrompts(dbResult, message);
+              } else if (
+                action === "get_scholarship_detail" ||
+                mappedParameters.query_type
+              ) {
+                prompt = bulletinPrompts(dbResult, message);
+              } else {
+                prompt = singleLinePrompt(dbResult, message);
+              }
+
+              const { text, apiKey } = await getGenerativeResponse(
+                prompt,
+                conversationHistory
+              );
+              if (text && text.trim()) {
+                responseText = text;
+                responseSource = `generative-database-detail (via ${apiKey})`;
+              }
+            } catch (geminiError) {
+              console.error("Generative response error:", geminiError);
+            }
             break;
           }
 
-          const prompt = `
-            You are a friendly school chatbot.
-            The student asked: "${message}"
-
-            Here is the scholarship data:
-            ${JSON.stringify(scholarshipData, null, 2)}
-
-            Answer conversationally.
-          `;
-
-          const { text, apiKey } = await getGenerativeResponse(prompt);
-
-          responseText = text || "Here are the scholarships available at SJC.";
-          responseSource = `generative-database-detail (via ${apiKey})`;
-          break;
-        }
-
-        case "list_scholarships_by_category": {
-          const category = parameters["scholarship-category"];
-          const scholarships = await fetchScholarshipsByCategory(category);
-
-          if (scholarships.length > 0) {
-            const scholarshipNames = scholarships
-              .map((s) => `- ${s.name}`)
-              .join("\n");
-
-            const prompt = `
-              You are a friendly school chatbot.
-              The student asked: "${message}"
-
-              Here are the scholarships in category "${category}":
-              ${scholarshipNames}
-
-              Answer directly and conversationally.
-            `;
-
-            const { text, apiKey } = await getGenerativeResponse(prompt);
-
-            responseText =
-              text ||
-              `Here are the scholarships in the ${category} category:\n${scholarshipNames}`;
-            responseSource = `generative-database-list (via ${apiKey})`;
-          } else {
-            responseText = `I couldn't find any scholarships in the "${category}" category.`;
-            responseSource = "database-list-empty";
+          default: {
+            const { text, apiKey } = await getGenerativeResponse(
+              message,
+              conversationHistory
+            );
+            responseText = text;
+            responseSource = `generative-main (via ${apiKey})`;
           }
-          break;
-        }
-
-        default: {
-          const { text, apiKey } = await getGenerativeResponse(message);
-          responseText = text;
-          responseSource = `generative-main (via ${apiKey})`;
         }
       }
-    } else {
-      const { text, apiKey } = await getGenerativeResponse(message);
-      responseText = text;
-      responseSource = `generative-critical-fallback (via ${apiKey})`;
     }
   } catch (error) {
-    console.error("Error in handleChatbotMessage:", error);
+    console.error("Error in scholarshipQuery:", error);
+    responseText = "An error occurred while processing your request.";
+    responseSource = "error-handler";
   }
+
+  await prisma.chatbotSession.update({
+    where: { id: session.id },
+    data: { total_queries: { increment: 1 } },
+  });
 
   return {
     answer: responseText,

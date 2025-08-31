@@ -1,105 +1,117 @@
 import { PrismaClient, Scholarship } from "@prisma/client";
-
 const db = new PrismaClient();
+import {
+  formatScholarshipGeneral,
+  formatScholarshipEligibility,
+  formatScholarshipDocuments,
+  formatScholarshipApplication,
+  formatScholarshipAmount,
+  formatScholarshipContact,
+  formatScholarshipDescription,
+  formatScholarshipOfferedBy,
+  formatMultipleScholarships,
+} from "../utils/scholarship.helper";
 
-interface FetchScholarshipParams {
-  scholarship_name?: string | string[];
-  requirement_type?: string | string[];
+interface SearchScholarshipParams {
+  name?: string | string[];
+  requirementType?: string | string[];
+  category?: string | string[];
+  query_type?: string;
 }
 
-export async function fetchScholarshipFromDB(
-  params: FetchScholarshipParams
-): Promise<
-  Scholarship[] | Scholarship | (Partial<Scholarship> & { name: string }) | null
-> {
-  let scholarshipName = params.scholarship_name;
-  const requirementType = params.requirement_type;
-
-  if (!scholarshipName) {
-    try {
-      const allScholarships = await db.scholarship.findMany();
-      return allScholarships;
-    } catch (err) {
-      console.error("Database query error fetching all scholarships:", err);
-      return null;
-    }
-  }
-
-  if (Array.isArray(scholarshipName)) scholarshipName = scholarshipName[0];
-
-  let parsedRequirementTypes: string[] = [];
-  if (requirementType) {
-    const typesArray = Array.isArray(requirementType)
-      ? requirementType
-      : [requirementType];
-    parsedRequirementTypes = typesArray.flatMap((type: string) =>
-      type
-        .split(",")
-        .map((s: string) => s.trim())
-        .filter((s: string) => s)
-    );
-    parsedRequirementTypes = [...new Set(parsedRequirementTypes)];
-  }
+export async function searchScholarships(
+  params: SearchScholarshipParams
+): Promise<string> {
+  console.log("🔍 SCHOLARSHIP SEARCH PARAMS:", params);
 
   try {
-    let scholarship;
+    const addCondition = (field: string, value: string | string[]) => {
+      if (Array.isArray(value)) {
+        return {
+          OR: value.map((v) => ({
+            [field]: { contains: v, mode: "insensitive" },
+          })),
+        };
+      }
+      return { [field]: { contains: value, mode: "insensitive" } };
+    };
 
-    if (!parsedRequirementTypes.length) {
-      scholarship = await db.scholarship.findFirst({
-        where: { name: scholarshipName },
-      });
-    } else {
-      const selectFields: Partial<Record<keyof Scholarship, boolean>> = {
-        name: true,
-      };
+    const conditions = [];
 
-      parsedRequirementTypes.forEach((type: string) => {
-        switch (type) {
-          case "eligibility_criteria":
-            selectFields.eligibility_criteria = true;
-            break;
-          case "required_document":
-            selectFields.required_document = true;
-            break;
-          case "application_process":
-            selectFields.application_process = true;
-            break;
-          case "award_amount":
-            selectFields.award_amount = true;
-            break;
-          case "contact_office":
-            selectFields.contact_office = true;
-            break;
-          case "description":
-            selectFields.description = true;
-            break;
-        }
-      });
+    if (params.name) conditions.push(addCondition("name", params.name));
+    if (params.category)
+      conditions.push(addCondition("category", params.category));
 
-      scholarship = await db.scholarship.findFirst({
-        where: { name: scholarshipName },
-        select: selectFields,
+    if (conditions.length === 0 && !params.requirementType) {
+      const allScholarships = await db.scholarship.findMany({
+        orderBy: { name: "asc" },
       });
+      if (allScholarships.length > 0) {
+        return formatMultipleScholarships(allScholarships);
+      }
+      return "I need more specific information. Please ask about a specific scholarship, category, or requirement.";
     }
 
-    return scholarship || null;
-  } catch (err) {
-    console.error(`Database query error for ${scholarshipName}:`, err);
-    return null;
-  }
-}
+    const whereCondition =
+      conditions.length > 1 ? { AND: conditions } : conditions[0];
 
-export async function fetchScholarshipsByCategory(
-  category: string
-): Promise<Scholarship[]> {
-  try {
     const scholarships = await db.scholarship.findMany({
-      where: { category: { equals: category, mode: "insensitive" } },
+      where: whereCondition,
+      orderBy: { name: "asc" },
     });
-    return scholarships;
-  } catch (err) {
-    console.error(`Database query error for category ${category}:`, err);
-    return [];
+
+    console.log("🔍 FOUND SCHOLARSHIPS:", scholarships);
+
+    if (scholarships.length === 0) {
+      return "No scholarships matched your search criteria.";
+    }
+
+    if (scholarships.length === 1) {
+      const scholarship = scholarships[0];
+
+      if (
+        params.query_type === "eligibility_criteria" ||
+        params.requirementType?.includes("eligibility_criteria")
+      ) {
+        return formatScholarshipEligibility(scholarship);
+      } else if (
+        params.query_type === "required_document" ||
+        params.requirementType?.includes("required_document")
+      ) {
+        return formatScholarshipDocuments(scholarship);
+      } else if (
+        params.query_type === "application_process" ||
+        params.requirementType?.includes("application_process")
+      ) {
+        return formatScholarshipApplication(scholarship);
+      } else if (
+        params.query_type === "award_amount" ||
+        params.requirementType?.includes("award_amount")
+      ) {
+        return formatScholarshipAmount(scholarship);
+      } else if (
+        params.query_type === "contact_office" ||
+        params.requirementType?.includes("contact_office")
+      ) {
+        return formatScholarshipContact(scholarship);
+      } else if (
+        params.query_type === "description" ||
+        params.requirementType?.includes("description")
+      ) {
+        return formatScholarshipDescription(scholarship);
+      } else if (
+        params.query_type === "offeredBy" ||
+        params.requirementType?.includes("offeredBy")
+      ) {
+        return formatScholarshipOfferedBy(scholarship);
+      } else {
+        return formatScholarshipGeneral(scholarship);
+      }
+    } else {
+      return formatMultipleScholarships(scholarships);
+    }
+  } catch (error) {
+    console.error("Database search error:", error);
+    return "I'm sorry, there was an error searching for scholarship information.";
   }
 }
-
