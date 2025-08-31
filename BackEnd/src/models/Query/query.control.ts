@@ -6,8 +6,10 @@ import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
 import { schoolOfficialsQuery } from "models/chatbot/Shool Official/schoolOfficials";
 import { scholarshipQuery } from "models/chatbot/Scholarship/scholarship.services";
+import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
 import { getDialogflowResponse } from "../../../helper/dialogflow";
 import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
+import { searchSchoolDetails } from "../../../helper/services/schoolDetail.database";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -137,7 +139,32 @@ export const createQuery = async (req: Request, res: Response) => {
           console.log(`Confidence: ${dialogflowResponse.confidence}`);
           console.log(`Parameters:`, dialogflowResponse.parameters);
 
-          const intentName = dialogflowResponse.intent.toLowerCase();
+          const intentName = dialogflowResponse.intent?.toLowerCase?.() || "";
+          const action = dialogflowResponse.action || "";
+          const parameters = dialogflowResponse.parameters || {};
+
+          const hasSchoolInfoParam =
+            Array.isArray(parameters["school-info"]) &&
+            parameters["school-info"].length > 0;
+          const hasSchoolNameParam =
+            typeof parameters["school-name"] === "string" &&
+            parameters["school-name"].trim().length > 0;
+
+          if (
+            action === "get_school_info" ||
+            hasSchoolInfoParam ||
+            hasSchoolNameParam
+          ) {
+            console.log(
+              "Routing to school detail service based on action/params."
+            );
+            return await schoolDetailQuery(
+              user.id,
+              query_text,
+              conversationHistory,
+              parameters
+            );
+          }
 
           if (
             intentName.includes("scholarship") ||
@@ -154,7 +181,9 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          } else if (
+          }
+
+          if (
             intentName.includes("department") ||
             intentName.includes("departments") ||
             intentName.includes("head") ||
@@ -169,17 +198,14 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          } else {
-            console.log(
-              "Routing to school official service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await schoolOfficialsQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
           }
+
+          console.log("Routing to school official service (fallback).");
+          return await schoolOfficialsQuery(
+            user.id,
+            query_text,
+            conversationHistory
+          );
         } catch (dialogflowError) {
           console.error("Dialogflow processing failed:", dialogflowError);
           console.log(
