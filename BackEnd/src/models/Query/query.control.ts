@@ -7,6 +7,8 @@ import { measureResponseTime } from "../../../utils/responseTimeCounter";
 import { schoolOfficialsQuery } from "models/chatbot/Shool Official/schoolOfficials";
 import { scholarshipMessage } from "models/chatbot/Scholarship/scholarship.services";
 import { getDialogflowResponse } from "../../../helper/dialogflow"; // Update path
+import {departmentOfficialsQuery} from "models/chatbot/School Department/schoolDepartment";
+
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -105,6 +107,11 @@ export const createQuery = async (req: Request, res: Response) => {
               intentName.includes('grant')) {
             console.log("Routing to scholarship service based on intent:", dialogflowResponse.intent);
             return await scholarshipMessage(user.id, query_text);
+          } else if (intentName.includes('department') ||
+                     intentName.includes('departments') ||
+                     intentName.includes('head') || intentName.includes('heads')) {
+            console.log("Routing to school department service based on intent:", dialogflowResponse.intent);
+            return await departmentOfficialsQuery(user.id, query_text);
           } else {
             console.log("Routing to school official service based on intent:", dialogflowResponse.intent);
             return await schoolOfficialsQuery(user.id, query_text);

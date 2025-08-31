@@ -4,9 +4,9 @@ import {
   fetchScholarshipsByCategory,
 } from "../../../../helper/services/scholarship.service";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-import { getDialogflowResponse } from "../../../../helper/dialogflow.service";
+import { getDialogflowResponse } from "../../../../helper/dialogflow";
 
-export const handleChatbotMessage = async (
+export const scholarshipMessage = async (
   userId: number,
   message: string
 ): Promise<{ answer: string; source: string; queryId: number }> => {
