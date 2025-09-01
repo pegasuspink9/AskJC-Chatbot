@@ -10,6 +10,7 @@ import { getDialogflowResponse } from "../../../helper/dialogflow";
 import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
 import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
 import { officeQuery} from "models/chatbot/schoolOffices/schoolOffices";
+import {schoolDetailQuery} from "models/chatbot/School Details/schoolDetails.service";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -187,7 +188,7 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }else if (
+          } else if (
             intentName.includes("contact") ||
             intentName.includes("contacts") ||
             intentName.includes("email") ||
@@ -199,6 +200,25 @@ export const createQuery = async (req: Request, res: Response) => {
               dialogflowResponse.intent
             );
             return await contactQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
+            intentName.includes("detail") ||
+            intentName.includes("details") ||
+            intentName.includes("history") ||
+            intentName.includes("mission") ||
+            intentName.includes("vision") ||
+            intentName.includes("goal") ||
+            intentName.includes("address") ||
+            intentName.includes("accreditation")
+          ) {
+            console.log(
+              "Routing to school detail service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await schoolDetailQuery(
               user.id,
               query_text,
               conversationHistory
