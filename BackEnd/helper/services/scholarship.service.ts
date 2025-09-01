@@ -1,4 +1,4 @@
-import { PrismaClient} from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
 import {
   formatScholarshipGeneral,
@@ -13,7 +13,7 @@ import {
 } from "../utils/scholarship.helper";
 
 interface SearchScholarshipParams {
-  name?: string | string[];
+  scholarship_name?: string | string[];
   requirementType?: string | string[];
   category?: string | string[];
   query_type?: string;
@@ -38,13 +38,16 @@ export async function searchScholarships(
 
     const conditions = [];
 
-    if (params.name) conditions.push(addCondition("name", params.name));
+    if (params.scholarship_name)
+      conditions.push(
+        addCondition("scholarship name", params.scholarship_name)
+      );
     if (params.category)
       conditions.push(addCondition("category", params.category));
 
     if (conditions.length === 0 && !params.requirementType) {
       const allScholarships = await db.scholarship.findMany({
-        orderBy: { name: "asc" },
+        orderBy: { scholarship_name: "asc" },
       });
       if (allScholarships.length > 0) {
         return formatMultipleScholarships(allScholarships);
@@ -57,7 +60,7 @@ export async function searchScholarships(
 
     const scholarships = await db.scholarship.findMany({
       where: whereCondition,
-      orderBy: { name: "asc" },
+      orderBy: { scholarship_name: "asc" },
     });
 
     console.log("🔍 FOUND SCHOLARSHIPS:", scholarships);
