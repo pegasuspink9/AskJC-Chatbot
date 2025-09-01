@@ -59,32 +59,8 @@ export const MessageItem = memo<MessageItemProps>(({
     }
   };
 
-<<<<<<< Updated upstream
   const suggestions = !item.isUser ? extractSuggestions(item.text) : [];
 
-=======
-  const extractSuggestions = (text: string): string[] => {
-  const suggestionRegex = /\[([^\]]+)\]/g;
-  const matches = [];
-  let match;
-  
-  while ((match = suggestionRegex.exec(text)) !== null) {
-    matches.push(match[1].trim());
-  }
-  
-  return matches;
-  };
-
-  const removeSuggestions = (text: string): string => {
-    return text.replace(/\[([^\]]+)\]/g, '').trim();
-  };
-
-
-
- const suggestions = !item.isUser ? extractSuggestions(item.text) : [];
-  
-  // Remove suggestions from display text
->>>>>>> Stashed changes
   const displayText = !item.isUser ? removeSuggestions(item.text) : item.text;
 
   // Memoize the suggestion press handler
@@ -118,11 +94,7 @@ return (
         
         <Text style={textStyle}>
           {parseFormattedText(
-<<<<<<< Updated upstream
             displayText,
-=======
-            displayText, 
->>>>>>> Stashed changes
             Colors, 
             item.isUser,
             textStyle 

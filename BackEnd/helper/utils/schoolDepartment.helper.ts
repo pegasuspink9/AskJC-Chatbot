@@ -1,3 +1,5 @@
+
+
 export function formatDepartmentLocation(dept: any): string {
   const location = [];
   if (dept.floor) location.push(`Floor: ${dept.floor}`);
@@ -133,17 +135,12 @@ export function formatDepartmentGeneral(dept: any): string {
 
 export function formatMultipleDepartments(departments: any[]): string {
   if (departments.length <= 3) {
-<<<<<<< Updated upstream
-    return departments.map(dept => formatDepartmentGeneral(dept)).join('\n\n');
+    return departments.map(dept => formatDepartmentGeneral(dept)).join('\n');
   } else {
-    const header = `Saint Joseph College departments are:\nFound ${departments.length} departments:\n`;
-    const list = departments.map((dept, i) => 
-      `${i + 1}. ${dept.name}${dept.head_name ? ` (Head: ${dept.head_name})` : ''}${dept.description ? ` - ${dept.description}` : ''}${dept.building ? ` (Building: ${dept.building})` : ''}${dept.floor ? ` - Floor: ${dept.floor}` : ''}${dept.career_path ? ` - Career: ${dept.career_path}` : ''}`
+    const header = `Found ${departments.length} departments:\n`;
+    const list = departments.map(dept => 
+      `• ${dept.name}${dept.head_name ? ` (${dept.head_name})` : ''}`
     ).join('\n');
-=======
-    const header = `Saint Joseph College departments:\n\n`;
-    const list = departments.map(dept => formatDepartmentGeneral(dept)).join('\n\n');
->>>>>>> Stashed changes
     return header + list;
   } else {
     const header = `Saint Joseph College departments:\nFound ${departments.length} departments:\n`;

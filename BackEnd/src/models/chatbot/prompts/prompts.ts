@@ -1,9 +1,4 @@
-<<<<<<< Updated upstream
-const suggestion = `Also continue the conversation by giving 2 short input continuation for user and put each input continuation inside the brackets like this: [Suggestion 1] [Suggestion 2]. Keep inputs short and relevant to the topic. Make sure that the inputs are like a user inputs dont make it an question statement. Act like a user input when making inputs suggestion.`;
-=======
-const suggestion = `Also continue the conversation by giving a 2 short input for user and put the input inside the brackets [ ] short words to keep up the conversation related to the question asked. Make sure that the suggestions are relevant to the question asked and helpful for the user to continue the conversation.
-If the question is not relevant to the database, just say "I'm sorry, I don't have that information." and do not provide any suggestions.`;
->>>>>>> Stashed changes
+const suggestion = `Also continue the conversation by giving a 2 short input for user and put the input inside the brackets [ ] short words to keep up the conversation related to the question asked.`;
 
 const botTalk = `
     Talk like a front desk assistant, make the conversation like you already talk before, conversational way as a helpful school assistant. Stop greetings. Use new lines for clear reading.
