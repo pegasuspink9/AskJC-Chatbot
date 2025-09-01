@@ -135,12 +135,8 @@ export function formatDepartmentGeneral(dept: any): string {
 
 export function formatMultipleDepartments(departments: any[]): string {
   if (departments.length <= 3) {
-    return departments.map(dept => formatDepartmentGeneral(dept)).join('\n');
-  } else {
-    const header = `Found ${departments.length} departments:\n`;
-    const list = departments.map(dept => 
-      `• ${dept.name}${dept.head_name ? ` (${dept.head_name})` : ''}`
-    ).join('\n');
+    const header = `Saint Joseph College departments:\n\n`;
+    const list = departments.map(dept => formatDepartmentGeneral(dept)).join('\n\n');
     return header + list;
   } else {
     const header = `Saint Joseph College departments:\nFound ${departments.length} departments:\n`;
