@@ -42,11 +42,11 @@ export function formatDepartmentGeneral(dept: any): string {
 
 export function formatMultipleDepartments(departments: any[]): string {
   if (departments.length <= 3) {
-    return departments.map(dept => formatDepartmentGeneral(dept)).join('\n');
+    return departments.map(dept => formatDepartmentGeneral(dept)).join('\n\n');
   } else {
-    const header = `Found ${departments.length} departments:\n`;
-    const list = departments.map(dept => 
-      `• ${dept.name}${dept.head_name ? ` (${dept.head_name})` : ''}`
+    const header = `Saint Joseph College departments are:\nFound ${departments.length} departments:\n`;
+    const list = departments.map((dept, i) => 
+      `${i + 1}. ${dept.name}${dept.head_name ? ` (Head: ${dept.head_name})` : ''}${dept.description ? ` - ${dept.description}` : ''}${dept.building ? ` (Building: ${dept.building})` : ''}${dept.floor ? ` - Floor: ${dept.floor}` : ''}${dept.career_path ? ` - Career: ${dept.career_path}` : ''}`
     ).join('\n');
     return header + list;
   }

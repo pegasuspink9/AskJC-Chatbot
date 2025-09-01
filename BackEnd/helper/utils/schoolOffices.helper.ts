@@ -1,7 +1,5 @@
 export function generateSingleOfficeResponse(office: any, query_type?: string): string {
-  
-  
-  return `${office.name}${office.description ? ` - ${office.description}` : ""}${office.location_building ? ` (Building: ${office.location_building})` : ""}${office.location_floor ? ` - Floor: ${office.location_floor}` : ""}${office.operating_hours ? ` - Hours: ${office.operating_hours}` : ""}${office.contact_email ? ` - Email: ${office.contact_email}` : ""}${office.contact_phone ? ` - Phone: ${office.contact_phone}` : ""}${office.fb_page ? ` - FB: ${office.fb_page}` : ""}`;
+    return `${office.name}${office.description ? ` - ${office.description}` : ""}${office.location_building ? ` (Building: ${office.location_building})` : ""}${office.location_floor ? ` - Floor: ${office.location_floor}` : ""}${office.operating_hours ? ` - Hours: ${office.operating_hours}` : ""}${office.contact_email ? ` - Email: ${office.contact_email}` : ""}${office.contact_phone ? ` - Phone: ${office.contact_phone}` : ""}${office.fb_page ? ` - FB: ${office.fb_page}` : ""}`;
 }
 
 export function generateMultipleOfficesResponse(offices: any[], query_type?: string): string {
