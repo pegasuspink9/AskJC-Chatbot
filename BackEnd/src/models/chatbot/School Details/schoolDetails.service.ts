@@ -5,6 +5,7 @@ import {
   searchSchoolDetails,
   RequirementType,
 } from "../../../../helper/services/schoolDetail.database";
+import { pickPromptStyle } from "../prompts/promptStyle.helper";
 import {
   tablePrompts,
   singleLinePrompt,
@@ -128,7 +129,14 @@ export const schoolDetailQuery = async (
       try {
         let prompt: string;
 
-        if (mappedParameters.requirementType.includes("history")) {
+        const style = pickPromptStyle(
+          message,
+          mappedParameters.requirementType
+        );
+
+        if (style === "table") {
+          prompt = tablePrompts(dbResult || "Not available", message);
+        } else if (style === "bulletin") {
           prompt = bulletinPrompts(dbResult || "Not available", message);
         } else {
           prompt = singleLinePrompt(dbResult || "Not available", message);
