@@ -1,4 +1,4 @@
-const suggestion = `Also continue the conversation by giving a 2 short input for user and put the input inside the brackets [ ] short words to keep up the conversation related to the question asked.`;
+const suggestion = `Also continue the conversation by giving 2 short input continuation for user and put each input continuation inside the brackets like this: [Suggestion 1] [Suggestion 2]. Keep inputs short and relevant to the topic. Make sure that the inputs are like a user inputs dont make it an question statement. Act like a user input when making inputs suggestion.`;
 
 const botTalk = `
     Talk like a front desk assistant, make the conversation like you already talk before, conversational way as a helpful school assistant. Stop greetings. Use new lines for clear reading.
@@ -16,6 +16,8 @@ export const singleLinePrompt = (
 
     talk like ${botTalk}
     Make the highlight answer bold ** ** with new line. Make sure that the answer is direct to the point.
+
+    if its a list or the response are two or more - present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database using only ** **
     and ${suggestion}
 `;
 
@@ -32,7 +34,7 @@ Student's question:
 
 
 talk like ${botTalk}
-present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database .
+present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database using only ** **.
 and ${suggestion}
 `;
 

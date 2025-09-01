@@ -1,6 +1,6 @@
 export interface Office {
   id: number;
-  office_name: string;
+  name: string;
   description?: string | null;
   location_building?: string | null;
   operation_hours?: string | null;
@@ -11,7 +11,7 @@ export interface Office {
 }
 
 export interface CreateOffice {
-  office_name: string;
+  name: string;
   description?: string | null;
   location_building?: string | null;
   operation_hours?: string | null;
@@ -22,7 +22,7 @@ export interface CreateOffice {
 }
 
 export interface UpdateOffice {
-  office_name?: string;
+  name?: string;
   description?: string | null;
   location_building?: string | null;
   operation_hours?: string | null;

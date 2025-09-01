@@ -77,19 +77,17 @@ export const officeQuery = async (
             try {
               let prompt = "";
               
+              // Count numbered entries (1., 2., 3., etc.) to detect multiple offices
+              const numberedEntries = (dbResult.match(/^\d+\./gm) || []).length;
+              
               if (
                 dbResult.includes("No offices matched your search criteria.") ||
                 dbResult.includes("I need more specific information.")
               ) {
                 prompt = singleLinePrompt(dbResult, message);
               } else if (
-                dbResult.includes("Found") && 
-                (dbResult.match(/•/g) || []).length > 3
-              ) {
-                prompt = tablePrompts(dbResult, message);
-              } else if (
-                dbResult.includes("Found") || 
-                dbResult.split('\n').length > 1
+                numberedEntries >= 2 || // 2 or more numbered entries = multiple offices
+                dbResult.includes("Found") && dbResult.split('\n').length >= 4 // Multiple lines of data
               ) {
                 prompt = tablePrompts(dbResult, message);
               } else {

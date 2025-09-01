@@ -16,8 +16,8 @@ export const getOffice = async (_: Request, res: Response) => {
 
 export const createOffice = async (req: Request, res: Response) => {
   try {
-    const data: CreateOffice[] = req.body;
-    const office = await prisma.office.createMany({ data });
+    const data: CreateOffice = req.body;
+    const office = await prisma.office.create({ data });
     return successResponse(res, office, "Office created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create office");

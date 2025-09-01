@@ -44,13 +44,13 @@ export const getStudentOrgById = async (req: Request, res: Response) => {
 
 export const createStudentOrg = async (req: Request, res: Response) => {
   try {
-    const data: CreateStudentOrg[] = req.body;
+    const data: CreateStudentOrg = req.body;
 
-    const organization = await prisma.studentOrg.createMany({
+    const teacher: StudentOrg = await prisma.studentOrg.create({
       data,
     });
 
-    return successResponse(res, organization, "Student organization created");
+    return successResponse(res, teacher, "Student organization created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create student organization");
   }

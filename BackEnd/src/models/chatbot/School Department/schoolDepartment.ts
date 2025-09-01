@@ -5,7 +5,6 @@ import { getGenerativeResponse } from "../../../../helper/gemini.service";
 import {
   tablePrompts,
   singleLinePrompt,
-  bulletinPrompts,
 } from "../prompts/prompts";
 
 export const departmentOfficialsQuery = async (
@@ -34,6 +33,7 @@ export const departmentOfficialsQuery = async (
 
   try {
     const dialogflowSessionPath = `projects/${process.env.DIALOGFLOW_PROJECT_ID}/agent/sessions/${userId}`;
+    
     const dialogflow = await getDialogflowResponse(
       message,
       dialogflowSessionPath,
@@ -44,6 +44,7 @@ export const departmentOfficialsQuery = async (
       console.log(
         "Low confidence or no Dialogflow result. Using Gemini fallback."
       );
+      
       const { text, apiKey } = await getGenerativeResponse(
         message,
         conversationHistory
@@ -52,6 +53,7 @@ export const departmentOfficialsQuery = async (
       responseSource = `generative-fallback (via ${apiKey})`;
     } else {
       const { action, parameters, fulfillmentText, intent } = dialogflow;
+      
       console.log(`Dialogflow Intent: ${intent}, Action: ${action}`);
       console.log("Parameters:", parameters);
 
@@ -65,17 +67,36 @@ export const departmentOfficialsQuery = async (
               name: parameters.department_name || parameters.name,
               head_name: parameters["departments-head-names"],
             };
-            console.log("Original parameters:", parameters);
-            console.log("Mapped parameters:", mappedParameters);
+
+            console.log("Original Dialogflow parameters:", parameters);
+            console.log("Mapped department parameters:", mappedParameters);
 
             const dbResult = await searchSchoolDepartment(mappedParameters);
             responseText = dbResult;
             responseSource = "database-search";
 
             try {
-              const prompt = bulletinPrompts(message, dbResult);
+              let prompt = "";
+              
+              // Count numbered entries to detect multiple departments
+              const numberedEntries = (dbResult.match(/^\d+\./gm) || []).length;
+              
+              if (
+                dbResult.includes("No departments matched your search criteria.") ||
+                dbResult.includes("I need more specific information.")
+              ) {
+                prompt = singleLinePrompt(dbResult, message);
+              } else if (
+                numberedEntries >= 2 || 
+                dbResult.includes("Found") && dbResult.split('\n').length >= 4 
+              ) {
+                prompt = tablePrompts(dbResult, message);
+              } else {
+                prompt = singleLinePrompt(dbResult, message);
+              }
+
               const { text, apiKey } = await getGenerativeResponse(
-                prompt,
+                prompt, 
                 conversationHistory
               );
               if (text && text.trim()) {
@@ -87,10 +108,14 @@ export const departmentOfficialsQuery = async (
             }
             break;
           }
+
           default: {
-            responseText = "Sorry, I couldn’t understand your request.";
-            responseSource = "dialogflow-unknown";
-            break;
+            const { text, apiKey } = await getGenerativeResponse(
+              message,
+              conversationHistory
+            );
+            responseText = text;
+            responseSource = `generative-main (via ${apiKey})`;
           }
         }
       }

@@ -32,8 +32,8 @@ export const getSchoolOfficialById = async (req: Request, res: Response) => {
 
 export const createSchoolOfficial = async (req: Request, res: Response) => {
   try {
-    const data: CreateSchoolOfficial[] = req.body;
-    const official = await prisma.schoolOfficial.createMany({ data });
+    const data: CreateSchoolOfficial = req.body;
+    const official = await prisma.schoolOfficial.create({ data });
     return successResponse(res, official, "School official created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create school official");

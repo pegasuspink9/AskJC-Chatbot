@@ -26,6 +26,24 @@ interface TypingIndicatorProps {
   dot3Opacity: Animated.Value;
 }
 
+// Add this function to extract suggestions from bot response
+const extractSuggestions = (text: string): string[] => {
+  const suggestionRegex = /\[([^\]]+)\]/g;
+  const matches = [];
+  let match;
+  
+  while ((match = suggestionRegex.exec(text)) !== null) {
+    matches.push(match[1].trim());
+  }
+  
+  return matches;
+};
+
+// Add this function to remove suggestions from display text
+const removeSuggestions = (text: string): string => {
+  return text.replace(/\[([^\]]+)\]/g, '').trim();
+};
+
 // Memoized MessageItem component
 export const MessageItem = memo<MessageItemProps>(({ 
   item, 
@@ -41,7 +59,9 @@ export const MessageItem = memo<MessageItemProps>(({
     }
   };
 
-  const suggestions = ['Tuition fee', 'Enrollment Process', 'Exam Date'];
+  const suggestions = !item.isUser ? extractSuggestions(item.text) : [];
+
+  const displayText = !item.isUser ? removeSuggestions(item.text) : item.text;
 
   // Memoize the suggestion press handler
   const handleSuggestionPress = useCallback((suggestion: string) => {
@@ -50,14 +70,18 @@ export const MessageItem = memo<MessageItemProps>(({
     }
   }, [onSuggestionPress, item.id]);
 
-  const showSuggestions = !item.isUser && shouldShowSuggestions && shouldShowSuggestions(item.id);
+  const showSuggestions = !item.isUser && 
+    shouldShowSuggestions && 
+    shouldShowSuggestions(item.id) && 
+    suggestions.length > 0;
 
   const textStyle = StyleSheet.flatten([
     styles(Colors).messageText,
     item.isUser ? styles(Colors).userMessageText : styles(Colors).botMessageText
   ]);
 
-  return (
+
+return (
     <View style={StyleSheet.flatten([
       styles(Colors).messageContainer,
       item.isUser ? styles(Colors).userMessageContainer : styles(Colors).botMessageContainer
@@ -70,7 +94,7 @@ export const MessageItem = memo<MessageItemProps>(({
         
         <Text style={textStyle}>
           {parseFormattedText(
-            item.text, 
+            displayText,
             Colors, 
             item.isUser,
             textStyle 

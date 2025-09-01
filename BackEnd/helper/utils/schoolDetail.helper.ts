@@ -11,11 +11,11 @@ export function formatSchoolGeneral(schoolDetail: SchoolDetail): string {
   const details: string[] = [];
   if (schoolDetail.small_details)
     details.push(`small details: ${schoolDetail.small_details}`);
-  if (schoolDetail.vision) details.push(`${schoolDetail.vision}`);
-  if (schoolDetail.mission) details.push(`${schoolDetail.mission}`);
-  if (schoolDetail.goals) details.push(`${schoolDetail.goals}`);
-  if (schoolDetail.address) details.push(`${schoolDetail.address}`);
-  if (schoolDetail.history) details.push(`${schoolDetail.history}`);
+  if (schoolDetail.vision) details.push(`vision: ${schoolDetail.vision}`);
+  if (schoolDetail.mission) details.push(`mission: ${schoolDetail.mission}`);
+  if (schoolDetail.goals) details.push(`goals: ${schoolDetail.goals}`);
+  if (schoolDetail.address) details.push(`address: ${schoolDetail.address}`);
+  if (schoolDetail.history) details.push(`history: ${schoolDetail.history}`);
 
   const detailsStr = details.length > 0 ? ` (${details.join(", ")})` : "";
   return `Saint Joseph College${detailsStr}.`;
@@ -99,31 +99,8 @@ export function formatMultipleSchoolInfo(
   const filteredTypes = types.filter((type) => validTypes.includes(type));
 
   return schools
-    .map((schoolDetail) => {
-      if (filteredTypes.length === 1) {
-        const type = filteredTypes[0];
-        switch (type) {
-          case "small_details":
-            return formatSchoolSmallDetails(schoolDetail);
-          case "vision":
-            return formatSchoolVision(schoolDetail);
-          case "mission":
-            return formatSchoolMission(schoolDetail);
-          case "goals":
-            return formatSchoolGoals(schoolDetail);
-          case "address":
-            return formatSchoolAddress(schoolDetail);
-          case "history":
-            return formatSchoolHistory(schoolDetail);
-          case "president":
-            return formatSchoolPresident(schoolDetail);
-          case "events":
-            return formatSchoolEvents(schoolDetail);
-          default:
-            return "";
-        }
-      }
-
+    .map((schoolDetail, index) => {
+      const schoolName = `School ${index + 1}`;
       if (filteredTypes.length === 0) {
         return formatSchoolGeneral(schoolDetail);
       }
@@ -154,48 +131,59 @@ export function formatMultipleSchoolInfo(
           })
           .filter((text) => text)
           .join("\n");
+      } else {
+        const header = `Found ${filteredTypes.length} types of information for ${schoolName}:\n`;
+        const list = filteredTypes
+          .map((type) => {
+            switch (type) {
+              case "small_details":
+                return schoolDetail.small_details
+                  ? `• Small Details: ${schoolDetail.small_details}`
+                  : "";
+              case "vision":
+                return schoolDetail.vision
+                  ? `• Vision: ${schoolDetail.vision}`
+                  : "";
+              case "mission":
+                return schoolDetail.mission
+                  ? `• Mission: ${schoolDetail.mission}`
+                  : "";
+              case "goals":
+                return schoolDetail.goals
+                  ? `• Goals: ${schoolDetail.goals}`
+                  : "";
+              case "address":
+                return schoolDetail.address
+                  ? `• Address: ${schoolDetail.address}`
+                  : "";
+              case "history":
+                return schoolDetail.history
+                  ? `• History: ${schoolDetail.history}`
+                  : "";
+              case "president": {
+                const presidentMatch = schoolDetail.history
+                  ? schoolDetail.history.match(/President: ([^\n,.]+)/i)
+                  : null;
+                return presidentMatch && presidentMatch[1]
+                  ? `• President: ${presidentMatch[1].trim()}`
+                  : "";
+              }
+              case "events": {
+                const eventsMatch = schoolDetail.history
+                  ? schoolDetail.history.match(/Events: ([^\n,.]+)/i)
+                  : null;
+                return eventsMatch && eventsMatch[1]
+                  ? `• Events: ${eventsMatch[1].trim()}`
+                  : "";
+              }
+              default:
+                return "";
+            }
+          })
+          .filter((text) => text)
+          .join("\n");
+        return header + list;
       }
-
-      const header = `Found ${filteredTypes.length} types of information:\n`;
-      const list = filteredTypes
-        .map((type) => {
-          switch (type) {
-            case "small_details":
-              return schoolDetail.small_details || "";
-            case "vision":
-              return schoolDetail.vision || "";
-            case "mission":
-              return schoolDetail.mission || "";
-            case "goals":
-              return schoolDetail.goals || "";
-            case "address":
-              return schoolDetail.address || "";
-            case "history":
-              return schoolDetail.history || "";
-            case "president": {
-              const presidentMatch = schoolDetail.history
-                ? schoolDetail.history.match(/President: ([^\n,.]+)/i)
-                : null;
-              return presidentMatch && presidentMatch[1]
-                ? `• President: ${presidentMatch[1].trim()}`
-                : "";
-            }
-            case "events": {
-              const eventsMatch = schoolDetail.history
-                ? schoolDetail.history.match(/Events: ([^\n,.]+)/i)
-                : null;
-              return eventsMatch && eventsMatch[1]
-                ? `• Events: ${eventsMatch[1].trim()}`
-                : "";
-            }
-            default:
-              return "";
-          }
-        })
-        .filter((text) => text)
-        .join("\n");
-
-      return header + list;
     })
     .filter((text) => text)
     .join("\n\n");
