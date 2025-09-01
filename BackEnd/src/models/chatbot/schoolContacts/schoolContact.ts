@@ -64,7 +64,7 @@ export const contactQuery = async (
         switch (action) {
           case "get_contact_info": {
             const mappedParameters = {
-              name: parameters.contact_names,
+              contact_name: parameters.contact_names,
               query_type: parameters.query_type,
             };
 

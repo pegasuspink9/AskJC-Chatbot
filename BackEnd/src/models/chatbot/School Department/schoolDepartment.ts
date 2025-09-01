@@ -64,7 +64,7 @@ export const departmentOfficialsQuery = async (
         switch (action) {
           case "get_department_info": {
             const mappedParameters = {
-              name: parameters.department_name || parameters.name,
+              department_name: parameters.department_name || parameters.name,
               head_name: parameters["departments-head-names"],
             };
 

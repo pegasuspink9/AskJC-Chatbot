@@ -3,13 +3,12 @@ const db = new PrismaClient();
 import { 
   generateSingleContactResponse, 
   generateMultipleContactsResponse,  
-  generateNotFoundContactMessage 
 } from "../utils/schoolContacts";
 
 interface SearchContactParams {
-  name?: string | string[];
   email?: string | string[];
   fb_page?: string | string[];
+  contact_name?: string | string[];
   query_type?: string;
 }
 
@@ -32,18 +31,18 @@ export async function searchContacts(
 
     const conditions = [];
 
-    if (params.name) conditions.push(addCondition("name", params.name));
+    if (params.contact_name) conditions.push(addCondition("contact_name", params.contact_name));
     if (params.email) conditions.push(addCondition("email", params.email));
     if (params.fb_page) conditions.push(addCondition("fb_page", params.fb_page));
 
     if (conditions.length === 0) {
       const allContacts = await db.contact.findMany({
-        orderBy: { name: "asc" },
+        orderBy: { contact_name: "asc" },
       });
       if (allContacts.length > 0) {
         return generateMultipleContactsResponse(allContacts);
       }
-      return "I need more specific information. Please ask about a specific contact name, email, or Facebook page.";
+      return "I need more specific information. Please ask about a specific contact contact_name, email, or Facebook page.";
     }
 
     const whereCondition =
@@ -51,7 +50,7 @@ export async function searchContacts(
 
     const contacts = await db.contact.findMany({
       where: whereCondition,
-      orderBy: { name: "asc" },
+      orderBy: { contact_name: "asc" },
     });
 
     console.log("🔍 FOUND CONTACTS:", contacts);

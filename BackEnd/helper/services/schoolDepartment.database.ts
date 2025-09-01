@@ -3,7 +3,7 @@ const db = new PrismaClient();
 import { formatDepartmentLocation, formatDepartmentHead, formatDepartmentDescription, formatDepartmentCareerPath, formatDepartmentGeneral, formatMultipleDepartments } from "../utils/schoolDepartment.helper";
 
 interface SearchDepartmentParams {
-  name?: string | string[];
+  department_name?: string | string[];
   head_name?: string | string[];
   description?: string | string[];
   building?: string | string[];
@@ -28,8 +28,8 @@ export async function searchSchoolDepartment(params: SearchDepartmentParams): Pr
     };
 
     const conditions = [];
-    
-    if (params.name) conditions.push(addCondition("name", params.name));
+
+    if (params.department_name) conditions.push(addCondition("department_name", params.department_name));
     if (params.head_name) conditions.push(addCondition("head_name", params.head_name));
     if (params.description) conditions.push(addCondition("description", params.description));
     if (params.building) conditions.push(addCondition("building", params.building));
@@ -37,9 +37,14 @@ export async function searchSchoolDepartment(params: SearchDepartmentParams): Pr
     if (params.career_path) conditions.push(addCondition("career_path", params.career_path));
 
     if (conditions.length === 0) {
+<<<<<<< Updated upstream
       // Get all departments
       const allDepartments = await db.department.findMany({
         orderBy: { name: "asc" },
+=======
+      const allDepartments = await db.department.findMany({
+        orderBy: { department_name: "asc" },
+>>>>>>> Stashed changes
       });
       
       if (allDepartments.length > 0) {
@@ -55,7 +60,7 @@ export async function searchSchoolDepartment(params: SearchDepartmentParams): Pr
 
     const departments = await db.department.findMany({
       where: whereCondition,
-      orderBy: { name: "asc" },
+      orderBy: { department_name: "asc" },
     });
 
     console.log("🔍 FOUND DEPARTMENTS:", departments);

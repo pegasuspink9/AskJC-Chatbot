@@ -3,7 +3,7 @@ import { generateSingleOfficialResponse, generateMultipleOfficialsResponse,  gen
 const db = new PrismaClient();
 
 interface SearchSchoolOfficialParams {
-  name?: string;
+  official_name?: string;
   position?: string | string[];
   department?: string | string[];
   category?: string | string[];
@@ -32,7 +32,7 @@ export async function searchSchoolOfficial(
     if (params.position) conditions.push(addCondition("title", params.position));
     if (params.department) conditions.push(addCondition("department", params.department));
     if (params.category) conditions.push(addCondition("category", params.category));
-    if (params.name) conditions.push(addCondition("name", params.name));
+    if (params.official_name) conditions.push(addCondition("official_name", params.official_name));
 
     if (conditions.length === 0 && !params.query_type) {
       return "I need more specific information. Please ask about a specific position, department, or person.";
@@ -52,7 +52,7 @@ export async function searchSchoolOfficial(
         where: whereCondition,
         orderBy: [
           { department: 'asc' },
-          { name: 'asc' }
+          { official_name: 'asc' }
         ]
       });
 
@@ -76,7 +76,7 @@ export async function searchSchoolOfficial(
       }
       
       officials.forEach((official, index) => {
-        formattedResponse += `${index + 1}. **${official.name}** - ${official.title}`;
+        formattedResponse += `${index + 1}. **${official.official_name}** - ${official.title}`;
         if (official.department) {
           formattedResponse += ` (${official.department})`;
         }
@@ -90,13 +90,13 @@ export async function searchSchoolOfficial(
 
     const officials = await db.schoolOfficial.findMany({
       where: whereCondition,
-      orderBy: { name: 'asc' }
+      orderBy: { official_name: 'asc' }
     });
 
     console.log("🔍 FOUND OFFICIALS:", officials);
 
     if (officials.length === 0) {
-      return generateNotFoundMessage(params.position, params.department, params.name);
+      return generateNotFoundMessage(params.position, params.department, params.official_name);
     }
 
     if (officials.length === 1) {
