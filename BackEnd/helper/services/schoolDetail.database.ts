@@ -49,7 +49,7 @@ export async function searchSchoolDetails(
     const conditions = [];
 
     if (params.school_name)
-      conditions.push(addCondition("school name", params.school_name));
+      conditions.push(addCondition("school_name", params.school_name));
 
     if (params.requirementType && params.requirementType.length > 0) {
       for (const type of params.requirementType) {
