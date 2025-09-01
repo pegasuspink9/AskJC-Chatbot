@@ -1,6 +1,6 @@
 export interface SchoolDetail {
   id: number;
-  name?: string | null;
+  school_name?: string | null;
   small_details?: string | null;
   history?: string | null;
   vision?: string | null;
@@ -10,7 +10,7 @@ export interface SchoolDetail {
 }
 
 export interface CreateSchoolDetail {
-  name?: string;
+  school_name?: string;
   small_details?: string;
   history?: string;
   vision?: string;
@@ -20,8 +20,7 @@ export interface CreateSchoolDetail {
 }
 
 export interface UpdateSchoolDetail {
-  id: number;
-  name?: string | null;
+  school_name?: string | null;
   small_details?: string | null;
   history?: string | null;
   vision?: string | null;

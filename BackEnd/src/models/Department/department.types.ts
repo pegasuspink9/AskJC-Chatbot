@@ -1,5 +1,5 @@
 export interface Department {
-  name: string | null;
+  department_name: string | null;
   acronym?: string;
   head_name: string | null;
   description: string | null;
@@ -9,7 +9,7 @@ export interface Department {
 }
 
 export interface CreateDepartment {
-  name?: string;
+  department_name?: string;
   acronym?: string;
   head_name?: string;
   description?: string;
@@ -19,7 +19,7 @@ export interface CreateDepartment {
 }
 
 export interface UpdateDepartment {
-  name?: string;
+  department_name?: string;
   acronym?: string;
   head_name?: string;
   description?: string;

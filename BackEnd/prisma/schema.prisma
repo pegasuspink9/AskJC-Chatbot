@@ -66,7 +66,7 @@ model Greeting {
 
 model SchoolDetail {
   id              Int    @id @default(autoincrement())
-  name            String?
+  school_name            String?
   small_details   String? @db.Text
   history         String? @db.Text
   vision          String? @db.Text
@@ -120,7 +120,7 @@ model QuestionKeyword {
 
 model Scholarship { //completed data
   id                    Int  @id @default(autoincrement())
-  name                  String
+  scholarship_name      String
   category              String
   description           String
   offeredBy             String
@@ -135,7 +135,7 @@ model Scholarship { //completed data
 
 model Office { //incomplete data
   id                Int       @id @default(autoincrement())
-  name              String    @unique //Example: BURSAR
+  office_name              String    @unique //Example: BURSAR
   description       String?   // The Bursar’s Office handles school payments, such as tuition and other fees, and assists students and parents with billing and receipts
   location_building String?   //SJC Main Building
   location_floor    String?   //Ground Floor
@@ -156,18 +156,18 @@ model OfficeImage {
   office    Office  @relation(fields: [office_id], references: [id])
 }
 
-model StudentOrg { //fb_page links nalang kuwang
-  id            Int @id @default(autoincrement())
-  name          String
-  description   String
-  fb_page       String?
+model StudentOrg { 
+  id                    Int @id @default(autoincrement())
+  organization_name     String
+  description           String
+  fb_page               String?
 
-  faqs          Faq[]
+  faqs                  Faq[]
 }
 
 model Contact {
   id               Int    @id @default(autoincrement())
-  name             String //Example: Saint Josep College or College of Computer Studies
+  contact_name     String //Example: Saint Josep College or College of Computer Studies
   fb_page          String? //link
   email            String? 
 
@@ -176,7 +176,7 @@ model Contact {
 
 model Course {
   id            Int     @id @default(autoincrement())
-  program_id    Int?    //optional, null for minor subjects
+  program_id    Int?    
   course_code   String  @unique
   course_name   String
   units         Int
@@ -185,14 +185,14 @@ model Course {
 }
 
 model Department {
-  id             Int      @id @default(autoincrement())
-  name           String?
-  acronym        String?
-  head_name      String?
-  description    String?
-  building       String?
-  floor          String?
-  career_path    String?
+  id               Int      @id @default(autoincrement())
+  department_name  String?
+  acronym          String?
+  head_name        String?
+  description      String?
+  building         String?
+  floor            String?
+  career_path      String?
 
   faqs     Faq[]
 
@@ -203,9 +203,9 @@ model Program {
   id                Int     @id @default(autoincrement())
   department_id     Int
   program_type      ProgramType 
-  program           String
+  program_name      String
   acronym           String?
-  tuition_fee       String? //approximation only per semester
+  tuition_fee       String? 
 
   department    Department      @relation(fields: [department_id], references: [id])
   courses  Course[]
@@ -220,7 +220,7 @@ enum ProgramType {
 
 model SchoolOfficial {
   id         Int      @id @default(autoincrement())
-  name       String
+  official_name       String
   title      String?
   department String?
   category   String

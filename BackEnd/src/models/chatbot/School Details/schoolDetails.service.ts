@@ -1,7 +1,10 @@
 import { prisma } from "../../../../prisma/client";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-import { searchSchoolDetails } from "../../../../helper/services/schoolDetail.database";
+import {
+  searchSchoolDetails,
+  RequirementType,
+} from "../../../../helper/services/schoolDetail.database";
 import {
   tablePrompts,
   singleLinePrompt,
@@ -75,20 +78,33 @@ export const schoolDetailQuery = async (
       return null;
     }
 
-    let chosenParam = pickBestParam(requirementType);
+    const validRequirementTypes: RequirementType[] = requirementType.filter(
+      (req): req is RequirementType =>
+        [
+          "history",
+          "vision",
+          "mission",
+          "goals",
+          "address",
+          "small_details",
+        ].includes(req)
+    );
 
     const mappedParameters = {
       name,
-      requirementType: chosenParam ? [chosenParam] : [],
+      requirementType:
+        validRequirementTypes.length > 0 ? [validRequirementTypes[0]] : [],
     };
-    console.log("Mapped school parameters (to DB):", mappedParameters);
 
     let dbResult = "";
 
     if (requirementType.length > 1) {
       const combinedAnswers: string[] = [];
       for (const req of requirementType) {
-        const res = await searchSchoolDetails({ name, requirementType: [req] });
+        const res = await searchSchoolDetails({
+          name,
+          requirementType: [req as any],
+        });
         if (res && !res.includes("No schools matched")) {
           combinedAnswers.push(`${req.toUpperCase()}:\n${res}`);
         }
@@ -110,11 +126,19 @@ export const schoolDetailQuery = async (
 
     if (looksLikeError) {
       try {
-        const prompt = singleLinePrompt(dbResult || "Not available", message);
+        let prompt: string;
+
+        if (mappedParameters.requirementType.includes("history")) {
+          prompt = bulletinPrompts(dbResult || "Not available", message);
+        } else {
+          prompt = singleLinePrompt(dbResult || "Not available", message);
+        }
+
         const { text, apiKey } = await getGenerativeResponse(
           prompt,
           conversationHistory
         );
+
         if (text && text.trim()) {
           responseText = text;
           responseSource = `generative-database-detail (via ${apiKey})`;

@@ -1,12 +1,12 @@
 export interface CreateSchoolOfficial {
-  name: string;
+  official_name: string;
   title: string;
   department?: string;
   category: string;
 }
 
 export interface UpdateSchoolOfficial {
-  name?: string;
+  official_name?: string;
   title?: string;
   department?: string;
   category?: string;

@@ -1,5 +1,5 @@
 export interface CreateScholarship {
-  name: string;
+  scholarship_name: string;
   category: string;
   description: string;
   offeredBy: string;
@@ -11,7 +11,7 @@ export interface CreateScholarship {
 }
 
 export interface UpdateScholarship {
-  name?: string;
+  scholarship_name?: string;
   category?: string;
   description?: string;
   offeredBy?: string;

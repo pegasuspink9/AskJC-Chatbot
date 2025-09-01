@@ -9,7 +9,8 @@ import { scholarshipQuery } from "models/chatbot/Scholarship/scholarship.service
 import { getDialogflowResponse } from "../../../helper/dialogflow";
 import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
 import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
-import { officeQuery} from "models/chatbot/schoolOffices/schoolOffices";
+import { officeQuery } from "models/chatbot/schoolOffices/schoolOffices";
+import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -157,21 +158,30 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
+            intentName.includes("getschooldetails") ||
+            intentName.includes("schooldetails")
+          ) {
+            console.log(
+              "Routing to school details service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await schoolDetailQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
             intentName.includes("office") ||
             intentName.includes("offices") ||
             intentName.includes("building") ||
             intentName.includes("location") ||
             intentName.includes("floor")
-            ) {
+          ) {
             console.log(
               "Routing to school office service based on intent:",
               dialogflowResponse.intent
             );
-            return await officeQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await officeQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("department") ||
             intentName.includes("departments") ||
@@ -187,22 +197,18 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }else if (
+          } else if (
             intentName.includes("contact") ||
             intentName.includes("contacts") ||
             intentName.includes("email") ||
-            intentName.includes("phone") || 
+            intentName.includes("phone") ||
             intentName.includes("facebook")
           ) {
             console.log(
               "Routing to school contact service based on intent:",
               dialogflowResponse.intent
             );
-            return await contactQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await contactQuery(user.id, query_text, conversationHistory);
           } else {
             console.log(
               "Routing to school official service based on intent:",

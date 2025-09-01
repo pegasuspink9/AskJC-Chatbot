@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
-import { 
-  generateSingleOfficeResponse, 
-  generateMultipleOfficesResponse,  
-} from '../utils/schoolOffices.helper';
+import {
+  generateSingleOfficeResponse,
+  generateMultipleOfficesResponse,
+} from "../utils/schoolOffices.helper";
 
 interface SearchOfficeParams {
-  name?: string;
+  office_name?: string;
   description?: string;
   location_building?: string;
   location_floor?: string;
@@ -35,18 +35,28 @@ export async function searchOffices(
 
     const conditions = [];
 
-    if (params.name) conditions.push(addCondition("name", params.name));
-    if (params.description) conditions.push(addCondition("description", params.description));
-    if (params.location_building) conditions.push(addCondition("location_building", params.location_building));
-    if (params.location_floor) conditions.push(addCondition("location_floor", params.location_floor));
-    if (params.operating_hours) conditions.push(addCondition("operating_hours", params.operating_hours));
-    if (params.contact_email) conditions.push(addCondition("contact_email", params.contact_email));
-    if (params.contact_phone) conditions.push(addCondition("contact_phone", params.contact_phone));
-    if (params.fb_page) conditions.push(addCondition("fb_page", params.fb_page));
+    if (params.office_name)
+      conditions.push(addCondition("office_name", params.office_name));
+    if (params.description)
+      conditions.push(addCondition("description", params.description));
+    if (params.location_building)
+      conditions.push(
+        addCondition("location_building", params.location_building)
+      );
+    if (params.location_floor)
+      conditions.push(addCondition("location_floor", params.location_floor));
+    if (params.operating_hours)
+      conditions.push(addCondition("operating_hours", params.operating_hours));
+    if (params.contact_email)
+      conditions.push(addCondition("contact_email", params.contact_email));
+    if (params.contact_phone)
+      conditions.push(addCondition("contact_phone", params.contact_phone));
+    if (params.fb_page)
+      conditions.push(addCondition("fb_page", params.fb_page));
 
     if (conditions.length === 0) {
       const allOffices = await db.office.findMany({
-        orderBy: { name: "asc" },
+        orderBy: { office_name: "asc" },
       });
       if (allOffices.length > 0) {
         return generateMultipleOfficesResponse(allOffices);
@@ -59,7 +69,7 @@ export async function searchOffices(
 
     const offices = await db.office.findMany({
       where: whereCondition,
-      orderBy: { name: "asc" },
+      orderBy: { office_name: "asc" },
     });
 
     console.log("🔍 FOUND OFFICES:", offices);
@@ -73,7 +83,6 @@ export async function searchOffices(
     } else {
       return generateMultipleOfficesResponse(offices);
     }
-
   } catch (error) {
     console.error("Database search error:", error);
     return "I'm sorry, there was an error searching for office information.";

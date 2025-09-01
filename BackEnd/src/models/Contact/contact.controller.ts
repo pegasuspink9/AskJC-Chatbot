@@ -16,8 +16,10 @@ export const getContacts = async (_: Request, res: Response) => {
 
 export const createContact = async (req: Request, res: Response) => {
   try {
-    const data: CreateContact = req.body;
-    const contact = await prisma.contact.create({ data });
+    const data: CreateContact[] = req.body;
+    const contact = await prisma.contact.createMany({
+      data,
+    });
     return successResponse(res, contact, "Contact created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create contact");
