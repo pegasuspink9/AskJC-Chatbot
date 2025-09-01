@@ -15,7 +15,7 @@ export const singleLinePrompt = (
     "${message}"
 
     talk like ${botTalk}
-    Make the highlight answer bold ** ** with new line. 
+    Make the highlight answer bold ** ** with new line. Make sure that the answer is direct to the point.
     and ${suggestion}
 `;
 
@@ -32,7 +32,7 @@ Student's question:
 
 
 talk like ${botTalk}
-present the list in a bulletin-style format with bullet points (•) 
+present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database .
 and ${suggestion}
 `;
 

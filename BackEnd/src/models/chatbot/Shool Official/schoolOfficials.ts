@@ -1,7 +1,6 @@
 import { prisma } from "../../../../prisma/client";
 import {
   searchSchoolOfficial,
-  getAllOfficialsWithPosition,
 } from "../../../../helper/services/schoolOfficials.database";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
@@ -60,7 +59,8 @@ export const schoolOfficialsQuery = async (
         responseSource = "dialogflow-direct";
       } else {
         switch (action) {
-          case "get_school_official_info": {
+          case "get_school_official_info":
+          case "get_all_officials_with_position": {
             const mappedParameters = {
               position: parameters.position_titles || parameters.position,
               department: parameters.departments || parameters.department,
@@ -74,14 +74,34 @@ export const schoolOfficialsQuery = async (
             responseSource = "database-search";
 
             try {
-              const prompt = singleLinePrompt(message, dbResult);
-              const { text, apiKey } = await getGenerativeResponse(
-                prompt,
-                conversationHistory
-              );
-              if (text && text.trim()) {
-                responseText = text;
-                responseSource = `enhanced-database (via ${apiKey})`;
+              let prompt = "";
+              if (
+                dbResult.includes("No officials matched") ||
+                dbResult.includes("I need more specific information") ||
+                dbResult.includes("I couldn't find any")
+              ) {
+                prompt = singleLinePrompt(message, dbResult);
+              } else if (
+                action === "get_all_officials_with_position" ||
+                dbResult.includes("Here are all the") ||
+                dbResult.includes("Here are the officials") ||
+                dbResult.includes("I found multiple")
+              ) {
+                prompt = tablePrompts(message, dbResult);
+              } else {
+                // For single official responses
+                prompt = singleLinePrompt(message, dbResult);
+              }
+
+              if (prompt) {
+                const { text, apiKey } = await getGenerativeResponse(
+                  prompt,
+                  conversationHistory
+                );
+                if (text && text.trim()) {
+                  responseText = text;
+                  responseSource = `enhanced-database (via ${apiKey})`;
+                }
               }
             } catch (geminiError) {
               console.warn(
@@ -91,37 +111,22 @@ export const schoolOfficialsQuery = async (
             }
             break;
           }
-          case "get_all_officials_with_position": {
-            const position = parameters.position_titles || parameters.position;
-            console.log("🔄 Getting all officials with position:", position);
 
-            const dbResult = await getAllOfficialsWithPosition(position);
-            responseText = dbResult;
-            responseSource = "database-all-officials-names";
-
-            try {
-              const prompt = tablePrompts(message, dbResult);
-              const { text, apiKey } = await getGenerativeResponse(
-                prompt,
-                conversationHistory
-              );
-              if (text && text.trim()) {
-                responseText = text;
-                responseSource = `enhanced-officials-names (via ${apiKey})`;
-              }
-            } catch (geminiError) {
-              console.warn(
-                "Gemini enhancement failed, using database result:",
-                geminiError
-              );
-            }
+          default: {
+            console.log(`Unknown action: ${action}, using Gemini fallback`);
+            const { text, apiKey } = await getGenerativeResponse(
+              message,
+              conversationHistory
+            );
+            responseText = text;
+            responseSource = `generative-unknown-action (via ${apiKey})`;
             break;
           }
         }
       }
     }
   } catch (error) {
-    console.error("Error in handleChatbotMessage:", error);
+    console.error("Error in schoolOfficialsQuery:", error);
     try {
       const { text, apiKey } = await getGenerativeResponse(
         message,
