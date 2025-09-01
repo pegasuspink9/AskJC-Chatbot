@@ -43,10 +43,12 @@ class GeminiKeyManager {
   private isKeyAvailable(keyStatus: ApiKeyStatus): boolean {
     const now = Date.now();
 
+    // Check if key is temporarily disabled
     if (keyStatus.disabledUntil && now < keyStatus.disabledUntil) {
       return false;
     }
 
+    // Re-enable key if disable period has passed
     if (keyStatus.disabledUntil && now >= keyStatus.disabledUntil) {
       keyStatus.disabledUntil = null;
       keyStatus.isWorking = true;
@@ -54,32 +56,40 @@ class GeminiKeyManager {
         (now - keyStatus.lastFailureAt) / (1000 * 60 * 60)
       );
       console.log(
-        `🔄 KEY-${
-          keyStatus.originalIndex + 1
-        } re-enabled after ${hoursDisabled} hours`
+        `🔄 KEY-${keyStatus.originalIndex + 1} re-enabled after ${hoursDisabled} hours`
       );
     }
 
     return keyStatus.isWorking;
   }
 
-  private getBestAvailableKey(): ApiKeyStatus | null {
-    const availableKeys = this.keyStatuses.filter((key) =>
-      this.isKeyAvailable(key)
-    );
+  // Get only available keys and return the best one
+  private getAvailableKeys(): ApiKeyStatus[] {
+    return this.keyStatuses.filter(key => this.isKeyAvailable(key));
+  }
 
+  private getBestAvailableKey(): ApiKeyStatus | null {
+    const availableKeys = this.getAvailableKeys();
+    
     if (availableKeys.length === 0) {
       return null;
     }
 
+    // Sort by success rate and last success time
     return availableKeys.sort((a, b) => {
-      const aScore = a.isWorking && a.totalSuccesses > 0 ? 1 : 0;
-      const bScore = b.isWorking && b.totalSuccesses > 0 ? 1 : 0;
-      if (aScore !== bScore) return bScore - aScore;
-
-      if (a.lastSuccessAt !== b.lastSuccessAt)
+      // Prefer keys with recent successes
+      if (a.lastSuccessAt !== b.lastSuccessAt) {
         return b.lastSuccessAt - a.lastSuccessAt;
+      }
+      
+      // Then prefer keys with higher success rates
+      const aRate = a.totalSuccesses / (a.totalSuccesses + a.totalFailures || 1);
+      const bRate = b.totalSuccesses / (b.totalSuccesses + b.totalFailures || 1);
+      if (aRate !== bRate) {
+        return bRate - aRate;
+      }
 
+      // Finally, prefer least recently used
       const aLastUsed = Math.max(a.lastSuccessAt, a.lastFailureAt);
       const bLastUsed = Math.max(b.lastSuccessAt, b.lastFailureAt);
       return aLastUsed - bLastUsed;
@@ -93,9 +103,7 @@ class GeminiKeyManager {
     keyStatus.lastSuccessAt = now;
     keyStatus.totalSuccesses++;
     console.log(
-      `✅ KEY-${keyStatus.originalIndex + 1} successful (${
-        keyStatus.totalSuccesses
-      } total successes)`
+      `✅ KEY-${keyStatus.originalIndex + 1} successful (${keyStatus.totalSuccesses} total)`
     );
   }
 
@@ -107,13 +115,9 @@ class GeminiKeyManager {
     keyStatus.lastError = error;
     keyStatus.disabledUntil = now + this.disableDurationHours * 60 * 60 * 1000;
 
-    const disabledUntilDate = new Date(
-      keyStatus.disabledUntil
-    ).toLocaleString();
+    const disabledUntilDate = new Date(keyStatus.disabledUntil).toLocaleString();
     console.log(
-      `❌ KEY-${
-        keyStatus.originalIndex + 1
-      } failed and disabled until ${disabledUntilDate}`
+      `❌ KEY-${keyStatus.originalIndex + 1} failed and disabled until ${disabledUntilDate}`
     );
     console.log(`   Error: ${error}`);
   }
@@ -140,11 +144,10 @@ class GeminiKeyManager {
     prompt: string,
     conversationHistory: string[] = []
   ): Promise<{ text: string; apiKey: string }> {
-    const availableKeysCount = this.keyStatuses.filter((key) =>
-      this.isKeyAvailable(key)
-    ).length;
+    const availableKeys = this.getAvailableKeys();
 
-    if (availableKeysCount === 0) {
+    // Early exit if no keys are available
+    if (availableKeys.length === 0) {
       const nextAvailableTime = Math.min(
         ...this.keyStatuses
           .filter((key) => key.disabledUntil)
@@ -167,33 +170,58 @@ class GeminiKeyManager {
       : `User: ${prompt}`;
 
     console.log(
-      `🔍 ${availableKeysCount} keys available out of ${this.keyStatuses.length}`
+      `🔍 ${availableKeys.length} keys available out of ${this.keyStatuses.length}`
     );
 
-    let attempts = 0;
-    const maxAttempts = availableKeysCount;
-
-    while (attempts < maxAttempts) {
+    // Only attempt with available keys
+    for (let attempt = 0; attempt < availableKeys.length; attempt++) {
       const keyStatus = this.getBestAvailableKey();
-      if (!keyStatus) throw new Error("No available Gemini API keys");
+      
+      if (!keyStatus) {
+        throw new Error("No available Gemini API keys");
+      }
 
-      attempts++;
       try {
+        console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (attempt ${attempt + 1})`);
         const result = await this.tryGenerate(fullPrompt, keyStatus);
         this.markKeySuccess(keyStatus);
         return result;
       } catch (error: any) {
+        console.log(`❌ KEY-${keyStatus.originalIndex + 1} failed: ${error.message}`);
         this.markKeyFailure(keyStatus, error.message);
-        if (attempts >= maxAttempts) {
+        
+        // Check if we still have available keys after this failure
+        const remainingKeys = this.getAvailableKeys();
+        if (remainingKeys.length === 0) {
           throw new Error(
             `All available Gemini API keys failed. Last error: ${error.message}`
           );
         }
-        console.log("🔄 Trying next available key...");
+        
+        if (attempt < availableKeys.length - 1) {
+          console.log("🔄 Trying next available key...");
+        }
       }
     }
 
-    throw new Error("Unexpected error in Gemini key management");
+    throw new Error("All available Gemini API keys have been exhausted");
+  }
+
+  // Enhanced status method to show only available keys
+  getAvailableKeyStatuses() {
+    return this.getAvailableKeys().map((key) => ({
+      keyIndex: key.originalIndex + 1,
+      isWorking: key.isWorking,
+      totalSuccesses: key.totalSuccesses,
+      totalFailures: key.totalFailures,
+      lastError: key.lastError,
+      successRate:
+        key.totalSuccesses + key.totalFailures > 0
+          ? `${Math.round(
+              (key.totalSuccesses / (key.totalSuccesses + key.totalFailures)) * 100
+            )}%`
+          : "N/A",
+    }));
   }
 
   getKeyStatuses() {
@@ -216,6 +244,11 @@ class GeminiKeyManager {
             )}%`
           : "N/A",
     }));
+  }
+
+  // Get count of available keys
+  getAvailableKeyCount(): number {
+    return this.getAvailableKeys().length;
   }
 
   enableKey(keyIndex: number) {
@@ -273,15 +306,27 @@ export async function getGenerativeResponse(
 export function getKeyStatuses() {
   return geminiManager.getKeyStatuses();
 }
+
+export function getAvailableKeyStatuses() {
+  return geminiManager.getAvailableKeyStatuses();
+}
+
+export function getAvailableKeyCount() {
+  return geminiManager.getAvailableKeyCount();
+}
+
 export function enableKey(keyIndex: number) {
   return geminiManager.enableKey(keyIndex);
 }
+
 export function disableKey(keyIndex: number, reason?: string) {
   return geminiManager.disableKey(keyIndex, reason);
 }
+
 export function resetAllKeys() {
   return geminiManager.resetAllKeys();
 }
+
 export function setDisableDuration(hours: number) {
   return geminiManager.setDisableDuration(hours);
 }

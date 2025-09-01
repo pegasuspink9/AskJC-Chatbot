@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, JSX } from 'react';
+import React, { useRef, useCallback, useState, JSX } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
+import { Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
 
 interface ChatScreenProps {
@@ -42,43 +42,67 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   renderTypingIndicator,
 }) => {
   const flatListRef = useRef<FlatList>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  // Memoize the renderMessage function to prevent unnecessary re-renders
+  // Scroll to bottom helper
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, []);
+
+  // Enhanced send message handler
+  const handleSendMessage = useCallback(() => {
+    onSendMessage();
+    setShouldAutoScroll(true);
+    scrollToBottom();
+  }, [onSendMessage, scrollToBottom]);
+
+  // Memoized render functions
   const memoizedRenderMessage = useCallback(
     ({ item }: { item: ChatMessage }) => renderMessage({ item }),
     [renderMessage]
   );
 
-  // Memoize the renderTypingIndicator function
   const memoizedRenderTypingIndicator = useCallback(
     () => renderTypingIndicator(),
     [renderTypingIndicator]
   );
 
-  // Memoize the keyExtractor function
-  const keyExtractor = useCallback(
-    (item: ChatMessage) => item.id,
-    []
-  );
+  const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
 
-  // Memoize the onContentSizeChange function
+  // Scroll event handlers
   const onContentSizeChange = useCallback(() => {
-    flatListRef.current?.scrollToEnd({ animated: true });
+    if (shouldAutoScroll) {
+      scrollToBottom();
+    }
+  }, [shouldAutoScroll, scrollToBottom]);
+
+  const onScrollBeginDrag = useCallback(() => {
+    setShouldAutoScroll(false);
   }, []);
 
-  // Create safe animated style object
+  const onScroll = useCallback((event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= 
+                           contentSize.height - paddingToBottom;
+    
+    if (isCloseToBottom) {
+      setShouldAutoScroll(true);
+    }
+  }, []);
+
+  // Animation styles
   const animatedStyle = {
     opacity: fadeAnim || 1,
     transform: slideAnim2 ? [{ translateY: slideAnim2 }] : [{ translateY: 0 }]
   };
 
+  const isInputValid = inputText.trim();
+
   return (
-    <Animated.View 
-      style={[
-        styles(Colors).container,
-        animatedStyle
-      ]}
-    >
+    <Animated.View style={[styles(Colors).container, animatedStyle]}>
       <KeyboardAvoidingView
         style={styles(Colors).keyboardAvoid}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -91,8 +115,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           <View style={styles(Colors).headerContent}>
             <View style={styles(Colors).headerInfo}>
               <Text style={[styles(Colors).headerTitle, styles(Colors).welcomeAsk]}>
-                Ask
-                <Text style={styles(Colors).welcomeJC}>JC</Text>
+                Ask<Text style={styles(Colors).welcomeJC}>JC</Text>
               </Text>
               <Text style={styles(Colors).headerSubtitle}>
                 {isTyping ? 'Typing...' : 'Online'}
@@ -108,20 +131,22 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           renderItem={memoizedRenderMessage}
           keyExtractor={keyExtractor}
           style={styles(Colors).messagesList}
-          contentContainerStyle={StyleSheet.flatten([
+          contentContainerStyle={[
             styles(Colors).messagesContent,
-            { flexGrow: 1 },
-          ])}
+            { flexGrow: 1 }
+          ]}
           showsVerticalScrollIndicator={false}
           ListFooterComponent={memoizedRenderTypingIndicator}
           onContentSizeChange={onContentSizeChange}
-          // Add these performance optimizations
+          onScrollBeginDrag={onScrollBeginDrag}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           updateCellsBatchingPeriod={50}
           initialNumToRender={10}
           windowSize={10}
-          getItemLayout={undefined} // Let FlatList calculate this automatically
+          getItemLayout={undefined}
         />
 
         {/* Input */}
@@ -135,21 +160,23 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
               placeholderTextColor={Colors.gray?.[400] || '#9CA3AF'}
               multiline
               maxLength={500}
-              onSubmitEditing={onSendMessage}
+              onSubmitEditing={handleSendMessage}
               blurOnSubmit={false}
             />
             <TouchableOpacity
-              style={StyleSheet.flatten([
+              style={[
                 styles(Colors).sendButton,
-                inputText.trim() ? styles(Colors).sendButtonActive : styles(Colors).sendButtonInactive
-              ])}
-              onPress={onSendMessage}
-              disabled={!inputText.trim()}
+                isInputValid 
+                  ? styles(Colors).sendButtonActive 
+                  : styles(Colors).sendButtonInactive
+              ]}
+              onPress={handleSendMessage}
+              disabled={!isInputValid}
             >
               <Ionicons
                 name="send"
                 size={20}
-                color={inputText.trim() ? Colors.white : Colors.gray?.[400] || '#9CA3AF'}
+                color={isInputValid ? Colors.white : Colors.gray?.[400] || '#9CA3AF'}
               />
             </TouchableOpacity>
           </View>

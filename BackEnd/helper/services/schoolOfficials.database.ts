@@ -1,164 +1,113 @@
 import { PrismaClient } from "@prisma/client";
-import { generateSingleOfficialResponse, generateMultipleOfficialsResponse, generateNotFoundMessage } from "../utils/schoolOfficial.responseFormatter";
+import { generateSingleOfficialResponse, generateMultipleOfficialsResponse,  generateNotFoundMessage } from "../utils/schoolOfficial.responseFormatter";
 const db = new PrismaClient();
 
-interface SearchParams {
-  position?: string;
-  department?: string;
+interface SearchSchoolOfficialParams {
+  name?: string;
+  position?: string | string[];
+  department?: string | string[];
+  category?: string | string[];
   query_type?: string;
 }
 
-export async function searchSchoolOfficial(params: SearchParams): Promise<string> {
-  console.log("🔍 SEARCH PARAMS:", params);
+export async function searchSchoolOfficial(
+  params: SearchSchoolOfficialParams
+): Promise<string> {
+  console.log("🔍 SCHOOL OFFICIAL SEARCH PARAMS:", params);
 
-  const position = params.position;
-  const department = params.department;
-  const query_type = params.query_type;
-  
-  console.log("🔄 MAPPED PARAMS:");
-  console.log("Position:", position);
-  console.log("Department:", department);
-  console.log("Query Type:", query_type);
-  
   try {
-    let whereCondition: any = {};
-    
-    if (position && department) {
-      whereCondition = {
-        AND: [
-          {
-            title: {
-              contains: position,
-              mode: "insensitive"
-            }
-          },
-          {
-            OR: [
-              {
-                department: {
-                  contains: department,
-                  mode: "insensitive"
-                }
-              },
-              {
-                category: {
-                  contains: department,
-                  mode: "insensitive"
-                }
-              }
-            ]
-          }
-        ]
-      };
-    } else if (position) {
-      whereCondition = {
-        title: {
-          contains: position,
-          mode: "insensitive"
-        }
-      };
-    } else if (department) {
-      whereCondition = {
-        OR: [
-          {
-            department: {
-              contains: department,
-              mode: "insensitive"
-            }
-          },
-          {
-            category: {
-              contains: department,
-              mode: "insensitive"
-            }
-          }
-        ]
-      };
-    } else {
-      return "I need more specific information. Please ask about a specific position or department.";
+    const addCondition = (field: string, value: string | string[]) => {
+      if (Array.isArray(value)) {
+        return {
+          OR: value.map((v) => ({
+            [field]: { contains: v, mode: "insensitive" },
+          })),
+        };
+      }
+      return { [field]: { contains: value, mode: "insensitive" } };
+    };
+
+    const conditions = [];
+
+    if (params.position) conditions.push(addCondition("title", params.position));
+    if (params.department) conditions.push(addCondition("department", params.department));
+    if (params.category) conditions.push(addCondition("category", params.category));
+    if (params.name) conditions.push(addCondition("name", params.name));
+
+    if (conditions.length === 0 && !params.query_type) {
+      return "I need more specific information. Please ask about a specific position, department, or person.";
     }
+
+    if (params.query_type === "get_all_officials_with_position" || 
+        (params.position && !params.department && !params.category)) {
+      console.log("🔍 GETTING ALL OFFICIALS WITH POSITION:", params.position);
+      
+      let whereCondition: any = {};
+      
+      if (params.position) {
+        whereCondition = addCondition("title", params.position);
+      }
+
+      const officials = await db.schoolOfficial.findMany({
+        where: whereCondition,
+        orderBy: [
+          { department: 'asc' },
+          { name: 'asc' }
+        ]
+      });
+
+      console.log("🔍 FOUND OFFICIALS:", officials);
+
+      if (officials.length === 0) {
+        if (params.position) {
+          return `I couldn't find any ${Array.isArray(params.position) ? params.position.join(' or ') : params.position}s in our records.`;
+        } else {
+          return "I couldn't find any officials in our records.";
+        }
+      }
+
+      let formattedResponse = "";
+      
+      if (params.position) {
+        const positionStr = Array.isArray(params.position) ? params.position.join(' or ') : params.position;
+        formattedResponse = `Here are all the ${positionStr}s:\n\n`;
+      } else {
+        formattedResponse = `Here are all the officials:\n\n`;
+      }
+      
+      officials.forEach((official, index) => {
+        formattedResponse += `${index + 1}. **${official.name}** - ${official.title}`;
+        if (official.department) {
+          formattedResponse += ` (${official.department})`;
+        }
+        formattedResponse += '\n';
+      });
+
+      return formattedResponse;
+    }
+
+    const whereCondition = conditions.length > 1 ? { AND: conditions } : conditions[0];
 
     const officials = await db.schoolOfficial.findMany({
       where: whereCondition,
-      orderBy: {
-        title: 'asc'
-      }
+      orderBy: { name: 'asc' }
     });
 
     console.log("🔍 FOUND OFFICIALS:", officials);
 
     if (officials.length === 0) {
-      return generateNotFoundMessage(position, department);
+      return generateNotFoundMessage(params.position, params.department, params.name);
     }
 
     if (officials.length === 1) {
       const official = officials[0];
-      return generateSingleOfficialResponse(official, position, department);
+      return generateSingleOfficialResponse(official, params.position, params.department);
+    } else {
+      return generateMultipleOfficialsResponse(officials, params.position, params.department);
     }
-
-    return generateMultipleOfficialsResponse(officials, position, department);
 
   } catch (error) {
     console.error("Database search error:", error);
     return "I'm sorry, there was an error searching for that information.";
-  }
-
-}
-
-export async function getAllOfficialsWithPosition(position?: string): Promise<string> {
-  console.log("🔍 GETTING ALL OFFICIALS WITH POSITION:", position);
-  
-  try {
-    let whereCondition: any = {};
-    
-    if (position) {
-      whereCondition = {
-        title: {
-          contains: position,
-          mode: "insensitive"
-        }
-      };
-    }
-
-    const officials = await db.schoolOfficial.findMany({
-      where: whereCondition,
-      orderBy: [
-        { department: 'asc' },
-        { name: 'asc' }
-      ]
-    });
-
-    console.log("🔍 FOUND OFFICIALS:", officials);
-
-    if (officials.length === 0) {
-      if (position) {
-        return `I couldn't find any ${position}s in our records.`;
-      } else {
-        return "I couldn't find any officials in our records.";
-      }
-    }
-
-    // Format the response with just names and positions
-    let formattedResponse = "";
-    
-    if (position) {
-      formattedResponse = `Here are all the ${position}s:\n\n`;
-    } else {
-      formattedResponse = `Here are all the officials:\n\n`;
-    }
-    
-    officials.forEach((official, index) => {
-      formattedResponse += `${index + 1}. **${official.name}** - ${official.title}`;
-      if (official.department) {
-        formattedResponse += ` (${official.department})`;
-      }
-      formattedResponse += '\n';
-    });
-
-    return formattedResponse;
-
-  } catch (error) {
-    console.error("Database search error for all officials with position:", error);
-    return "I'm sorry, there was an error retrieving the officials information.";
   }
 }

@@ -52,7 +52,6 @@ export const MessageItem = memo<MessageItemProps>(({
 
   const showSuggestions = !item.isUser && shouldShowSuggestions && shouldShowSuggestions(item.id);
 
-  // Create flattened text styles to avoid array issues
   const textStyle = StyleSheet.flatten([
     styles(Colors).messageText,
     item.isUser ? styles(Colors).userMessageText : styles(Colors).botMessageText
@@ -210,8 +209,8 @@ const styles = (Colors: any) => StyleSheet.create({
     borderColor: Colors.borderColor,
   },
   messageText: {
-    fontSize: FontSizes?.sm || 14,
-    lineHeight: 20,
+    fontSize: 13.5,
+    lineHeight: 21,
     fontFamily: FontFamilies?.regular || 'System',
   },
   userMessageText: {
