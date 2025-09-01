@@ -8,49 +8,49 @@ export function formatScholarshipGeneral(scholarship: any): string {
     details.push(`in the ${scholarship.category} category`);
 
   const detailsStr = details.length > 0 ? ` (${details.join(", ")})` : "";
-  return `${scholarship.name}${detailsStr}.`;
+  return `${scholarship.scholarship_name}${detailsStr}.`;
 }
 
 export function formatScholarshipEligibility(scholarship: any): string {
   return scholarship.eligibility_criteria
-    ? `${scholarship.name} eligibility criteria: ${scholarship.eligibility_criteria}`
-    : `${scholarship.name} eligibility criteria is not available.`;
+    ? `${scholarship.scholarship_name} eligibility criteria: ${scholarship.eligibility_criteria}`
+    : `${scholarship.scholarship_name} eligibility criteria is not available.`;
 }
 
 export function formatScholarshipDocuments(scholarship: any): string {
   return scholarship.required_document
-    ? `${scholarship.name} required documents: ${scholarship.required_document}`
-    : `${scholarship.name} required documents are not available.`;
+    ? `${scholarship.scholarship_name} required documents: ${scholarship.required_document}`
+    : `${scholarship.scholarship_name} required documents are not available.`;
 }
 
 export function formatScholarshipApplication(scholarship: any): string {
   return scholarship.application_process
-    ? `${scholarship.name} application process: ${scholarship.application_process}`
-    : `${scholarship.name} application process is not available.`;
+    ? `${scholarship.scholarship_name} application process: ${scholarship.application_process}`
+    : `${scholarship.scholarship_name} application process is not available.`;
 }
 
 export function formatScholarshipAmount(scholarship: any): string {
   return scholarship.award_amount
-    ? `The award amount for ${scholarship.name} is ${scholarship.award_amount}.`
-    : `${scholarship.name} award amount is not available.`;
+    ? `The award amount for ${scholarship.scholarship_name} is ${scholarship.award_amount}.`
+    : `${scholarship.scholarship_name} award amount is not available.`;
 }
 
 export function formatScholarshipContact(scholarship: any): string {
   return scholarship.contact_office
-    ? `To contact about ${scholarship.name}: ${scholarship.contact_office}`
-    : `${scholarship.name} contact information is not available.`;
+    ? `To contact about ${scholarship.scholarship_name}: ${scholarship.contact_office}`
+    : `${scholarship.scholarship_name} contact information is not available.`;
 }
 
 export function formatScholarshipDescription(scholarship: any): string {
   return scholarship.description
-    ? `${scholarship.name} description: ${scholarship.description}`
-    : `${scholarship.name} description is not available.`;
+    ? `${scholarship.scholarship_name} description: ${scholarship.description}`
+    : `${scholarship.scholarship_name} description is not available.`;
 }
 
 export function formatScholarshipOfferedBy(scholarship: any): string {
   return scholarship.offeredBy
-    ? `${scholarship.name} is offered by ${scholarship.offeredBy}.`
-    : `${scholarship.name} 'offered by' information is not available.`;
+    ? `${scholarship.scholarship_name} is offered by ${scholarship.offeredBy}.`
+    : `${scholarship.scholarship_name} 'offered by' information is not available.`;
 }
 
 export function formatMultipleScholarships(scholarships: any[]): string {
@@ -61,7 +61,7 @@ export function formatMultipleScholarships(scholarships: any[]): string {
     const list = scholarships
       .map(
         (sch) =>
-          `• ${sch.name}${
+          `• ${sch.scholarship_name}${
             sch.award_amount ? ` (worth ${sch.award_amount})` : ""
           }`
       )

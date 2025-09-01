@@ -14,7 +14,7 @@ export type RequirementType =
   | "history";
 
 interface SearchSchoolDetailsParams {
-  name?: string | string[];
+  school_name?: string | string[];
   requirementType?: RequirementType[];
 }
 
@@ -48,7 +48,8 @@ export async function searchSchoolDetails(
 
     const conditions = [];
 
-    if (params.name) conditions.push(addCondition("name", params.name));
+    if (params.school_name)
+      conditions.push(addCondition("school name", params.school_name));
 
     if (params.requirementType && params.requirementType.length > 0) {
       for (const type of params.requirementType) {

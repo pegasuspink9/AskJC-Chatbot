@@ -50,10 +50,10 @@ export const schoolDetailQuery = async (
       parameters = dialogflow?.parameters || {};
     }
 
-    const nameRaw = parameters["school-name"];
+    const nameRaw = parameters["school_name"];
     const infoRaw = parameters["school-info"];
 
-    const name =
+    const school_name =
       (typeof nameRaw === "string" && nameRaw.trim()) || "Saint Joseph College";
 
     const requirementType: string[] = Array.isArray(infoRaw)
@@ -91,7 +91,7 @@ export const schoolDetailQuery = async (
     );
 
     const mappedParameters = {
-      name,
+      school_name,
       requirementType:
         validRequirementTypes.length > 0 ? [validRequirementTypes[0]] : [],
     };
@@ -102,7 +102,7 @@ export const schoolDetailQuery = async (
       const combinedAnswers: string[] = [];
       for (const req of requirementType) {
         const res = await searchSchoolDetails({
-          name,
+          school_name,
           requirementType: [req as any],
         });
         if (res && !res.includes("No schools matched")) {
