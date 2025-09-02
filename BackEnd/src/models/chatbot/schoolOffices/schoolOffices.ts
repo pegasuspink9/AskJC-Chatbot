@@ -64,7 +64,7 @@ export const officeQuery = async (
         switch (action) {
           case "get_office_info": {
             const mappedParameters = {
-              name: parameters.office_names,
+              office_name: parameters.office_names,
             };
 
             console.log("Original Dialogflow parameters:", parameters);

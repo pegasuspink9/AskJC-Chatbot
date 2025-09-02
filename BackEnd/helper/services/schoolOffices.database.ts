@@ -3,6 +3,10 @@ const db = new PrismaClient();
 import {
   generateSingleOfficeResponse,
   generateMultipleOfficesResponse,
+  formatOfficeLocation,
+  formatOfficeContact,
+  formatOfficeHours,
+  formatOfficeDescription,
 } from "../utils/schoolOffices.helper";
 
 interface SearchOfficeParams {
@@ -79,12 +83,24 @@ export async function searchOffices(
     }
 
     if (offices.length === 1) {
-      return generateSingleOfficeResponse(offices[0]);
-    } else {
-      return generateMultipleOfficesResponse(offices);
-    }
-  } catch (error) {
-    console.error("Database search error:", error);
-    return "I'm sorry, there was an error searching for office information.";
+  const office = offices[0];
+  
+  if (params.location_building || params.location_floor) {
+    return formatOfficeLocation(office);
+  } else if (params.contact_email || params.contact_phone || params.fb_page) {
+    return formatOfficeContact(office);
+  } else if (params.operating_hours) {
+    return formatOfficeHours(office);
+  } else if (params.description) {
+    return formatOfficeDescription(office);
+  } else {
+    return generateSingleOfficeResponse(office);
   }
+} else {
+  return generateMultipleOfficesResponse(offices);
+}
+} catch (error) {
+  console.error("Database search error:", error);
+  return "I'm sorry, there was an error searching for office information.";
+}
 }
