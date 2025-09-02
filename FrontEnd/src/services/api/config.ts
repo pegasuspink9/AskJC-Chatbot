@@ -6,7 +6,7 @@ export const API_CONFIG = {
     // USER: '/user/',
     // AUTH: '/auth/',
   },
-  TIMEOUT: 30000, // 30 seconds
+  TIMEOUT: 30000, 
 };
 
 function getBaseUrl(): string {

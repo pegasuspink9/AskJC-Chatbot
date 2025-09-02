@@ -8,10 +8,12 @@ export function formatDepartmentLocation(dept: any): string {
   if (location.length > 0) {
     let response = `The ${dept.department_name} is located at ${location.join(', ')}.`;
     
+    // Add head contact information if available
     if (dept.head_name) {
       response += ` You can find ${dept.head_name} (Department Head) at this location.`;
     }
     
+    // Add department context
     if (dept.description) {
       response += ` This is where ${dept.description.toLowerCase()} activities take place.`;
     }
@@ -26,6 +28,7 @@ export function formatDepartmentHead(dept: any): string {
   if (dept.head_name) {
     let response = `The ${dept.department_name} is headed by ${dept.head_name}.`;
     
+    // Add location information for the head
     const location = [];
     if (dept.floor) location.push(`Floor: ${dept.floor}`);
     if (dept.building) location.push(`Building: ${dept.building}`);
@@ -34,10 +37,12 @@ export function formatDepartmentHead(dept: any): string {
       response += ` You can find ${dept.head_name} at the department office located at ${location.join(', ')}.`;
     }
     
+    // Add department focus context
     if (dept.description) {
       response += ` ${dept.head_name} oversees ${dept.description.toLowerCase()} programs and activities.`;
     }
     
+    // Add career guidance context
     if (dept.career_path) {
       response += ` Contact ${dept.head_name} for guidance on career paths including: ${dept.career_path}.`;
     }

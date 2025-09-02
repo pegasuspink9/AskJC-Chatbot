@@ -53,7 +53,7 @@ Student's question:
 "${message}"
 
 talk like ${botTalk}
-Present the results in a **Markdown table** with clear columns (attributes| attributes | attributes and etc.). 
+Present the results in a **Markdown table** maximum of 3 clear columns (attributes| attributes | attributes). 
 Make the table clean and easy to read. 
 
 - Make the table clean and easy to read. 

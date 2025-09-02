@@ -11,6 +11,7 @@ import { departmentOfficialsQuery } from "models/chatbot/School Department/schoo
 import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
 import { officeQuery} from "models/chatbot/schoolOffices/schoolOffices";
 import {schoolDetailQuery} from "models/chatbot/School Details/schoolDetails.service";
+import {organizationQuery} from "models/chatbot/schoolOrganization/schoolOrganization";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -177,7 +178,10 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("department") ||
             intentName.includes("departments") ||
             intentName.includes("head") ||
-            intentName.includes("heads")
+            intentName.includes("heads") ||
+            intentName.includes("faculty") ||
+            intentName.includes("faculty members") 
+
           ) {
             console.log(
               "Routing to school department service based on intent:",
@@ -205,6 +209,23 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
+            intentName.includes("organization") ||
+            intentName.includes("organizations") ||
+            intentName.includes("student org") ||
+            intentName.includes("club") ||
+            intentName.includes("society")
+          ) {
+            console.log(
+              "Routing to organization service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await organizationQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          }
+          else if (
             intentName.includes("detail") ||
             intentName.includes("details") ||
             intentName.includes("history") ||

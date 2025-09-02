@@ -1,5 +1,5 @@
 export interface CreateScholarship {
-  name: string;
+  contact_name: string;
   category: string;
   description: string;
   offeredBy: string;
@@ -11,7 +11,7 @@ export interface CreateScholarship {
 }
 
 export interface UpdateScholarship {
-  name?: string;
+  contact_name?: string;
   category?: string;
   description?: string;
   offeredBy?: string;

@@ -1,18 +1,18 @@
 export interface Contact {
   id: number;
-  name: string;
+  contact_name: string;
   fb_page?: string | null;
   email?: string | null;
 }
 
 export interface CreateContact {
-  name: string;
+  contact_name: string;
   fb_page?: string | null;
   email?: string | null;
 }
 
 export interface UpdateContact {
-  name?: string;
+  contact_name?: string;
   fb_page?: string | null;
   email?: string | null;
 }
