@@ -20,6 +20,10 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": [
+          "android.permission.INTERNET",
+          "android.permission.QUERY_ALL_PACKAGES"
+        ],
       "edgeToEdgeEnabled": true
     },
     "web": {

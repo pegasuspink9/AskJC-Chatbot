@@ -78,7 +78,6 @@ export const departmentOfficialsQuery = async (
             try {
               let prompt = "";
               
-              // Count numbered entries to detect multiple departments
               const numberedEntries = (dbResult.match(/^\d+\./gm) || []).length;
               
               if (
@@ -97,6 +96,32 @@ export const departmentOfficialsQuery = async (
 
               const { text, apiKey } = await getGenerativeResponse(
                 prompt, 
+                conversationHistory
+              );
+              if (text && text.trim()) {
+                responseText = text;
+                responseSource = `generative-database-detail (via ${apiKey})`;
+              }
+            } catch (geminiError) {
+              console.error("Generative response error:", geminiError);
+            }
+            break;
+          }
+
+        case "get_all_departments": {
+            const mappedParameters = {}; // Empty object to get ALL departments
+            
+            console.log("Getting all departments with complete information");
+            
+            const dbResult = await searchSchoolDepartment(mappedParameters);
+            responseText = dbResult;
+            responseSource = "database-search";
+
+            try {
+              // Always use tablePrompts for comprehensive display
+              const prompt = tablePrompts(dbResult, message);
+              const { text, apiKey } = await getGenerativeResponse(
+                prompt,
                 conversationHistory
               );
               if (text && text.trim()) {

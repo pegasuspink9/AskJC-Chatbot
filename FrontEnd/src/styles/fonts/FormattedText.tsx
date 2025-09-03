@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, Linking, TouchableOpacity, Alert, Platform } from 'react-native';
 import { FontFamilies, FontSizes } from '../../constants/theme';
 
 const parseFormattedText = (
@@ -13,15 +13,16 @@ const parseFormattedText = (
   }
 
   if (text.match(/^\s*[-•]/m)) {
-    return renderWithBullets(text, baseTextStyle);
+    return renderWithBullets(text, baseTextStyle, Colors);
   }
 
-  return renderFormattedText(text, baseTextStyle);
+  return renderFormattedText(text, baseTextStyle, Colors);
 };
 
-const renderFormattedText = (text: string, baseTextStyle: any) => {
-  const formatRegex = /(\*\*.*?\*\*|\*.*?\*)/g;
-  const parts = text.split(formatRegex);
+const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
+
+  const combinedRegex = /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+)/g;
+  const parts = text.split(combinedRegex);
 
   return parts
     .map((part, index) => {
@@ -36,8 +37,35 @@ const renderFormattedText = (text: string, baseTextStyle: any) => {
           ...textStyle,
           fontFamily: FontFamilies?.bold || 'System',
         };
+        return (
+          <Text key={index} style={textStyle}>
+            {content}
+          </Text>
+        );
       }
 
+        if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/)) {
+        return (
+          <TouchableOpacity 
+            key={index} 
+            onPress={() => handleUrlPress(part)}
+            activeOpacity={0.7}
+            style={{ flexShrink: 1 }} // Important for proper text wrapping
+          >
+            <Text style={{
+              ...textStyle,
+              color: Colors?.primary || '#0066cc', 
+              textDecorationLine: 'underline',
+              fontWeight: '500',
+            }}>
+              {part}
+            </Text>
+          </TouchableOpacity>
+        );
+      }
+
+
+      // Regular text
       return (
         <Text key={index} style={textStyle}>
           {content}
@@ -47,7 +75,60 @@ const renderFormattedText = (text: string, baseTextStyle: any) => {
     .filter(Boolean);
 };
 
-const renderWithBullets = (text: string, baseTextStyle: any) => {
+// Enhanced URL handler - works perfectly with Expo Go (no clipboard needed)
+const handleUrlPress = async (url: string) => {
+  try {
+    let fullUrl = url.trim();
+    
+    // Clean up URL - remove trailing punctuation
+    fullUrl = fullUrl.replace(/[.,;:]$/, '');
+    
+    // Handle different URL formats
+    if (fullUrl.startsWith('www.')) {
+      fullUrl = `https://${fullUrl}`;
+    } else if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+      fullUrl = `https://${fullUrl}`;
+    }
+    
+    console.log('📱 Platform:', Platform.OS);
+    console.log('🔗 Attempting to open URL:', fullUrl);
+    
+    // Android-specific handling - try direct open first
+    if (Platform.OS === 'android') {
+      try {
+        await Linking.openURL(fullUrl);
+        console.log('✅ URL opened successfully');
+        return;
+      } catch (androidError) {
+        console.log('❌ Direct open failed, trying canOpenURL check');
+      }
+    }
+    
+    // Fallback for both platforms
+    const supported = await Linking.canOpenURL(fullUrl);
+    console.log('🔍 URL supported:', supported);
+    
+    if (supported) {
+      await Linking.openURL(fullUrl);
+      console.log('✅ URL opened via canOpenURL check');
+    } else {
+      Alert.alert(
+        "Can't open link", 
+        `Unable to open this link. Please copy and paste it in your browser:\n\n${fullUrl}`,
+        [{ text: "OK", style: "default" }]
+      );
+    }
+  } catch (error) {
+    console.error('💥 Error opening URL:', error);
+    Alert.alert(
+      "Link Error", 
+      "Something went wrong while trying to open the link.",
+      [{ text: "OK", style: "default" }]
+    );
+  }
+};
+
+const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
   const lines = text.split('\n').filter(line => line.trim().length > 0);
 
   return (
@@ -65,9 +146,9 @@ const renderWithBullets = (text: string, baseTextStyle: any) => {
               <Text style={{ ...baseTextStyle, marginRight: 20 }}>•</Text>
             )}
 
-            <Text style={{ flex: 1 }}>
-              {renderFormattedText(trimmed, baseTextStyle)}
-            </Text>
+            <View style={{ flex: 1 }}>
+              {renderFormattedText(trimmed, baseTextStyle, Colors)}
+            </View>
           </View>
         );
       })}
@@ -86,7 +167,7 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
   const lastTableIndex = tableIndexes.length > 0 ? tableIndexes.pop()! : -1;
 
   if (firstTableIndex === -1 || lastTableIndex === -1) {
-    return renderFormattedText(text, baseTextStyle);
+    return renderFormattedText(text, baseTextStyle, Colors);
   }
 
   const intro = lines.slice(0, firstTableIndex).join('\n').trim();
@@ -98,7 +179,9 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
   return (
     <View style={{ width: '100%' }}>
       {intro ? (
-        <Text style={{ ...baseTextStyle, marginBottom: 8 }}>{intro}</Text>
+        <View style={{ marginBottom: 8 }}>
+          {renderFormattedText(intro, baseTextStyle, Colors)}
+        </View>
       ) : null}
 
       <View
@@ -131,22 +214,18 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
                     borderColor: Colors?.border || '#000',
                   }}
                 >
-                  <Text
+                  <View
                     style={{
-                      ...baseTextStyle,
-                      fontFamily:
-                        rowIndex === 0
-                          ? FontFamilies?.bold
-                          : baseTextStyle.fontFamily,
-                      fontSize: 10,
-                      flexWrap: 'wrap',
+                      flex: 1,
+                      justifyContent: 'center',
                     }}
-                    numberOfLines={0}
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.7}
                   >
-                    {col}
-                  </Text>
+                    {renderFormattedText(col, {
+                      ...baseTextStyle,
+                      fontFamily: rowIndex === 0 ? FontFamilies?.bold : baseTextStyle.fontFamily,
+                      fontSize: 10,
+                    }, Colors)}
+                  </View>
                 </View>
               ))}
             </View>
@@ -156,7 +235,7 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
 
       {outro ? (
         <View style={{ marginTop: 8 }}>
-          {renderFormattedText(outro, baseTextStyle)}
+          {renderFormattedText(outro, baseTextStyle, Colors)}
         </View>
       ) : null}
     </View>

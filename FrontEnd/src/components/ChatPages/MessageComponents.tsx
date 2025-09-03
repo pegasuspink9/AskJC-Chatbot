@@ -81,6 +81,8 @@ export const MessageItem = memo<MessageItemProps>(({
   ]);
 
 
+
+
 return (
     <View style={StyleSheet.flatten([
       styles(Colors).messageContainer,
@@ -92,14 +94,15 @@ return (
         item.isUser ? styles(Colors).userMessageBubble : styles(Colors).botMessageBubble
       ])}>
         
-        <Text style={textStyle}>
+        {/* FIXED: Remove the Text wrapper and render formatted content directly */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           {parseFormattedText(
             displayText,
             Colors, 
             item.isUser,
             textStyle 
           )}
-        </Text>
+        </View>
       </View>
 
       {showSuggestions && (
