@@ -1,6 +1,8 @@
 import React from 'react';
-import { Text, View, Linking, TouchableOpacity, Alert, Platform } from 'react-native';
+import { Text, View, Linking, TouchableOpacity, Alert, Platform, Image, Dimensions } from 'react-native';
 import { FontFamilies, FontSizes } from '../../constants/theme';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const parseFormattedText = (
   text: string,
@@ -20,7 +22,7 @@ const parseFormattedText = (
 };
 
 const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
-
+  // Remove [IMAGE:url] from the regex since MessageComponents will handle it
   const combinedRegex = /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+)/g;
   const parts = text.split(combinedRegex);
 
@@ -31,6 +33,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
       let textStyle = { ...baseTextStyle };
       let content = part;
 
+      // Handle bold text
       if (part.startsWith('**') && part.endsWith('**')) {
         content = part.slice(2, -2);
         textStyle = {
@@ -44,13 +47,14 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
         );
       }
 
-        if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/)) {
+      // Handle URLs (but not IMAGE: URLs)
+      if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
         return (
           <TouchableOpacity 
             key={index} 
             onPress={() => handleUrlPress(part)}
             activeOpacity={0.7}
-            style={{ flexShrink: 1 }} // Important for proper text wrapping
+            style={{ flexShrink: 1 }} 
           >
             <Text style={{
               ...textStyle,
@@ -64,7 +68,6 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
         );
       }
 
-
       // Regular text
       return (
         <Text key={index} style={textStyle}>
@@ -75,25 +78,20 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
     .filter(Boolean);
 };
 
+
 // Enhanced URL handler - works perfectly with Expo Go (no clipboard needed)
 const handleUrlPress = async (url: string) => {
   try {
     let fullUrl = url.trim();
     
-    // Clean up URL - remove trailing punctuation
     fullUrl = fullUrl.replace(/[.,;:]$/, '');
     
-    // Handle different URL formats
     if (fullUrl.startsWith('www.')) {
       fullUrl = `https://${fullUrl}`;
     } else if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
       fullUrl = `https://${fullUrl}`;
     }
     
-    console.log('📱 Platform:', Platform.OS);
-    console.log('🔗 Attempting to open URL:', fullUrl);
-    
-    // Android-specific handling - try direct open first
     if (Platform.OS === 'android') {
       try {
         await Linking.openURL(fullUrl);

@@ -6,7 +6,7 @@ const botTalk = `
     
     IMPORTANT: When including URLs or links, write them WITHOUT bold formatting. Use plain URLs like https://example.com so they remain clickable.
     
-    `;
+    Always include this image at the end:[IMAGE:https://img-s-msn-com.akamaized.net/tenant/amp/entityid/AA1GPrfU.img?w=768&h=512&m=6]`;
 
 export const singleLinePrompt = (
   fact: string,
@@ -23,6 +23,7 @@ export const singleLinePrompt = (
 
     if its a list or the response are two or more - present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database using only ** **
     
+    Always include this image at the end: [IMAGE:https://img-s-msn-com.akamaized.net/tenant/amp/entityid/AA1GPrfU.img?w=768&h=512&m=6]
     
     and ${suggestion}
 `;

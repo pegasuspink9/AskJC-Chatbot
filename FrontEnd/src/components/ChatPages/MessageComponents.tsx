@@ -5,11 +5,16 @@ import {
   StyleSheet,
   Animated,
   Platform,
-  TouchableOpacity
+  TouchableOpacity,
+  Image,
+  Dimensions
 } from 'react-native';
 import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
 import parseFormattedText from '../../styles/fonts/FormattedText';
+
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface MessageItemProps {
   item: ChatMessage;
@@ -28,23 +33,41 @@ interface TypingIndicatorProps {
 
 // Add this function to extract suggestions from bot response
 const extractSuggestions = (text: string): string[] => {
-  const suggestionRegex = /\[([^\]]+)\]/g;
+  // More permissive regex - allows more characters in suggestions
+  const suggestionRegex = /\[(?!IMAGE:)([A-Za-z\s\?'.,!-]+)\]/g;
   const matches = [];
   let match;
   
   while ((match = suggestionRegex.exec(text)) !== null) {
+    const suggestion = match[1].trim();
+    if (suggestion.length > 0 && !suggestion.includes('|')) {
+      matches.push(suggestion);
+    }
+  }
+  
+  return matches;
+};
+
+const extractImages = (text: string): string[] => {
+  const imageRegex = /\[IMAGE:(https?:\/\/[^\]]+)\]/g;
+  const matches = [];
+  let match;
+  
+  while ((match = imageRegex.exec(text)) !== null) {
     matches.push(match[1].trim());
   }
   
   return matches;
 };
 
-// Add this function to remove suggestions from display text
-const removeSuggestions = (text: string): string => {
-  return text.replace(/\[([^\]]+)\]/g, '').trim();
+const cleanDisplayText = (text: string): string => {
+  return text
+    .replace(/\[(?!IMAGE:)([A-Za-z\s\?'.,!-]+)\]/g, '')
+    .trim();
 };
 
-// Memoized MessageItem component
+
+
 export const MessageItem = memo<MessageItemProps>(({ 
   item, 
   Colors, 
@@ -60,8 +83,8 @@ export const MessageItem = memo<MessageItemProps>(({
   };
 
   const suggestions = !item.isUser ? extractSuggestions(item.text) : [];
-
-  const displayText = !item.isUser ? removeSuggestions(item.text) : item.text;
+  const images = !item.isUser ? extractImages(item.text) : []; 
+  const displayText = !item.isUser ? cleanDisplayText(item.text) : item.text;
 
   // Memoize the suggestion press handler
   const handleSuggestionPress = useCallback((suggestion: string) => {
@@ -84,51 +107,93 @@ export const MessageItem = memo<MessageItemProps>(({
 
 
 return (
-    <View style={StyleSheet.flatten([
-      styles(Colors).messageContainer,
-      item.isUser ? styles(Colors).userMessageContainer : styles(Colors).botMessageContainer
-    ])}>
-      
-      <View style={StyleSheet.flatten([
-        styles(Colors).messageBubble,
-        item.isUser ? styles(Colors).userMessageBubble : styles(Colors).botMessageBubble
-      ])}>
-        
-        {/* FIXED: Remove the Text wrapper and render formatted content directly */}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          {parseFormattedText(
-            displayText,
-            Colors, 
-            item.isUser,
-            textStyle 
-          )}
-        </View>
-      </View>
+        <>
+      {/* Text Message */}
+      {displayText && (
+        <View style={StyleSheet.flatten([
+          styles(Colors).messageContainer,
+          item.isUser ? styles(Colors).userMessageContainer : styles(Colors).botMessageContainer
+        ])}>
+          
+          <View style={StyleSheet.flatten([
+            styles(Colors).messageBubble,
+            item.isUser ? styles(Colors).userMessageBubble : styles(Colors).botMessageBubble
+          ])}>
+            
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              {parseFormattedText(
+                displayText,
+                Colors, 
+                item.isUser,
+                textStyle 
+              )}
+            </View>
+          </View>
 
-      {showSuggestions && (
-        <View style={styles(Colors).suggestionsContainer}>
-          {suggestions.map((suggestion, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles(Colors).suggestionButton}
-              onPress={() => handleSuggestionPress(suggestion)} 
-              activeOpacity={0.7} 
-            >
-              <Text style={styles(Colors).suggestionText}>
-                {suggestion}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <Text style={StyleSheet.flatten([
+            styles(Colors).timestamp,
+            item.isUser ? styles(Colors).userTimestamp : styles(Colors).botTimestamp
+          ])}>
+            {formatTime(item.timestamp)}
+          </Text>
         </View>
       )}
 
-      <Text style={StyleSheet.flatten([
-        styles(Colors).timestamp,
-        item.isUser ? styles(Colors).userTimestamp : styles(Colors).botTimestamp
-      ])}>
-        {formatTime(item.timestamp)}
-      </Text>
-    </View>
+      {images.length > 0 && images.map((imageUrl, index) => {
+        return (
+          <View 
+            key={`${item.id}-image-${index}`}
+            style={StyleSheet.flatten([
+              styles(Colors).messageContainer,
+              styles(Colors).botMessageContainer 
+            ])}
+          >
+            
+              
+              <Image 
+                source={{ uri: imageUrl }}
+                style={{
+                  width: 300,
+                  height: 200,           
+                  borderRadius: 8,
+                }}
+                resizeMode="cover"
+              />
+
+            <Text style={StyleSheet.flatten([
+              styles(Colors).timestamp,
+              styles(Colors).botTimestamp
+            ])}>
+              {formatTime(item.timestamp)}
+            </Text>
+          </View>
+        );
+      })}
+      
+
+      {/* Suggestions (only show after the last message/image) */}
+      {showSuggestions && (
+        <View style={StyleSheet.flatten([
+          styles(Colors).messageContainer,
+          styles(Colors).botMessageContainer
+        ])}>
+          <View style={styles(Colors).suggestionsContainer}>
+            {suggestions.map((suggestion, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles(Colors).suggestionButton}
+                onPress={() => handleSuggestionPress(suggestion)} 
+                activeOpacity={0.7} 
+              >
+                <Text style={styles(Colors).suggestionText}>
+                  {suggestion}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+    </>
   );
 }, (prevProps, nextProps) => {
   return (
@@ -142,6 +207,7 @@ return (
   );
 });
 
+
 // Memoized TypingIndicator component
 export const TypingIndicator = memo<TypingIndicatorProps>(({
   Colors,
@@ -152,7 +218,6 @@ export const TypingIndicator = memo<TypingIndicatorProps>(({
 }) => {
   if (!isTyping) return null;
   
-  // Create safe animated styles with fallbacks
   const dot1Style = {
     ...styles(Colors).typingDot,
     opacity: dot1Opacity || 1
@@ -276,7 +341,7 @@ const styles = (Colors: any) => StyleSheet.create({
   suggestionsContainer: {
     flexWrap: 'wrap',
     maxWidth: '80%',
-    marginTop: Spacing?.sm || 8,
+    marginTop: -10,
   },
   suggestionButton: {
     backgroundColor: Colors.suggestionBackground,
@@ -293,6 +358,13 @@ const styles = (Colors: any) => StyleSheet.create({
     fontSize: FontSizes?.xs || 12,          
     color: Colors.textSecondary,   
     fontFamily: FontFamilies?.regular || 'System',
+  },
+    imageBubble: {
+    padding: 4, 
+  },
+  messageImage: {
+    width: '100%',
+    borderRadius: BorderRadius?.md || 8,
   },
 });
 
