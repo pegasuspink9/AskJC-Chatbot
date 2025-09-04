@@ -179,8 +179,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("program") ||
             intentName.includes("course") ||
             intentName.includes("courses") ||
-            intentName.includes("tuition") ||
-            intentName.includes("department")
+            intentName.includes("tuition") 
           ) {
             console.log(
               "Routing to school program service based on intent:",
