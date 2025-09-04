@@ -35,6 +35,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
         textStyle = {
           ...textStyle,
           fontFamily: FontFamilies?.bold || 'System',
+          textDecorationLine: 'underline',
         };
         return (
           <Text key={index} style={textStyle}>

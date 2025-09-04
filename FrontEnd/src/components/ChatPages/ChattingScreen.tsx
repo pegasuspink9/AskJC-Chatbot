@@ -101,6 +101,15 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const isInputValid = inputText.trim();
 
+  const handleKeyPress = useCallback((e: any) => {
+  if (Platform.OS === 'web' && e.nativeEvent.key === 'Enter') {
+    if (!e.nativeEvent.shiftKey && isInputValid) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }
+}, [handleSendMessage, isInputValid]);
+
   return (
     <Animated.View style={[styles(Colors).container, animatedStyle]}>
       <KeyboardAvoidingView
@@ -162,6 +171,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
               maxLength={500}
               onSubmitEditing={handleSendMessage}
               blurOnSubmit={false}
+              onKeyPress={handleKeyPress}
+              returnKeyType="send"
+              enablesReturnKeyAutomatically={true}
             />
             <TouchableOpacity
               style={[
@@ -239,8 +251,10 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   inputContainer: {
     backgroundColor: Colors.surface,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderSuggestion,
     paddingHorizontal: Spacing?.md || 12,
     paddingVertical: Spacing?.md || 12,
   },

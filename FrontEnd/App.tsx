@@ -5,6 +5,8 @@ import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, P
 import * as SplashScreen from 'expo-splash-screen';
 import StackNavigator from './src/navigation/StackNavigator';
 import { ThemeProvider, useTheme } from './src/constants/ThemeContext';
+import WebContainer from './src/components/ChatPages/webContainer';
+import { getColors } from './src/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,10 +56,12 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <NavigationContainer theme={isDark ? darkTheme : lightTheme}>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <StackNavigator />
-    </NavigationContainer>
+   <WebContainer Colors={getColors(isDark)}> {/* Wrap NavigationContainer with WebContainer */}
+      <NavigationContainer theme={isDark ? darkTheme : lightTheme}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        <StackNavigator />
+      </NavigationContainer>
+    </WebContainer>
   );
 };
 
