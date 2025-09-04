@@ -98,7 +98,6 @@ export function formatOfficeDescription(office: any): string {
 }
 
 export function generateSingleOfficeResponse(office: any): string {
-  // General comprehensive response
   const details = [];
   
   if (office.description) details.push(`Purpose: ${office.description}`);
