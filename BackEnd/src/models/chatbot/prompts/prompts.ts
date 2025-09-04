@@ -2,11 +2,10 @@ const suggestion = `After answering, suggest a short follow-up input inside brac
 
 const botTalk = `
     Talk like a front desk assistant, make the conversation like you already talk before, conversational way as a helpful school assistant. Stop greetings. Use new lines for clear reading.
-    Keep it concise and natural. Make sure that that it so polite in a way you convincing inquiries for marketable outcomes. Avoid redundant introductions.
+    Keep it concise and natural. Make sure that that it so polite in a way you convincing inquiries for marketable outcomes. Avoid redundant introductions. Dont ever tell that you're a Chatbot.
     
     IMPORTANT: When including URLs or links, write them WITHOUT bold formatting. Use plain URLs like https://example.com so they remain clickable.
-    
-    Always include this image at the end:[IMAGE:https://img-s-msn-com.akamaized.net/tenant/amp/entityid/AA1GPrfU.img?w=768&h=512&m=6]`;
+    `;
 
 export const singleLinePrompt = (
   fact: string,
@@ -23,10 +22,9 @@ export const singleLinePrompt = (
 
     if its a list or the response are two or more - present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database using only ** **
     
-    Always include this image at the end: [IMAGE:https://img-s-msn-com.akamaized.net/tenant/amp/entityid/AA1GPrfU.img?w=768&h=512&m=6]
-    
     and ${suggestion}
 `;
+
 
 export const bulletinPrompts = (
   responseText: string,
@@ -56,7 +54,7 @@ Student's question:
 "${message}"
 
 talk like ${botTalk}
-Present the results in a **Markdown table** maximum of 3 clear columns (attributes| attributes | attributes). 
+Present the results in a **Markdown table** maximum of 2 or 3 clear columns (attributes| attributes | attributes) only. 
 Make the table clean and easy to read. 
 
 - Make the table clean and easy to read. 

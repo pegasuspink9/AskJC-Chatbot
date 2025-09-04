@@ -14,7 +14,6 @@ import { Message as ChatMessage } from '../../types/index';
 import parseFormattedText from '../../styles/fonts/FormattedText';
 
 
-const { width: screenWidth } = Dimensions.get('window');
 
 interface MessageItemProps {
   item: ChatMessage;
@@ -31,9 +30,7 @@ interface TypingIndicatorProps {
   dot3Opacity: Animated.Value;
 }
 
-// Add this function to extract suggestions from bot response
 const extractSuggestions = (text: string): string[] => {
-  // More permissive regex - allows more characters in suggestions
   const suggestionRegex = /\[(?!IMAGE:)([A-Za-z\s\?'.,!-]+)\]/g;
   const matches = [];
   let match;
@@ -272,7 +269,7 @@ const styles = (Colors: any) => StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: '90%',
     paddingHorizontal: Spacing?.md || 12,
     paddingVertical: Spacing?.sm || 8,
     borderRadius: BorderRadius?.lg || 12,

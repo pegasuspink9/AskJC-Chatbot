@@ -12,6 +12,7 @@ import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
 import { officeQuery} from "models/chatbot/schoolOffices/schoolOffices";
 import {schoolDetailQuery} from "models/chatbot/School Details/schoolDetails.service";
 import {organizationQuery} from "models/chatbot/schoolOrganization/schoolOrganization";
+import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -170,6 +171,22 @@ export const createQuery = async (req: Request, res: Response) => {
               dialogflowResponse.intent
             );
             return await officeQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
+            intentName.includes("program") ||
+            intentName.includes("course") ||
+            intentName.includes("courses") ||
+            intentName.includes("tuition") ||
+            intentName.includes("department")
+          ) {
+            console.log(
+              "Routing to school program service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await programQuery(
               user.id,
               query_text,
               conversationHistory

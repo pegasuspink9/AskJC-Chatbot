@@ -2,8 +2,6 @@ import React from 'react';
 import { Text, View, Linking, TouchableOpacity, Alert, Platform, Image, Dimensions } from 'react-native';
 import { FontFamilies, FontSizes } from '../../constants/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
-
 const parseFormattedText = (
   text: string,
   Colors: any,
@@ -22,7 +20,6 @@ const parseFormattedText = (
 };
 
 const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
-  // Remove [IMAGE:url] from the regex since MessageComponents will handle it
   const combinedRegex = /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+)/g;
   const parts = text.split(combinedRegex);
 
@@ -33,7 +30,6 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
       let textStyle = { ...baseTextStyle };
       let content = part;
 
-      // Handle bold text
       if (part.startsWith('**') && part.endsWith('**')) {
         content = part.slice(2, -2);
         textStyle = {
@@ -47,7 +43,6 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
         );
       }
 
-      // Handle URLs (but not IMAGE: URLs)
       if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
         return (
           <TouchableOpacity 
@@ -186,8 +181,10 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
         style={{
           width: '100%',
           borderWidth: 1,
-          borderColor: Colors?.border || '#000',
+          borderColor: Colors?.line,
           marginVertical: 8,
+          backgroundColor: Colors?.surface,
+          borderRadius: 10,
         }}
       >
         {rows.map((row, rowIndex) => {
@@ -207,9 +204,9 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
                   key={colIndex}
                   style={{
                     width: colIndex === 0 ? '30%' : '35%',
-                    padding: 6,
                     borderRightWidth: colIndex === cols.length - 1 ? 0 : 1,
-                    borderColor: Colors?.border || '#000',
+                    borderColor: Colors?.border,
+                    padding: 6,
                   }}
                 >
                   <View

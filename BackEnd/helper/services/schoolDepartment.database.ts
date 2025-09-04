@@ -36,17 +36,8 @@ export async function searchSchoolDepartment(params: SearchDepartmentParams): Pr
     if (params.floor) conditions.push(addCondition("floor", params.floor));
     if (params.career_path) conditions.push(addCondition("career_path", params.career_path));
 
-    
     if (conditions.length === 0) {
-      const allDepartments = await db.department.findMany({
-        orderBy: { department_name: "asc" },
-      });
-      
-      if (allDepartments.length > 0) {
-        return formatMultipleDepartments(allDepartments);
-      }
-      
-      return "No departments found in the database.";
+      return "I need more specific information. Please ask about a specific department, building, or department head.";
     }
 
     const whereCondition = conditions.length > 1 
