@@ -6,7 +6,8 @@ export interface SchoolDetail {
   vision?: string | null;
   mission?: string | null;
   address?: string | null;
-  accreditation?: string | null;
+  goals?: string | null;
+  location_url?: string | null;
 }
 
 export interface CreateSchoolDetail {
@@ -17,6 +18,7 @@ export interface CreateSchoolDetail {
   mission?: string;
   address?: string;
   goals?: string;
+  location_url?: string;
 }
 
 export interface UpdateSchoolDetail {
@@ -28,4 +30,5 @@ export interface UpdateSchoolDetail {
   mission?: string | null;
   address?: string | null;
   goals?: string | null;
+  location_url?: string;
 }

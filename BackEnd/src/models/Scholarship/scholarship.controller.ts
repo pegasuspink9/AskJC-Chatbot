@@ -5,9 +5,7 @@ import { CreateScholarship, UpdateScholarship } from "./scholarship.types";
 
 export const getScholarships = async (req: Request, res: Response) => {
   try {
-    const scholarships = await prisma.scholarship.findMany({
-      include: { faq: true },
-    });
+    const scholarships = await prisma.scholarship.findMany();
 
     return successResponse(res, scholarships, "Scholarships fetched");
   } catch (error) {
