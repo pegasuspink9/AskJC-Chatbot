@@ -31,8 +31,8 @@ export const getProgramById = async (req: Request, res: Response) => {
 
 export const createProgram = async (req: Request, res: Response) => {
   try {
-    const data: CreateProgram = req.body;
-    const program = await prisma.program.create({ data });
+    const data: CreateProgram[] = req.body;
+    const program = await prisma.program.createMany({ data });
     return successResponse(res, program, "Program created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create program");

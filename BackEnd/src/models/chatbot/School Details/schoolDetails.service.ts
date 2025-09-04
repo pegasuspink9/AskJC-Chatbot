@@ -5,12 +5,7 @@ import {
   searchSchoolDetails,
   RequirementType,
 } from "../../../../helper/services/schoolDetail.database";
-import { pickPromptStyle } from "../prompts/promptStyle.helper";
-import {
-  tablePrompts,
-  singleLinePrompt,
-  bulletinPrompts,
-} from "../prompts/prompts";
+import { pickPromptStyle, needsIntro } from "../prompts/promptStyle.helper";
 
 type DFParams = Record<string, any>;
 
@@ -53,70 +48,83 @@ export const schoolDetailQuery = async (
 
     const nameRaw = parameters["school_name"];
     const infoRaw = parameters["school-info"];
+    const presidentRaw = parameters["school-president"];
+    const eventsRaw = parameters["school-events"];
 
     const school_name =
-      (typeof nameRaw === "string" && nameRaw.trim()) || "Saint Joseph College";
+      nameRaw && typeof nameRaw === "string" && nameRaw.trim() !== ""
+        ? nameRaw.trim()
+        : "Saint Joseph College";
 
-    const requirementType: string[] = Array.isArray(infoRaw)
-      ? Array.from(new Set(infoRaw.map(String)))
-      : infoRaw
-      ? [String(infoRaw)]
-      : [];
+    const allRequirements: string[] = [];
 
-    const paramPriority = [
-      "history",
-      "vision",
-      "mission",
-      "goals",
-      "address",
-      "small_details",
-    ];
-
-    function pickBestParam(reqTypes: string[]): string | null {
-      for (const p of paramPriority) {
-        if (reqTypes.includes(p)) return p;
-      }
-      return null;
+    if (Array.isArray(infoRaw)) {
+      allRequirements.push(...infoRaw.map(String));
+    } else if (infoRaw) {
+      allRequirements.push(String(infoRaw));
     }
 
-    const validRequirementTypes: RequirementType[] = requirementType.filter(
-      (req): req is RequirementType =>
-        [
-          "history",
-          "vision",
-          "mission",
-          "goals",
-          "address",
-          "small_details",
-        ].includes(req)
+    if (Array.isArray(presidentRaw) && presidentRaw.length > 0) {
+      allRequirements.push("school-president");
+    } else if (presidentRaw) {
+      allRequirements.push("school-president");
+    }
+
+    if (Array.isArray(eventsRaw) && eventsRaw.length > 0) {
+      allRequirements.push("school-events");
+    } else if (eventsRaw) {
+      allRequirements.push("school-events");
+    }
+
+    const validRequirementTypes: RequirementType[] = Array.from(
+      new Set(allRequirements)
+    ).filter((req): req is RequirementType =>
+      [
+        "history",
+        "vision",
+        "mission",
+        "goals",
+        "address",
+        "small_details",
+        "school-president",
+        "school-events",
+      ].includes(req)
     );
+
+    console.log("🔍 All Requirements Found:", allRequirements);
+    console.log("🔍 Valid Requirement Types:", validRequirementTypes);
 
     const mappedParameters = {
       school_name,
-      requirementType:
-        validRequirementTypes.length > 0 ? [validRequirementTypes[0]] : [],
+      requirementType: validRequirementTypes,
     };
 
     let dbResult = "";
-
-    if (requirementType.length > 1) {
+    if (validRequirementTypes.length > 1) {
       const combinedAnswers: string[] = [];
-      for (const req of requirementType) {
+      for (const req of validRequirementTypes) {
         const res = await searchSchoolDetails({
           school_name,
-          requirementType: [req as any],
+          requirementType: [req],
         });
         if (res && !res.includes("No schools matched")) {
-          combinedAnswers.push(`${req.toUpperCase()}:\n${res}`);
+          const intro = needsIntro(req);
+          combinedAnswers.push(`${intro ?? ""}${res}`);
         }
       }
       dbResult = combinedAnswers.join("\n\n");
     } else {
       dbResult = await searchSchoolDetails(mappedParameters);
-    }
 
-    responseText = dbResult;
-    responseSource = "database-search";
+      if (
+        validRequirementTypes.length > 0 &&
+        needsIntro(validRequirementTypes[0]) &&
+        dbResult &&
+        !dbResult.startsWith("Here's what I found")
+      ) {
+        dbResult = `${dbResult}`;
+      }
+    }
 
     const looksLikeError =
       !dbResult ||
@@ -125,22 +133,15 @@ export const schoolDetailQuery = async (
       dbResult.includes("error searching") ||
       dbResult.includes("An error occurred");
 
-    if (looksLikeError) {
+    if (
+      looksLikeError ||
+      validRequirementTypes.some((r) =>
+        ["history", "school-president", "school-events"].includes(r)
+      )
+    ) {
       try {
-        let prompt: string;
-
-        const style = pickPromptStyle(
-          message,
-          mappedParameters.requirementType
-        );
-
-        if (style === "table") {
-          prompt = tablePrompts(dbResult || "Not available", message);
-        } else if (style === "bulletin") {
-          prompt = bulletinPrompts(dbResult || "Not available", message);
-        } else {
-          prompt = singleLinePrompt(dbResult || "Not available", message);
-        }
+        const promptFn = pickPromptStyle(message, validRequirementTypes);
+        const prompt = promptFn(dbResult || "Not available", message);
 
         const { text, apiKey } = await getGenerativeResponse(
           prompt,
@@ -149,11 +150,20 @@ export const schoolDetailQuery = async (
 
         if (text && text.trim()) {
           responseText = text;
-          responseSource = `generative-database-detail (via ${apiKey})`;
+          responseSource = `generative-history (via ${apiKey})`;
+        } else {
+          responseText =
+            dbResult || "I'm sorry, I don't have that information.";
+          responseSource = "history-db-fallback";
         }
       } catch (geminiError) {
-        console.error("Generative response error:", geminiError);
+        console.error("Generative response error (history):", geminiError);
+        responseText = dbResult || "I'm sorry, I don't have that information.";
+        responseSource = "history-db-fallback";
       }
+    } else {
+      responseText = dbResult;
+      responseSource = "database-search";
     }
   } catch (error) {
     console.error("Error in schoolDetailQuery:", error);

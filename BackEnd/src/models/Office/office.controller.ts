@@ -1,12 +1,12 @@
 import { prisma } from "../../../prisma/client";
 import { Request, Response } from "express";
 import { successResponse, errorResponse } from "../../../utils/response";
-import { Office, CreateOffice, UpdateOffice } from "./office.types";
+import { CreateOffice, UpdateOffice } from "./office.types";
 
 export const getOffice = async (_: Request, res: Response) => {
   try {
-    const offices: Office[] = await prisma.office.findMany({
-      include: { faqs: true },
+    const offices = await prisma.office.findMany({
+      include: { officeAndFacilities: true },
     });
     return successResponse(res, offices, "Offices fetched");
   } catch (error) {
