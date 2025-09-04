@@ -55,7 +55,6 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
             <Text style={{
               ...textStyle,
               color: Colors?.primary || '#0066cc', 
-              textDecorationLine: 'underline',
               fontWeight: '500',
             }}>
               {part}
