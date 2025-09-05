@@ -30,7 +30,6 @@ const AppContent: React.FC = () => {
     return null;
   }
 
-  // Custom navigation themes
   const lightTheme = {
     ...DefaultTheme,
     colors: {
@@ -56,7 +55,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-   <WebContainer Colors={getColors(isDark)}> {/* Wrap NavigationContainer with WebContainer */}
+    <WebContainer Colors={getColors(isDark)}>
       <NavigationContainer theme={isDark ? darkTheme : lightTheme}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
         <StackNavigator />

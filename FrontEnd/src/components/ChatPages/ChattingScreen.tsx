@@ -208,7 +208,7 @@ const styles = (Colors: any) => StyleSheet.create({
   header: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
-    paddingVertical: Spacing?.md || 12,
+    paddingVertical: 4,
     paddingHorizontal: Spacing?.lg || 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -246,8 +246,8 @@ const styles = (Colors: any) => StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: Spacing?.md || 12,
-    paddingVertical: Spacing?.sm || 12,
+    paddingHorizontal: Spacing?.sm,
+    paddingVertical: Spacing?.sm,
   },
   inputContainer: {
     backgroundColor: Colors.surface,
@@ -256,7 +256,7 @@ const styles = (Colors: any) => StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.borderSuggestion,
     paddingHorizontal: Spacing?.md || 12,
-    paddingVertical: Spacing?.md || 12,
+    paddingVertical: 2,
   },
   inputWrapper: {
     flexDirection: 'row',
