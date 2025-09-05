@@ -1,14 +1,15 @@
 {
   "version": 2,
-  "functions": {
-    "src/index.ts": {
-      "runtime": "@vercel/node@2.14.5"
+  "builds": [
+    {
+      "src": "src/index.ts",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/src/index.ts"
+      "dest": "src/index.ts"
     }
   ],
   "installCommand": "npm install && npx prisma generate"
