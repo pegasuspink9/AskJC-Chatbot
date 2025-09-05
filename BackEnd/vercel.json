@@ -12,5 +12,6 @@
       "dest": "src/index.ts"
     }
   ],
-  "installCommand": "npm install && npx prisma generate"
+  "installCommand": "npm install && npx prisma generate",
+  "buildCommand": "echo 'No build needed - Vercel handles TS compilation'"
 }
