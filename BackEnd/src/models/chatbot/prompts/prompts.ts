@@ -62,3 +62,43 @@ Make the table clean and easy to read.
 
 and ${suggestion}
 `;
+export const stepByStepPrompt = (
+  responseText: string,
+  message: string
+) => `
+    Use this information only to answer the question: 
+    ${responseText}
+
+    Student's question: 
+    "${message}"
+
+    talk like ${botTalk}
+    
+    Present the information in a clear step-by-step format with numbered steps. Follow this exact format:
+
+    **Step 1: [Step Title]**
+    - [Action item 1]
+    - [Action item 2]
+    - [Action item 3]
+
+    **Step 2: [Step Title]**
+    - [Action item 1]
+    - [Action item 2]
+    - [Action item 3]
+
+    **Step 3: [Step Title]**
+    - [Action item 1]
+    - [Action item 2]
+    - [Action item 3]
+
+    Guidelines:
+    - Use bold formatting for step headers: **Step X: Title**
+    - Each step should have a descriptive title
+    - List specific actions as bullet points using dashes (-)
+    - Keep each bullet point concise and actionable
+    - Add blank lines between steps for readability
+    - Number steps sequentially (Step 1, Step 2, etc.)
+    - Only include steps that are mentioned in the provided information
+
+    and ${suggestion}
+`;
