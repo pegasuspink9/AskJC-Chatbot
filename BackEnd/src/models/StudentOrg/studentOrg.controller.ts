@@ -9,9 +9,7 @@ import { successResponse, errorResponse } from "../../../utils/response";
 
 export const getAllStudentOrg = async (req: Request, res: Response) => {
   try {
-    const teachers: StudentOrg[] = await prisma.studentOrg.findMany({
-      include: { faqs: true },
-    });
+    const teachers: StudentOrg[] = await prisma.studentOrg.findMany();
 
     return successResponse(res, teachers, "Student organizations fetched");
   } catch (error) {
@@ -25,7 +23,6 @@ export const getStudentOrgById = async (req: Request, res: Response) => {
 
     const studentOrg = await prisma.studentOrg.findUnique({
       where: { id: Number(id) },
-      include: { faqs: true },
     });
 
     if (!studentOrg)
@@ -36,7 +33,7 @@ export const getStudentOrgById = async (req: Request, res: Response) => {
         404
       );
 
-    return successResponse(res, studentOrg, "Teacher fetched");
+    return successResponse(res, studentOrg, "Student organization fetched");
   } catch (error) {
     return errorResponse(res, error, "Failed to fetch student organization");
   }
