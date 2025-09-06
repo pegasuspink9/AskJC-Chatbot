@@ -30,8 +30,8 @@ export const getCourseById = async (req: Request, res: Response) => {
 
 export const createCourse = async (req: Request, res: Response) => {
   try {
-    const data: CreateCourse = req.body;
-    const course = await prisma.course.create({ data });
+    const data: CreateCourse[] = req.body;
+    const course = await prisma.course.createMany({ data });
     return successResponse(res, course, "Course created");
   } catch (error) {
     return errorResponse(res, error, "Failed to create course");
