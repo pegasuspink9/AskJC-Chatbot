@@ -13,6 +13,8 @@ import { officeQuery } from "models/chatbot/schoolOffices/schoolOffices";
 import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
 import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrganization";
 import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
+import {enrollmentQuery} from "models/chatbot/schoolEnrollment/schoolEnrollment"
+
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -211,6 +213,22 @@ export const createQuery = async (req: Request, res: Response) => {
               dialogflowResponse.intent
             );
             return await contactQuery(user.id, query_text, conversationHistory);
+          } else if (
+            intentName.includes("enroll") ||
+            intentName.includes("enrollment") ||
+            intentName.includes("admission") ||
+            intentName.includes("register") ||
+            intentName.includes("registration") 
+          ) {
+            console.log(
+              "Routing to enrollment service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await enrollmentQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
           } else if (
             intentName.includes("organization") ||
             intentName.includes("organizations") ||

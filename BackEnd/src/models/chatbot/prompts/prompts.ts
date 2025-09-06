@@ -1,4 +1,4 @@
-export const suggestion = `After answering, suggest a short follow-up input inside brackets [ ] that the user can use to keep the conversation going. The suggestion should be a relevant, helpful question connected to the original query, starting with who, what, when, or where. Make sure it is phrased in the first person (I, me, myself) instead of "you". If the question is not related to the database, respond with "I'm sorry, I don't have that information." and do not give any suggestions.`;
+export const suggestion = `After answering, suggest minimum of 2 short follow-up input inside brackets [ ] that the user can use to keep the conversation going. The suggestion should be a relevant, helpful question connected to the original query, starting with who, what, when, or where. Make sure it is phrased in the first person (I, me, myself) instead of "you". If the question is not related to the database, respond with "I'm sorry, I don't have that information." and do not give any suggestions.`;
 
 export const botTalk = `
     Talk like a front desk assistant, make the conversation like you already talk before, conversational way as a helpful school assistant. Stop greetings. Use new lines for clear reading.
@@ -62,6 +62,10 @@ Make the table clean and easy to read.
 
 and ${suggestion}
 `;
+
+
+
+
 export const stepByStepPrompt = (
   responseText: string,
   message: string
@@ -74,8 +78,7 @@ export const stepByStepPrompt = (
 
     talk like ${botTalk}
     
-    Present the information in a clear step-by-step format with numbered steps. Follow this exact format:
-
+    Present the information in a clear step-by-step format with numbered steps if it is an actions. Follow this exact format:
     **Step 1: [Step Title]**
     - [Action item 1]
     - [Action item 2]
@@ -100,5 +103,14 @@ export const stepByStepPrompt = (
     - Number steps sequentially (Step 1, Step 2, etc.)
     - Only include steps that are mentioned in the provided information
 
+
+
+    
+    IMPORTANT NOTE: ALWAYS REFER TO THE ${responseText} or database.
+
+
+    If the information does not contain steps or actions, provide a concise answer instead.
+
+    
     and ${suggestion}
 `;

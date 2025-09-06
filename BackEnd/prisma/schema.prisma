@@ -163,16 +163,22 @@ model SchoolOfficial {
 }
 
 model Enrollment {
-  id                    Int    @id @default(autoincrement())
-  enrollment_process    String 
-  enrollment_documents  String
-  department_to_enroll  String
+  id                   Int    @id @default(autoincrement())
+  enrollment_process   String
+  enrollment_documents String
+  department_to_enroll String
 }
 
 model Navigation {
-  id                Int    @id @default(autoincrement())
-  nav_button        String
-  dropdown_menu     String
-  action            String
-  notes             String    
+  id            Int    @id @default(autoincrement())
+  nav_button    String
+  action        String
+  notes         String
+  dropdown_menu String
+}
+
+model EnrollmentAndNavigation {
+  id                 Int    @id @default(autoincrement())
+  enrollment_process String
+  navigation         String
 }
