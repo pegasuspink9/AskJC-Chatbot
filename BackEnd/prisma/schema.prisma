@@ -175,5 +175,6 @@ model Navigation {
   nav_button        String
   dropdown_menu     String
   action            String
-  notes             String    
+  notes             String 
+  link              String?   
 }
