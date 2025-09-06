@@ -15,7 +15,8 @@ import programRoutes from "./models/Program/program.routes";
 import officeRoutes from "./models/Office/office.routes";
 import scholarshipRoutes from "./models/Scholarship/scholarship.routes";
 import facilitiesRoutes from "./models/OfficeAndFacilities/officeAndFacilities.routes";
-import enrollmentAndNavigationRoutes from "./models/EnrollmentAndNavigation/enrollmentAndEnrollment.routes";
+import enrollmentRoutes from "./models/Enrollment/enrollment.routes";
+import navigationRoutes from "./models/Navigation/navigation.routes";
 
 const app = express();
 
@@ -37,8 +38,8 @@ app.use(
   })
 );
 
-//makes sense na ni ari nga part
-app.use("/enrollment", enrollmentAndNavigationRoutes);
+app.use("/navigation", navigationRoutes);
+app.use("/enrollment", enrollmentRoutes);
 app.use("/school-detail", schoolDetailRoutes);
 app.use("/user", userRoutes);
 app.use("/query", queryRoutes);

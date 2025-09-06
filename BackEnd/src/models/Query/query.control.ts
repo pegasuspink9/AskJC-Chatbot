@@ -9,9 +9,9 @@ import { scholarshipQuery } from "models/chatbot/Scholarship/scholarship.service
 import { getDialogflowResponse } from "../../../helper/dialogflow";
 import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
 import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
-import { officeQuery} from "models/chatbot/schoolOffices/schoolOffices";
-import {schoolDetailQuery} from "models/chatbot/School Details/schoolDetails.service";
-import {organizationQuery} from "models/chatbot/schoolOrganization/schoolOrganization";
+import { officeQuery } from "models/chatbot/schoolOffices/schoolOffices";
+import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
+import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrganization";
 import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
 
 export const getQueryById = async (req: Request, res: Response) => {
@@ -165,39 +165,30 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("building") ||
             intentName.includes("location") ||
             intentName.includes("floor")
-            ) {
+          ) {
             console.log(
               "Routing to school office service based on intent:",
               dialogflowResponse.intent
             );
-            return await officeQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await officeQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("program") ||
             intentName.includes("course") ||
             intentName.includes("courses") ||
-            intentName.includes("tuition") 
+            intentName.includes("tuition")
           ) {
             console.log(
               "Routing to school program service based on intent:",
               dialogflowResponse.intent
             );
-            return await programQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await programQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("department") ||
             intentName.includes("departments") ||
             intentName.includes("head") ||
             intentName.includes("heads") ||
             intentName.includes("faculty") ||
-            intentName.includes("faculty members") 
-
+            intentName.includes("faculty members")
           ) {
             console.log(
               "Routing to school department service based on intent:",
@@ -212,18 +203,14 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("contact") ||
             intentName.includes("contacts") ||
             intentName.includes("email") ||
-            intentName.includes("phone") || 
+            intentName.includes("phone") ||
             intentName.includes("facebook")
           ) {
             console.log(
               "Routing to school contact service based on intent:",
               dialogflowResponse.intent
             );
-            return await contactQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await contactQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("organization") ||
             intentName.includes("organizations") ||
@@ -240,8 +227,7 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }
-          else if (
+          } else if (
             intentName.includes("detail") ||
             intentName.includes("details") ||
             intentName.includes("history") ||
@@ -314,5 +300,37 @@ export const createQuery = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error in createQuery:", error);
     return errorResponse(res, error, "Failed to create query");
+  }
+};
+
+export const deleteAllUserQueries = async (req: Request, res: Response) => {
+  try {
+    const user = await getOrCreateUserFromRequest(req, res);
+    if (!user) {
+      return errorResponse(
+        res,
+        "Could not identify or create user.",
+        "Server Error",
+        500
+      );
+    }
+
+    await prisma.query.deleteMany({
+      where: { user_id: user.id },
+    });
+
+    await prisma.chatbotSession.updateMany({
+      where: { user_id: user.id },
+      data: {
+        chatbot_response: [],
+        total_queries: 0,
+        response_time: new Date(),
+      },
+    });
+
+    return successResponse(res, null, "All user queries deleted successfully");
+  } catch (error) {
+    console.error("Error deleting user queries:", error);
+    return errorResponse(res, error, "Failed to delete queries");
   }
 };
