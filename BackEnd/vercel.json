@@ -1,17 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "./src/index.ts",
-      "use": "@vercel/node"
+  "functions": {
+    "src/index.ts": {
+      "runtime": "@vercel/node@3.0.23"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "./src/index.ts"
+      "dest": "/src/index.ts"
     }
-  ],
-  "installCommand": "npm install && npx prisma generate",
-  "buildCommand": "echo 'No build needed - Vercel handles TS compilation'"
+  ]
 }

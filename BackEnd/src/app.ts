@@ -37,6 +37,10 @@ app.use(
   })
 );
 
+
+app.get('/', (req, res) => {
+  res.json({ message: 'AskJC Backend API is running!' });
+});
 // Routes
 app.use("/enrollment", enrollmentAndNavigationRoutes);
 app.use("/school-detail", schoolDetailRoutes);

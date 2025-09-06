@@ -1,9 +1,13 @@
 import app from "./app";
 import { VercelRequest, VercelResponse } from "@vercel/node";
 
-// For Vercel deployment
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  return app(req, res);
+  res.status(200).json({ 
+    message: "Backend is working!",
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url
+  });
 }
 
 // For local development only
