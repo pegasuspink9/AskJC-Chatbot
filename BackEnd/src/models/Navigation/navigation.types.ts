@@ -3,6 +3,7 @@ export interface CreateNavigation {
   dropdown_menu: string;
   action: string;
   notes: string;
+  link?: string;
 }
 
 export interface UpdateNavigation {
@@ -10,4 +11,5 @@ export interface UpdateNavigation {
   dropdown_menu?: string;
   action?: string;
   notes?: string;
+  link?: string;
 }
