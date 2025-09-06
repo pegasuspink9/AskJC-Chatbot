@@ -19,9 +19,9 @@ export const getAllFacilities = async (req: Request, res: Response) => {
 export const createFacilities = async (req: Request, res: Response) => {
   try {
     const data: CreateFacilities[] = req.body;
-    const image = await prisma.officeAndFacilities.createMany({ data });
+    const facility = await prisma.officeAndFacilities.createMany({ data });
 
-    return successResponse(res, image, "Facilities created", 201);
+    return successResponse(res, facility, "Facilities created", 201);
   } catch (error) {
     return errorResponse(res, error, "Failed to Facilities");
   }

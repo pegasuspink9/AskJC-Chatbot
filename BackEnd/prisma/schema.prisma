@@ -121,10 +121,13 @@ model Contact {
 
 model Course {
   id          Int      @id @default(autoincrement())
-  course_code String   @unique
-  course_name String
   program_id  Int?
-  units       Int
+  course_code String?   
+  course_name String
+  year_level  String?
+  semester    String?
+  units       Int?
+
   program     Program? @relation(fields: [program_id], references: [id])
 }
 
