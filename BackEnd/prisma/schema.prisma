@@ -162,8 +162,17 @@ model SchoolOfficial {
   official_name String
 }
 
-model EnrollmentAndNavigation {
-  id                 Int    @id @default(autoincrement())
-  enrollment_process String
-  navigation         String
+model Enrollment {
+  id                    Int    @id @default(autoincrement())
+  enrollment_process    String 
+  enrollment_documents  String
+  department_to_enroll  String
+}
+
+model Navigation {
+  id                Int    @id @default(autoincrement())
+  nav_button        String
+  dropdown_menu     String
+  action            String
+  notes             String    
 }
