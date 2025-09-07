@@ -1,15 +1,19 @@
-import app from './app';
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import app from "./app";
+import { VercelRequest, VercelResponse } from "@vercel/node";
 
-// For Vercel serverless function
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  return app(req, res);
+  res.status(200).json({ 
+    message: "Backend is working!",
+    timestamp: new Date().toISOString(),
+    method: req.method,
+    url: req.url
+  });
 }
 
-// For local development (optional)
+// For local development only
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
   });
 }
