@@ -3,10 +3,9 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "build": "npx prisma generate && tsc",
+    "build": "tsc",
     "start": "ts-node src/index.ts",
-    "dev": "ts-node-dev --respawn --transpile-only --project tsconfig.json -r tsconfig-paths/register src/index.ts",
-     "postinstall": "prisma generate"
+    "dev": "ts-node-dev --respawn --transpile-only --project tsconfig.json -r tsconfig-paths/register src/index.ts"
   },
   "dependencies": {
     "@google-cloud/dialogflow": "^7.2.0",
