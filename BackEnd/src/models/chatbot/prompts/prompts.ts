@@ -114,3 +114,26 @@ export const stepByStepPrompt = (
     
     and ${suggestion}
 `;
+
+export const coursesPrompt = (
+  responseText: string,
+  message: string
+) => `
+
+Use the information from the database to answer the question or here:
+${responseText}
+
+Student's question:
+"${message}"
+
+talk like ${botTalk}
+Present the results in a **Markdown table** 2-3 clear columns.
+Make the table clean and easy to read.
+
+- Make the table clean and easy to read.
+- After the table, add one sentence summary highlighting the key info (bold important parts).
+
+and ${suggestion}
+
+
+`;

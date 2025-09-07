@@ -121,13 +121,12 @@ model Contact {
 
 model Course {
   id          Int      @id @default(autoincrement())
-  program_id  Int?
-  course_code String?   
+  course_code String?
   course_name String
-  year_level  String?
-  semester    String?
+  program_id  Int?
   units       Int?
-
+  semester    String?
+  year_level  String?
   program     Program? @relation(fields: [program_id], references: [id])
 }
 
@@ -164,17 +163,17 @@ model SchoolOfficial {
 }
 
 model Enrollment {
-  id                    Int    @id @default(autoincrement())
-  enrollment_process    String 
-  enrollment_documents  String
-  department_to_enroll  String
+  id                   Int    @id @default(autoincrement())
+  enrollment_process   String
+  enrollment_documents String
+  department_to_enroll String
 }
 
 model Navigation {
-  id                Int    @id @default(autoincrement())
-  nav_button        String
-  dropdown_menu     String
-  action            String
-  notes             String 
-  link              String?   
+  id            Int     @id @default(autoincrement())
+  nav_button    String
+  action        String
+  notes         String
+  dropdown_menu String
+  link          String?
 }

@@ -14,7 +14,7 @@ import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.s
 import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrganization";
 import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
 import {enrollmentQuery} from "models/chatbot/schoolEnrollment/schoolEnrollment"
-
+import { courseQuery } from "models/chatbot/schoolCourses/schoolCourses";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -175,8 +175,6 @@ export const createQuery = async (req: Request, res: Response) => {
             return await officeQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("program") ||
-            intentName.includes("course") ||
-            intentName.includes("courses") ||
             intentName.includes("tuition")
           ) {
             console.log(
@@ -235,7 +233,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("student org") ||
             intentName.includes("club") ||
             intentName.includes("society")
-          ) {
+          )  {
             console.log(
               "Routing to organization service based on intent:",
               dialogflowResponse.intent
@@ -245,7 +243,19 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          } else if (
+          }else if (
+            intentName.includes("course") || intentName.includes("courses") || intentName.includes("class") || intentName.includes("classes") || intentName.includes("subject") || intentName.includes("subjects") || intentName.includes("curriculum") || intentName.includes("syllabus")
+          ){
+            console.log(
+              "Routing to course service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await courseQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          }else if (
             intentName.includes("detail") ||
             intentName.includes("details") ||
             intentName.includes("history") ||
