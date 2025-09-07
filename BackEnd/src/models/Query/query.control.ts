@@ -13,6 +13,7 @@ import { officeQuery } from "models/chatbot/schoolOffices/schoolOffices";
 import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
 import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrganization";
 import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
+import { navigationQuery } from "models/chatbot/Navigation/navigation";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -242,6 +243,22 @@ export const createQuery = async (req: Request, res: Response) => {
               dialogflowResponse.intent
             );
             return await schoolDetailQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
+            intentName.includes("navigation") ||
+            intentName.includes("menu") ||
+            intentName.includes("home") ||
+            intentName.includes("page") ||
+            intentName.includes("link")
+          ) {
+            console.log(
+              "Routing to navigation service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await navigationQuery(
               user.id,
               query_text,
               conversationHistory
