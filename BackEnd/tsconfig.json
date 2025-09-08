@@ -9,22 +9,14 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "outDir": "./dist",
-    "paths": {
-      "models/*": ["src/models/*"],
-      "helper/*": ["helper/*"],
-      "utils/*": ["utils/*"],
-      "*": ["*"]
-    },
-    "types": ["node", "cookie-parser"]
+    "sourceMap": true
   },
   "include": [
     "src/**/*", 
     "helper/**/*",
     "utils/**/*",
     "prisma/**/*",
-    "types/**/*",
-    "types/express.d.ts", 
-    "dialogflow.d.ts"
+    "types/**/*"
   ],
   "exclude": ["node_modules", "dist"]
 }
