@@ -10,17 +10,8 @@ export const API_CONFIG = {
 };
 
 function getBaseUrl(): string {
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://askjc-chatbot.onrender.com';
-  }
+  return 'https://askjc-chatbot.onrender.com';
   
-  // For web development
-  if (typeof window !== 'undefined' && window.location) {
-    return 'http://localhost:3000';
-  }
-  
-  // For mobile development (Expo Go)
-  return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.254.121:3000';
 }
 
 export { getBaseUrl };
