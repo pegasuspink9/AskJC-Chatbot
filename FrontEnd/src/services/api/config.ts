@@ -11,7 +11,7 @@ export const API_CONFIG = {
 
 function getBaseUrl(): string {
   if (process.env.NODE_ENV === 'production') {
-    return 'https://your-production-api.com';
+    return 'https://askjc-chatbot.onrender.com';
   }
   
   // For web development
