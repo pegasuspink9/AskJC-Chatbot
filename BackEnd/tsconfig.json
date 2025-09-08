@@ -7,13 +7,24 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "baseUrl": "src",
-     "outDir": "./dist",
-    "rootDir": "./src",
+    "baseUrl": ".",
+    "outDir": "./dist",
     "paths": {
+      "models/*": ["src/models/*"],
+      "helper/*": ["helper/*"],
+      "utils/*": ["utils/*"],
       "*": ["*"]
     },
     "types": ["node", "cookie-parser"]
   },
-  "include": ["src/**/*", "types", "types/express.d.ts", "dialogflow.d.ts"]
+  "include": [
+    "src/**/*", 
+    "helper/**/*",
+    "utils/**/*",
+    "prisma/**/*",
+    "types/**/*",
+    "types/express.d.ts", 
+    "dialogflow.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
 }
