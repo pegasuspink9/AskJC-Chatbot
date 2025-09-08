@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, Linking, TouchableOpacity, Alert, Platform, Image, Dimensions } from 'react-native';
-import { FontFamilies, FontSizes } from '../../constants/theme';
+import { FontFamilies } from '../../constants/theme';
 
 const parseFormattedText = (
   text: string,
@@ -19,8 +19,48 @@ const parseFormattedText = (
   return renderFormattedText(text, baseTextStyle, Colors);
 };
 
+
+const handleEmailPress = async (email: string) => {
+    try {
+      const cleanEmail = email.trim().replace(/[.,;:]$/, '');
+      
+      const mailtoUrl = `mailto:${cleanEmail}`;
+      
+      console.log('📧 Attempting to open email:', mailtoUrl);
+      
+      const supported = await Linking.canOpenURL(mailtoUrl);
+      
+      if (supported) {
+        await Linking.openURL(mailtoUrl);
+        console.log('✅ Email app opened successfully');
+      } else {
+        Alert.alert(
+          "Email App", 
+          `No email app found. Please copy this email address:\n\n${cleanEmail}`,
+          [
+            { 
+              text: "OK", 
+              style: "default" 
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('💥 Error opening email:', error);
+      Alert.alert(
+        "Email Error", 
+        "Something went wrong while trying to open the email app.",
+        [{ text: "OK", style: "default" }]
+      );
+    }
+  };
+
+
+  
 const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
-  const combinedRegex = /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+)/g;
+  const combinedRegex =
+    /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+
   const parts = text.split(combinedRegex);
 
   return parts
@@ -31,38 +71,109 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
       let content = part;
 
       if (part.startsWith('**') && part.endsWith('**')) {
-        content = part.slice(2, -2);
-        textStyle = {
-          ...textStyle,
-          fontFamily: FontFamilies?.bold || 'System',
-        };
+        content = part.slice(2, -2).trim();
+
+        if (content.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+          return (
+            <TouchableOpacity
+              key={index}
+              onPress={() => handleEmailPress(content)}
+              activeOpacity={0.7}
+              style={{ flexShrink: 1 }}
+            >
+              <Text
+                style={{
+                  ...textStyle,
+                  color: Colors?.primary || '#0066cc',
+                  fontWeight: '500',
+                  textDecorationLine: 'underline',
+                }}
+              >
+                {content}
+              </Text>
+            </TouchableOpacity>
+          );
+        }
+
+        if (content.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/)) {
+          return (
+            <TouchableOpacity
+              key={index}
+              onPress={() => handleUrlPress(content)}
+              activeOpacity={0.7}
+              style={{ flexShrink: 1 }}
+            > 
+              <Text
+                style={{
+                  ...textStyle,
+                  color: Colors?.primary || '#0066cc',
+                  fontWeight: '500',
+                }}
+              >
+                {content}
+              </Text>
+            </TouchableOpacity>
+          );
+        }
+
+        // 🔹 Normal bold text
         return (
-          <Text key={index} style={textStyle}>
+          <Text
+            key={index}
+            style={{
+              ...textStyle,
+              fontFamily: FontFamilies?.bold || 'System',
+            }}
+          >
             {content}
           </Text>
         );
       }
 
-      if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
+      if (part.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
         return (
-          <TouchableOpacity 
-            key={index} 
-            onPress={() => handleUrlPress(part)}
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleEmailPress(part)}
             activeOpacity={0.7}
-            style={{ flexShrink: 1 }} 
+            style={{ flexShrink: 1 }}
           >
-            <Text style={{
-              ...textStyle,
-              color: Colors?.primary || '#0066cc', 
-              fontWeight: '500',
-            }}>
+            <Text
+              style={{
+                ...textStyle,
+                color: Colors?.primary || '#0066cc',
+                fontWeight: '500',
+                textDecorationLine: 'underline',
+              }}
+            >
               {part}
             </Text>
           </TouchableOpacity>
         );
       }
 
-      // Regular text
+      if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
+        return (
+          <TouchableOpacity
+            key={index}
+            onPress={() => handleUrlPress(part)}
+            activeOpacity={0.7}
+            style={{ flexShrink: 1 }}
+          >
+            <Text
+              style={{
+                ...textStyle,
+                color: Colors?.primary || '#0066cc',
+                fontWeight: '500',
+              }}
+            >
+              {part}
+            </Text>
+          </TouchableOpacity>
+        );
+      }
+
+      // ✅ Normal text
       return (
         <Text key={index} style={textStyle}>
           {content}
@@ -73,7 +184,6 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
 };
 
 
-// Enhanced URL handler - works perfectly with Expo Go (no clipboard needed)
 const handleUrlPress = async (url: string) => {
   try {
     let fullUrl = url.trim();
@@ -95,6 +205,8 @@ const handleUrlPress = async (url: string) => {
         console.log('❌ Direct open failed, trying canOpenURL check');
       }
     }
+
+   
     
     // Fallback for both platforms
     const supported = await Linking.canOpenURL(fullUrl);
