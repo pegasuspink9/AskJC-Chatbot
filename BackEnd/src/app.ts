@@ -32,7 +32,7 @@ app.use(
       "http://localhost:8081",
       "http://localhost:3000",
       "http://localhost:19006",
-      "https://ask-jc-chatbot-i1af.vercel.app/"
+      "https://askjc-chatbot.onrender.com"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -44,6 +44,8 @@ app.use(
 app.get('/', (req, res) => {
   res.json({ message: 'AskJC Backend API is running!' });
 });
+
+
 // Routes
 app.use("/enrollment", enrollmentRoutes);
 app.use("/navigation", navigationRoutes);

@@ -20,7 +20,7 @@ function getBaseUrl(): string {
   }
   
   // For mobile development (Expo Go)
-  return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.100.200:3000';
+  return process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.254.121:3000';
 }
 
 export { getBaseUrl };
