@@ -86,52 +86,55 @@ and ${suggestion}
 
 export const stepByStepPrompt = (
   responseText: string,
-  message: string
-) => `
-    Use this information only to answer the question: 
-    ${responseText}
+  message: string,
+  botTalk: string = "clear and helpful",
+  suggestion: string = ""
+): string => {
+  const suggestionLine = suggestion ? `\n\nAdditional suggestion: ${suggestion}` : "";
 
-    Student's question: 
-    "${message}"
+  return `Use ONLY the information below to answer the student's question.
 
-    talk like ${botTalk}
-    
-    Present the information in a clear step-by-step format with numbered steps if it is an actions. Follow this exact format:
-    **Step 1: [Step Title]**
-    - [Action item 1]
-    - [Action item 2]
-    - [Action item 3]
+Source / database:
+${responseText}
 
-    **Step 2: [Step Title]**
-    - [Action item 1]
-    - [Action item 2]
-    - [Action item 3]
+Student's question:
+"${message}"
 
-    **Step 3: [Step Title]**
-    - [Action item 1]
-    - [Action item 2]
-    - [Action item 3]
+Tone:
+Talk like ${botTalk}.
 
-    Guidelines:
-    - Use bold formatting for step headers: **Step X: Title**
-    - Each step should have a descriptive title
-    - List specific actions as bullet points using dashes (-)
-    - Keep each bullet point concise and actionable
-    - Add blank lines between steps for readability
-    - Number steps sequentially (Step 1, Step 2, etc.)
-    - Only include steps that are mentioned in the provided information
+Task:
+Present the answer in a clear step-by-step format using numbered steps if the content contains actions. Follow this exact format for each step:
 
+**Step 1: [Step Title]**
+- [Action item 1]
+- [Action item 2]
+- [Action item 3]
 
+**Step 2: [Step Title]**
+- [Action item 1]
+- [Action item 2]
+- [Action item 3]
 
-    
-    IMPORTANT NOTE: ALWAYS REFER TO THE ${responseText} or database.
+**Step 3: [Step Title]**
+- [Action item 1]
+- [Action item 2]
+- [Action item 3]
 
+Guidelines:
+- Use bold formatting for step headers (e.g., **Step X: Title**).
+- Each step must have a concise, descriptive title.
+- List specific actions as bullet points using dashes (-).
+- Keep each bullet point concise and actionable.
+- Add a blank line between steps for readability.
+- Number steps sequentially (Step 1, Step 2, etc.).
+- Only include steps that are supported by the provided source information.
+- If the source does not contain steps/actions, provide a concise direct answer instead of the step-by-step layout.
 
-    If the information does not contain steps or actions, provide a concise answer instead.
-
-    
-    and ${suggestion}
+IMPORTANT NOTE:
+ALWAYS refer to the provided source (${responseText}) or the database. Do not invent steps or add unsupported information.${suggestionLine}
 `;
+};
 
 export const coursesPrompt = (
   responseText: string,
