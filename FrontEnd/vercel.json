@@ -6,12 +6,13 @@
       "dest": "/dist/$1"
     }
   ],
-    "builds": [
+  "builds": [
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "dist",
+        "installCommand": "npm install --legacy-peer-deps"
       }
     }
   ],
