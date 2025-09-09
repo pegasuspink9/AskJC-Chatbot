@@ -17,6 +17,7 @@ import scholarshipRoutes from "./models/Scholarship/scholarship.routes";
 import facilitiesRoutes from "./models/OfficeAndFacilities/officeAndFacilities.routes";
 import enrollmentRoutes from "./models/Enrollment/enrollment.routes";
 import navigationRoutes from "./models/Navigation/navigation.routes";
+import devInfoRoutes from "./models/DevInfo/devInfo.routes";
 
 const app = express();
 
@@ -52,16 +53,16 @@ app.use("/user", userRoutes);
 app.use("/query", queryRoutes);
 app.use("/session", sessionRoutes);
 app.use("/feedback", feedbackRoutes);
-
+app.use("/dev", devInfoRoutes);
 app.use("/facility", facilitiesRoutes);
-app.use("/scholarship", scholarshipRoutes); //complete data
+app.use("/scholarship", scholarshipRoutes);
 app.use("/office", officeRoutes);
 app.use("/student-org", studentOrgRoutes);
 app.use("/contact", contactRoutes);
 app.use("/course", couseRoutes);
 app.use("/department", departmentRoutes);
 app.use("/program", programRoutes);
-app.use("/school-official", schoolOfficialRoutes); //complete data
+app.use("/school-official", schoolOfficialRoutes);
 
 app.listen(3000, () => {
   console.log(`Server running on http://localhost:${process.env.PORT}`);

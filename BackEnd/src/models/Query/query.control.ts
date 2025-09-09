@@ -15,6 +15,7 @@ import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrgan
 import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
 import { navigationQuery } from "models/chatbot/Navigation/navigation";
 import { officeFacilitiesQuery } from "models/chatbot/Office and Facilities/officeAndFacilities.service";
+import { devInfoQuery } from "models/chatbot/DevInfo/devInfo.services";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -282,6 +283,15 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
+          } else if (
+            intentName.includes("developer") ||
+            intentName.includes("created")
+          ) {
+            console.log(
+              "Routing to dev info based on intent: ",
+              dialogflowResponse.intent
+            );
+            return await devInfoQuery(user.id, query_text, conversationHistory);
           } else {
             console.log(
               "Routing to school official service based on intent:",
