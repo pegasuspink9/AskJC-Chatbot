@@ -250,6 +250,10 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingVertical: Spacing?.sm,
   },
   inputContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
