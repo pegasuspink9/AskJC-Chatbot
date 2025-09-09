@@ -1,19 +1,18 @@
 {
   "version": 2,
-  "installCommand": "npm install --legacy-peer-deps",
-  "builds": [
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1"
+    }
+  ],
+    "builds": [
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist"
       }
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/dist/$1"
     }
   ],
   "env": {
