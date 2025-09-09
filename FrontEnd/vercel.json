@@ -1,12 +1,13 @@
 {
   "version": 2,
-  "routes": [
+  "installCommand": "npm install && chmod +x node_modules/.bin/*",
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
+      "source": "/(.*)",
+      "destination": "/dist/$1"
     }
   ],
-    "builds": [
+  "builds": [
     {
       "src": "package.json",
       "use": "@vercel/static-build",
