@@ -194,5 +194,6 @@ Here's the map for your reference:
 
 You can also visit our website: https://sjccollege.edu/campus-map
 
+Make sure that this works
 and ${suggestion}
 `;
