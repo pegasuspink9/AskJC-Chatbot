@@ -10,6 +10,8 @@ export const botTalk = `
     - When including email addresses, write them as plain text (e.g., sjccollegelibrary@gmail.com) so they remain clickable.
     - Never bold or wrap contact info (emails, links, phone numbers). 
     - Any text containing '@', 'http', 'https', '.com', '.org', or '.net' must remain plain with no ** around it.
+
+    
 `;
 
 

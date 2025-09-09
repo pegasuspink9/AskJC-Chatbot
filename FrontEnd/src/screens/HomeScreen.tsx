@@ -18,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // Import new components
 import LandingScreen from '../components/ChatPages/LandingScreen';
 import ChatScreen from '../components/ChatPages/ChattingScreen';
-import Sidebar from '../components/ChatPages/SideBar';
 import { MessageItem, TypingIndicator } from '../components/ChatPages/MessageComponents';
 import { useChatLogic } from '../components/ChatPages/useChats';
 import { Message as ChatMessage } from '../types/index';
@@ -188,17 +187,7 @@ const HomeScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[{ flex: 1, backgroundColor: Colors.background }]}>
-      {/* Sidebar */}
-      <Sidebar
-        Colors={Colors}
-        modalVisible={modalVisible}
-        slideAnim={slideAnim}
-        isDark={isDark}
-        onClose={closeDrawer}
-        onNewChat={handleNewChat}
-        onToggleTheme={toggleTheme}
-      />
-
+ 
       <KeyboardAvoidingView
         style={styles(Colors).container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -212,7 +201,6 @@ const HomeScreen: React.FC = () => {
             introInput={introInput}
             setIntroInput={setIntroInput}
             onSubmit={handleIntroSubmit}
-            onOpenDrawer={openDrawer}
           />
         ) : (
           <ChatScreen

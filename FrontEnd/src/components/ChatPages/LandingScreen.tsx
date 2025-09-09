@@ -9,13 +9,11 @@ import {
   Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
+import { getColors, Spacing, FontSizes } from '../../constants/theme';
 import SimpleLottie from '../../LottieAnimation/SimpleLottie';
-
-
+import { useTheme } from '../../constants/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
-
 
 interface LandingScreenProps {
   Colors: any;
@@ -24,10 +22,7 @@ interface LandingScreenProps {
   introInput: string;
   setIntroInput: (text: string) => void;
   onSubmit: () => void;
-  onOpenDrawer: () => void;
 }
-
-
 
 const LandingScreen: React.FC<LandingScreenProps> = ({
   Colors,
@@ -36,10 +31,11 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
   introInput,
   setIntroInput,
   onSubmit,
-  onOpenDrawer,
 }) => {
+  const { isDark, toggleTheme } = useTheme(); 
+
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles(Colors).welcomeSection,
         {
@@ -48,27 +44,35 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
         }
       ]}
     >
-       <TouchableOpacity style={styles(Colors).hamburger} onPress={onOpenDrawer}>
-        <Ionicons name="menu" size={28} color={Colors.text} />
+      <TouchableOpacity
+        style={styles(Colors).themeToggle}
+        onPress={toggleTheme} 
+        activeOpacity={0.7}
+      >
+        <Ionicons
+          name={isDark ? 'sunny' : 'moon'}
+          size={24}
+          color={Colors.primary}
+        />
       </TouchableOpacity>
 
       <SimpleLottie
         source={{ uri: 'https://lottie.host/9c5ce41b-6089-4da6-97d8-b6c9106f2f3c/coLSHGaNNi.lottie' }}
         style={styles(Colors).lottieBackground}
-        autoPlay={true}
-        loop={true}
+        autoPlay
+        loop
         resizeMode="contain"
       />
-      
+
       <Text style={[styles(Colors).welcomeTitle, styles(Colors).welcomeAsk]}>
         Ask
         <Text style={styles(Colors).welcomeJC}>JC</Text>
       </Text>
-      
+
       <Text style={styles(Colors).welcomeSubtitle}>
         Your AI-powered assistant ready to help with anything you need.
       </Text>
-      
+
       <View style={styles(Colors).inputRow}>
         <TextInput
           style={styles(Colors).introInput}
@@ -83,7 +87,9 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
         <TouchableOpacity
           style={[
             styles(Colors).sendButton,
-            introInput.trim() ? styles(Colors).sendButtonActive : styles(Colors).sendButtonInactive
+            introInput.trim()
+              ? styles(Colors).sendButtonActive
+              : styles(Colors).sendButtonInactive
           ]}
           onPress={onSubmit}
           disabled={!introInput.trim()}
@@ -167,12 +173,10 @@ const styles = (Colors: any) => StyleSheet.create({
   sendButtonInactive: {
     backgroundColor: Colors.gray?.[200] || '#E5E7EB',
   },
-  
-  hamburger: {
+  themeToggle: {
     position: 'absolute',
     top: height * 0.064,
-    left: width * 0.05,
-    alignSelf: 'flex-start',
+    right: width * 0.05,
     zIndex: 10,
     backgroundColor: Colors.surface,
     borderRadius: 24,
