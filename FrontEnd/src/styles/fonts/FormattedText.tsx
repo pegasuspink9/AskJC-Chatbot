@@ -8,6 +8,12 @@ const parseFormattedText = (
   isUser: boolean,
   baseTextStyle: any
 ) => {
+
+  if (text.includes('![')) {
+    return renderWithMarkdownImages(text, baseTextStyle, Colors);
+  }
+
+
   if (text.includes('|')) {
     return renderWithTable(text, baseTextStyle, Colors);
   }
@@ -17,6 +23,49 @@ const parseFormattedText = (
   }
 
   return renderFormattedText(text, baseTextStyle, Colors);
+};
+
+
+const renderWithMarkdownImages = (text: string, baseTextStyle: any, Colors: any) => {
+  // Regex to match ![alt text](URL) format
+  const markdownImageRegex = /!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g;
+  const parts = text.split(markdownImageRegex);
+  
+  return parts.map((part, index) => {
+    // Every 3rd element starting from index 2 is a URL
+    if ((index - 2) % 3 === 0 && index > 0) {
+      const imageUrl = part.trim();
+      return (
+        <View key={index} style={{ marginVertical: 8, alignItems: 'center' }}>
+          <Image 
+            source={{ uri: imageUrl }}
+            style={{
+              width: 300,
+              height: 200,           
+              borderRadius: 8,
+            }}
+            resizeMode="cover"
+          />
+        </View>
+      );
+    }
+    
+    // Every 3rd element starting from index 1 is alt text (skip it)
+    if ((index - 1) % 3 === 0 && index > 0) {
+      return null;
+    }
+    
+    // Regular text parts
+    if (part && part.trim()) {
+      return (
+        <View key={index}>
+          {renderFormattedText(part, baseTextStyle, Colors)}
+        </View>
+      );
+    }
+    
+    return null;
+  }).filter(Boolean);
 };
 
 

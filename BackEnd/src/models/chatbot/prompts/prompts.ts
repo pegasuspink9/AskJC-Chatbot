@@ -178,12 +178,21 @@ Student's question:
 
 talk like ${botTalk}
 
-If a map URL or room image is available, clearly display the link (e.g., https://example.com) so the student can open it. 
-- Do not bold the link. 
-- If multiple maps exist, list them with bullet points. 
-- Highlight the important location details (building, room number, office name) in *bold*. 
+If a map URL or room image is available:
+- For image URLs, format them as: [IMAGE:URL_HERE] (e.g., [IMAGE:https://github.com/user-attachments/assets/69a932ed-d314-4c98-9535-67fca3ccfa47])
+- For regular links, display them as plain text (e.g., https://example.com) so they remain clickable
+- Do not bold any links or image URLs
+- If multiple maps/images exist, list them with bullet points
+- Highlight the important location details (building, room number, office name) in **bold**
 
 If no map is available, politely say so and guide the student with the next best information (building/room).
+
+Example format:
+**Building A - Room 101**
+Here's the map for your reference:
+[IMAGE:https://github.com/user-attachments/assets/69a932ed-d314-4c98-9535-67fca3ccfa47]
+
+You can also visit our website: https://sjccollege.edu/campus-map
 
 and ${suggestion}
 `;

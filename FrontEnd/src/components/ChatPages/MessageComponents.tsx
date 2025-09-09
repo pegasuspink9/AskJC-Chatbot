@@ -46,22 +46,30 @@ const extractSuggestions = (text: string): string[] => {
 };
 
 const extractImages = (text: string): string[] => {
-  const imageRegex = /\[IMAGE:(https?:\/\/[^\]]+)\]/g;
-  const matches = [];
+  const images = [];
+  const bracketImageRegex = /\[IMAGE:(https?:\/\/[^\]]+)\]/g;
   let match;
-  
-  while ((match = imageRegex.exec(text)) !== null) {
-    matches.push(match[1].trim());
+  while ((match = bracketImageRegex.exec(text)) !== null) {
+    images.push(match[1].trim());
   }
   
-  return matches;
+  const markdownImageRegex = /!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g;
+  while ((match = markdownImageRegex.exec(text)) !== null) {
+    images.push(match[2].trim());
+  }
+  
+  return images;
 };
+
 
 const cleanDisplayText = (text: string): string => {
   return text
-    .replace(/\[(?!IMAGE:)([A-Za-z\s\?'.,!-]+)\]/g, '')
+    .replace(/\[IMAGE:(https?:\/\/[^\]]+)\]/g, '') 
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g, '') 
+    .replace(/\[(?!IMAGE:)([A-Za-z\s\?'.,!-]+)\]/g, '') 
     .trim();
 };
+
 
 
 
