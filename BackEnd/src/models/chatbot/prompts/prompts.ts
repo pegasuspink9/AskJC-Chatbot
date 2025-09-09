@@ -7,10 +7,7 @@ export const botTalk = `
     IMPORTANT: When including URLs or links, write them WITHOUT bold formatting. Use plain URLs like https://example.com so they remain clickable.
     `;
 
-export const singleLinePrompt = (
-  fact: string,
-  message: string
-) => `
+export const singleLinePrompt = (fact: string, message: string) => `
     Use this only information to answer the question: 
     ${fact}
 
@@ -25,11 +22,7 @@ export const singleLinePrompt = (
     and ${suggestion}
 `;
 
-
-export const bulletinPrompts = (
-  responseText: string,
-  message: string
-) => `
+export const bulletinPrompts = (responseText: string, message: string) => `
 Information you can use: 
 ${responseText}
 
@@ -43,10 +36,7 @@ present the list in a bulletin-style format with bullet points (•) and highlig
 and ${suggestion}
 `;
 
-export const tablePrompts = (
-  responseText: string,
-  message: string
-) => `
+export const tablePrompts = (responseText: string, message: string) => `
 Information you can use: 
 ${responseText}
 
@@ -59,6 +49,25 @@ Make the table clean and easy to read.
 
 - Make the table clean and easy to read. 
 - After the table, add one sentence summary highlighting the key info (bold important parts).
+
+and ${suggestion}
+`;
+
+export const mapPrompt = (responseText: string, message: string) => `
+Information you can use: 
+${responseText}
+
+Student's question:
+"${message}"
+
+talk like ${botTalk}
+
+If a map URL or room image is available, clearly display the link (e.g., https://example.com) so the student can open it. 
+- Do not bold the link. 
+- If multiple maps exist, list them with bullet points. 
+- Highlight the important location details (building, room number, office name) in **bold**. 
+
+If no map is available, politely say so and guide the student with the next best information (building/room).
 
 and ${suggestion}
 `;

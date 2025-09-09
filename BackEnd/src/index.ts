@@ -23,6 +23,13 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+app.post("/webhook", (req, res) => {
+  console.log("Received webhook:", req.body);
+  res.json({
+    fulfillmentText: "Hello from webhook!",
+  });
+});
+
 const cors = require("cors");
 
 app.use(
@@ -57,5 +64,5 @@ app.use("/program", programRoutes);
 app.use("/school-official", schoolOfficialRoutes); //complete data
 
 app.listen(3000, () => {
-  console.log(`Server running on http://localhost:3000`);
+  console.log(`Server running on http://localhost:${process.env.PORT}`);
 });
