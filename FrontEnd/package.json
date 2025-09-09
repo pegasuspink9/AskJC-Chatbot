@@ -6,8 +6,7 @@
     "start": "npx expo start",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
-    "web": "npx expo start --web",
-    "vercel-build": "npm exec expo export:web"
+    "web": "npx expo start --web"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.0",
