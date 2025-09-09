@@ -16,6 +16,8 @@ import { programQuery } from "../../models/chatbot/schoolProgram/schoolProgram";
 import {enrollmentQuery} from "../../models/chatbot/schoolEnrollment/schoolEnrollment"
 import { courseQuery } from "../../models/chatbot/schoolCourses/schoolCourses";
 import { navigationQuery } from "../chatbot/Navigation/navigation";
+import { officeFacilitiesQuery } from "../chatbot/Office and Facilities/officeAndFacilities.service";
+
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -163,8 +165,6 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
-            intentName.includes("office") ||
-            intentName.includes("offices") ||
             intentName.includes("building") ||
             intentName.includes("location") ||
             intentName.includes("floor")
@@ -291,7 +291,27 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          } else {
+          }else if (
+            intentName.includes("office") ||
+            intentName.includes("offices") ||
+            intentName.includes("building") ||
+            intentName.includes("location") ||
+            intentName.includes("floor") ||
+            intentName.includes("facility") ||
+            intentName.includes("facilities") ||
+            intentName.includes("classroom") ||
+            intentName.includes("map")
+          ) {
+            console.log(
+              "Routing to office and facilities service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await officeFacilitiesQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          }else {
             console.log(
               "Routing to school official service based on intent:",
               dialogflowResponse.intent

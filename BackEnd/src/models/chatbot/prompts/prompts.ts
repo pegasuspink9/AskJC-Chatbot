@@ -165,3 +165,25 @@ and ${suggestion}
 
 
 `;
+
+
+
+
+export const mapPrompt = (responseText: string, message: string) => `
+Information you can use: 
+${responseText}
+
+Student's question:
+"${message}"
+
+talk like ${botTalk}
+
+If a map URL or room image is available, clearly display the link (e.g., https://example.com) so the student can open it. 
+- Do not bold the link. 
+- If multiple maps exist, list them with bullet points. 
+- Highlight the important location details (building, room number, office name) in *bold*. 
+
+If no map is available, politely say so and guide the student with the next best information (building/room).
+
+and ${suggestion}
+`;
