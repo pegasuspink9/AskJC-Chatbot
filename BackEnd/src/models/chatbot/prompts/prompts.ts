@@ -11,7 +11,7 @@ export const botTalk = `
     - Never bold or wrap contact info (emails, links, phone numbers). 
     - Any text containing '@', 'http', 'https', '.com', '.org', or '.net' must remain plain with no ** around it.
 
-    
+    If the question asked in bisaya or tagalog, answer in bisaya or tagalog. If the question is in english, answer in english.
 `;
 
 

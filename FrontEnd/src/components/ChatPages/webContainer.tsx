@@ -36,13 +36,16 @@ const styles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     minHeight: '100vh' as any,
+    maxHeight: '100vh' as any,
   },
   mobileViewport: {
     width: '100%',
     height: '100%',
     minHeight: '100vh' as any,
+    maxHeight: '100vh' as any,
     backgroundColor: Colors.surface || '#ffffff',
     overflow: 'hidden',
+    display: 'flex',
     flex: 1,
   },
   tablet: {
