@@ -32,7 +32,7 @@ app.use(
       "http://localhost:8081",
       "http://localhost:3000",
       "http://localhost:19006",
-      "https://askjc-chatbot.onrender.com"
+      "https://ask-jc-chatbot.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

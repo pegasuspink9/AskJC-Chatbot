@@ -5,5 +5,29 @@
       "src": "/(.*)",
       "dest": "/dist/$1"
     }
+  ],
+    "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "EXPO_PUBLIC_API_BASE_URL": "https://askjc-chatbot.onrender.com"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "cross-origin"
+        }
+      ]
+    }
   ]
 }
