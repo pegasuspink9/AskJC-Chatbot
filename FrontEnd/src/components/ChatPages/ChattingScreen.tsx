@@ -260,7 +260,7 @@ const styles = (Colors: any) => StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.borderSuggestion,
     minHeight: Platform.OS === 'web' ? 70 : undefined,
-    paddingBottom: Platform.OS === 'web' ? (Spacing?.sm || 8) : (Spacing?.md || 12),
+    paddingBottom: Platform.OS === 'web' ? (Spacing?.md || 8) : (Spacing?.md || 12),
     ...(Platform.OS === 'web' && {
       position: 'sticky' as any,
       bottom: 0,
