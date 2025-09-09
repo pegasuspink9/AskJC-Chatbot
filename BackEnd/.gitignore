@@ -6,8 +6,6 @@
 *.json
 credentials/
 
-# Dependencies
-node_modules/
 
 # Logs
 *.log

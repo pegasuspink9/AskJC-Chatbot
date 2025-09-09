@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,12 @@ import {
   Platform,
   TouchableOpacity,
   Image,
-  Dimensions
+  Dimensions,
+  ActivityIndicator
 } from 'react-native';
 import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
 import parseFormattedText from '../../styles/fonts/FormattedText';
-
-
 
 interface MessageItemProps {
   item: ChatMessage;
@@ -28,6 +27,14 @@ interface TypingIndicatorProps {
   dot1Opacity: Animated.Value;
   dot2Opacity: Animated.Value;
   dot3Opacity: Animated.Value;
+}
+
+// NEW: Add interface for OptimizedImage
+interface OptimizedImageProps {
+  uri: string;
+  width?: number;
+  height?: number;
+  borderRadius?: number;
 }
 
 const extractSuggestions = (text: string): string[] => {
@@ -61,7 +68,6 @@ const extractImages = (text: string): string[] => {
   return images;
 };
 
-
 const cleanDisplayText = (text: string): string => {
   return text
     .replace(/\[IMAGE:(https?:\/\/[^\]]+)\]/g, '') 
@@ -70,8 +76,85 @@ const cleanDisplayText = (text: string): string => {
     .trim();
 };
 
+// Optimize image URL function
+const optimizeImageUrl = (url: string, width: number = 300, height: number = 200, quality: number = 10): string => {
+  // For GitHub assets, add compression parameters
+  if (url.includes('github.com/user-attachments/assets/')) {
+    try {
+      const urlObj = new URL(url);
+      urlObj.searchParams.set('w', width.toString());
+      urlObj.searchParams.set('h', height.toString());
+      urlObj.searchParams.set('fit', 'crop');
+      urlObj.searchParams.set('auto', 'compress');
+      urlObj.searchParams.set('q', quality.toString());
+      return urlObj.toString();
+    } catch (error) {
+      console.warn('Error optimizing URL:', error);
+      return url;
+    }
+  }
+  return url;
+};
 
+// Updated OptimizedImage component with proper typing
+const OptimizedImage: React.FC<OptimizedImageProps> = ({ 
+  uri, 
+  width = 300, 
+  height = 200, 
+  borderRadius = 8 
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  
+  const optimizedUri = optimizeImageUrl(uri, width, height, 75);
 
+  return (
+    <View style={{ width, height, borderRadius, position: 'relative' }}>
+      {loading && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#f0f0f0',
+          borderRadius,
+          zIndex: 1,
+        }}>
+          <ActivityIndicator size="small" color="#666" />
+        </View>
+      )}
+      
+      {error ? (
+        <View style={{
+          width,
+          height,
+          borderRadius,
+          backgroundColor: '#f0f0f0',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <Text style={{ color: '#666', fontSize: 12, textAlign: 'center' }}>
+            Failed to load image
+          </Text>
+        </View>
+      ) : (
+        <Image
+          source={{ uri: optimizedUri }}
+          style={{ width, height, borderRadius }}
+          resizeMode="cover"
+          onLoad={() => setLoading(false)}
+          onError={() => {
+            setLoading(false);
+            setError(true);
+          }}
+        />
+      )}
+    </View>
+  );
+};
 
 export const MessageItem = memo<MessageItemProps>(({ 
   item, 
@@ -108,11 +191,8 @@ export const MessageItem = memo<MessageItemProps>(({
     item.isUser ? styles(Colors).userMessageText : styles(Colors).botMessageText
   ]);
 
-
-
-
-return (
-        <>
+  return (
+    <>
       {/* Text Message */}
       {displayText && (
         <View style={StyleSheet.flatten([
@@ -144,6 +224,7 @@ return (
         </View>
       )}
 
+      {/* Image Messages */}
       {images.length > 0 && images.map((imageUrl, index) => {
         return (
           <View 
@@ -153,17 +234,18 @@ return (
               styles(Colors).botMessageContainer 
             ])}
           >
-            
-              
-              <Image 
-                source={{ uri: imageUrl }}
-                style={{
-                  width: 300,
-                  height: 200,           
-                  borderRadius: 8,
-                }}
-                resizeMode="cover"
+            <View style={StyleSheet.flatten([
+              styles(Colors).messageBubble,
+              styles(Colors).botMessageBubble,
+              styles(Colors).imageBubble
+            ])}>
+              <OptimizedImage
+                uri={imageUrl}
+                width={280}
+                height={180}
+                borderRadius={8}
               />
+            </View>
 
             <Text style={StyleSheet.flatten([
               styles(Colors).timestamp,
@@ -175,8 +257,7 @@ return (
         );
       })}
       
-
-      {/* Suggestions (only show after the last message/image) */}
+      {/* Suggestions */}
       {showSuggestions && (
         <View style={StyleSheet.flatten([
           styles(Colors).messageContainer,

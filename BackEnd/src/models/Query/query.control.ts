@@ -294,11 +294,12 @@ export const createQuery = async (req: Request, res: Response) => {
           }else if (
             intentName.includes("office") ||
             intentName.includes("offices") ||
+            intentName.includes("facility") ||
+            intentName.includes("facilities") ||
+            intentName.includes("room") ||
             intentName.includes("building") ||
             intentName.includes("location") ||
             intentName.includes("floor") ||
-            intentName.includes("facility") ||
-            intentName.includes("facilities") ||
             intentName.includes("classroom") ||
             intentName.includes("map")
           ) {
