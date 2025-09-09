@@ -250,7 +250,6 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingVertical: Spacing?.sm,
   },
   inputContainer: {
-    backgroundColor: Colors.surface,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     borderTopWidth: 1,
@@ -258,7 +257,7 @@ const styles = (Colors: any) => StyleSheet.create({
       flexShrink: 0, 
     paddingHorizontal: Spacing?.md || 12,
     borderTopColor: Colors.borderSuggestion,
-    backgroundColor: 'green'
+    backgroundColor: 'green',
   },
   inputWrapper: {
     flexDirection: 'row',
