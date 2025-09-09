@@ -258,6 +258,7 @@ const styles = (Colors: any) => StyleSheet.create({
       flexShrink: 0, 
     paddingHorizontal: Spacing?.md || 12,
     borderTopColor: Colors.borderSuggestion,
+    backgroundColor: 'green'
   },
   inputWrapper: {
     flexDirection: 'row',
