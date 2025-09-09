@@ -2,12 +2,12 @@
   "name": "askjc-chatbot",
   "version": "1.0.0",
   "main": "index.ts",
-  "scripts": {
+ "scripts": {
     "start": "npx expo start",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
-    "vercel-build": "npx --yes @expo/cli@latest export:web"
+    "vercel-build": "npx --yes @expo/cli@latest export --platform web"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.0",

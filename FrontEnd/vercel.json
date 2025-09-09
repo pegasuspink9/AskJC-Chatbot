@@ -16,7 +16,7 @@
     }
   ],
   "installCommand": "npm install && chmod +x node_modules/.bin/*",
-  "buildCommand": "npx --yes @expo/cli@latest export:web",
+  "buildCommand": "npx --yes @expo/cli@latest export --platform web",
   "env": {
     "NODE_ENV": "production",
     "EXPO_PUBLIC_API_BASE_URL": "https://askjc-chatbot.onrender.com"
