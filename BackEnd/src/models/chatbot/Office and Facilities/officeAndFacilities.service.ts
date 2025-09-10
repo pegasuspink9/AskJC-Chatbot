@@ -2,11 +2,7 @@ import { prisma } from "../../../../prisma/client";
 import { searchOfficeAndFacilities } from "../../../../helper/services/officeAndFacilities.database";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-import {
-  tablePrompts,
-  singleLinePrompt,
-  mapPrompt,
-} from "../prompts/prompts";
+import { mapPrompt, singleLinePrompt } from "../prompts/prompts";
 
 export const officeFacilitiesQuery = async (
   userId: number,
@@ -34,7 +30,6 @@ export const officeFacilitiesQuery = async (
 
   try {
     const dialogflowSessionPath = `projects/${process.env.DIALOGFLOW_PROJECT_ID}/agent/sessions/${userId}`;
-    
     const dialogflow = await getDialogflowResponse(
       message,
       dialogflowSessionPath,
@@ -42,10 +37,8 @@ export const officeFacilitiesQuery = async (
     );
 
     if (!dialogflow || dialogflow.confidence < 0.3) {
-      console.log(
-        "Low confidence or no Dialogflow result. Using Gemini fallback."
-      );
-      
+      console.log("Low confidence → Using Gemini fallback");
+
       const { text, apiKey } = await getGenerativeResponse(
         message,
         conversationHistory
@@ -54,9 +47,12 @@ export const officeFacilitiesQuery = async (
       responseSource = `generative-fallback (via ${apiKey})`;
     } else {
       const { action, parameters, fulfillmentText, intent } = dialogflow;
-      
+
       console.log(`Dialogflow Intent: ${intent}, Action: ${action}`);
-      console.log("Parameters:", parameters);
+      console.log(
+        "📡 FULL DIALOGFLOW RAW RESPONSE:",
+        JSON.stringify(dialogflow, null, 2)
+      );
 
       if (fulfillmentText && fulfillmentText.trim()) {
         responseText = fulfillmentText;
@@ -64,50 +60,42 @@ export const officeFacilitiesQuery = async (
       } else {
         switch (action) {
           case "ask_location_info": {
-            const mappedParameters = {
+            const originalParameters = {
               offices_name: parameters.offices_name,
               facility_name: parameters.facility_name,
               room_number: parameters.room_number,
-              building: parameters.building
+              building: parameters.building,
             };
 
+            const mappedParameters = {
+              office_name: originalParameters.offices_name,
+              facility_name: originalParameters.facility_name,
+              room_number: originalParameters.room_number,
+              building: originalParameters.building,
+            };
 
-            console.log("Original Dialogflow parameters:", parameters);
-            console.log("Mapped location parameters:", mappedParameters);
+            console.log("Original Dialogflow parameters:", originalParameters);
+            console.log("Mapped office parameters:", mappedParameters);
 
-            const cleanedParameters = Object.fromEntries(
-              Object.entries(mappedParameters).filter(([_, value]) => 
-                value && value !== '' && value !== null && value !== undefined
-              )
-            );
-
-            console.log("Cleaned parameters for search:", cleanedParameters);
-
-            const dbResult = await searchOfficeAndFacilities(cleanedParameters);
+            const dbResult = await searchOfficeAndFacilities(mappedParameters);
             responseText = dbResult;
             responseSource = "database-search";
 
             try {
               let prompt = "";
-              
-              const numberedEntries = (dbResult.match(/^\d+\./gm) || []).length;
-              
+
               if (
-                dbResult.includes("No locations matched your search criteria.") ||
-                dbResult.includes("No locations found in the database.")
+                dbResult.includes("No offices") ||
+                dbResult.includes("No facilities") ||
+                dbResult.includes("I need the office")
               ) {
                 prompt = singleLinePrompt(dbResult, message);
-              } else if (
-                numberedEntries >= 2 || 
-                dbResult.includes("Found") && dbResult.split('\n').length >= 4 
-              ) {
-                prompt = mapPrompt(dbResult, message);
               } else {
                 prompt = mapPrompt(dbResult, message);
               }
 
               const { text, apiKey } = await getGenerativeResponse(
-                prompt, 
+                prompt,
                 conversationHistory
               );
               if (text && text.trim()) {
