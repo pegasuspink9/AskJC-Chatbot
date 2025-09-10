@@ -18,7 +18,7 @@ import scholarshipRoutes from "./models/Scholarship/scholarship.routes";
 import facilitiesRoutes from "./models/OfficeAndFacilities/officeAndFacilities.routes";
 import enrollmentRoutes from "./models/Enrollment/enrollment.routes";
 import navigationRoutes from "./models/Navigation/navigation.routes";
-
+import devRoutes from './models/DevInfo/devInfo.routes';
 
 const app = express();
 
@@ -47,6 +47,7 @@ app.get('/', (req, res) => {
 
 
 // Routes
+app.use("/dev", devRoutes);
 app.use("/enrollment", enrollmentRoutes);
 app.use("/navigation", navigationRoutes);
 app.use("/school-detail", schoolDetailRoutes);
