@@ -109,7 +109,7 @@ export const departmentOfficialsQuery = async (
           }
 
         case "get_all_departments": {
-            const mappedParameters = {}; // Empty object to get ALL departments
+            const mappedParameters = {};
             
             console.log("Getting all departments with complete information");
             

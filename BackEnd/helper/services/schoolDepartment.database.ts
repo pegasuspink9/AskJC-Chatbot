@@ -1,6 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 const db = new PrismaClient();
-import { formatDepartmentLocation, formatDepartmentHead, formatDepartmentDescription, formatDepartmentCareerPath, formatDepartmentGeneral, formatMultipleDepartments } from "../utils/schoolDepartment.helper";
+import { 
+  formatDepartmentLocation, 
+  formatDepartmentHead, 
+  formatDepartmentDescription, 
+  formatDepartmentCareerPath, 
+  formatDepartmentGeneral, 
+  formatMultipleDepartments,
+  generateNotFoundDepartmentMessage 
+} from "../utils/schoolDepartment.helper";
 
 interface SearchDepartmentParams {
   department_name?: string | string[];
@@ -36,8 +44,18 @@ export async function searchSchoolDepartment(params: SearchDepartmentParams): Pr
     if (params.floor) conditions.push(addCondition("floor", params.floor));
     if (params.career_path) conditions.push(addCondition("career_path", params.career_path));
 
+    // If no conditions, return all departments
     if (conditions.length === 0) {
-      return "I need more specific information. Please ask about a specific department, building, or department head.";
+      const allDepartments = await db.department.findMany({
+        orderBy: { department_name: "asc" },
+      });
+      
+      if (allDepartments.length > 0) {
+        console.log("📊 Formatting", allDepartments.length, "departments");
+        return formatMultipleDepartments(allDepartments);
+      }
+      
+      return "No departments found in the database.";
     }
 
     const whereCondition = conditions.length > 1 
@@ -52,12 +70,18 @@ export async function searchSchoolDepartment(params: SearchDepartmentParams): Pr
     console.log("🔍 FOUND DEPARTMENTS:", departments);
 
     if (departments.length === 0) {
-      return "No departments matched your search criteria.";
+      return generateNotFoundDepartmentMessage(
+        params.department_name,
+        params.head_name,
+        params.building,
+        params.floor
+      );
     }
 
     if (departments.length === 1) {
       const dept = departments[0];
       
+      // Specific response based on what was searched
       if (params.query_type === "location" || params.building || params.floor) {
         return formatDepartmentLocation(dept);
       } else if (params.query_type === "head" || params.head_name) {

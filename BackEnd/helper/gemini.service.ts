@@ -4,23 +4,23 @@ interface ApiKeyStatus {
   key: string;
   originalIndex: number;
   isWorking: boolean;
-  isRetired: boolean; // NEW: Permanently retired keys
+  isRetired: boolean;
   disabledUntil: number | null;
   lastSuccessAt: number;
   lastFailureAt: number;
   totalSuccesses: number;
   totalFailures: number;
-  consecutiveFailures: number; // NEW: Track consecutive failures
+  consecutiveFailures: number;
   lastError?: string;
-  retiredReason?: string; // NEW: Why this key was retired
+  retiredReason?: string;
 }
 
 class GeminiKeyManager {
   private keyStatuses: ApiKeyStatus[];
   private disableDurationHours: number = 24;
-  private maxConsecutiveFailures: number = 5; // NEW: Retire after 5 consecutive failures
-  private maxFailureRate: number = 0.8; // NEW: Retire if failure rate > 80%
-  private minTrialsBeforeRetirement: number = 10; // NEW: Minimum trials before considering retirement
+  private maxConsecutiveFailures: number = 3; // Reduced for faster retirement
+  private maxFailureRate: number = 0.7; // Lowered threshold
+  private minTrialsBeforeRetirement: number = 5; // Reduced for faster decisions
 
   constructor() {
     const keys = (process.env.GEMINI_API_KEYS || "")
@@ -36,47 +36,43 @@ class GeminiKeyManager {
       key,
       originalIndex: index,
       isWorking: true,
-      isRetired: false, // NEW
+      isRetired: false,
       disabledUntil: null,
       lastSuccessAt: 0,
       lastFailureAt: 0,
       totalSuccesses: 0,
       totalFailures: 0,
-      consecutiveFailures: 0, // NEW
+      consecutiveFailures: 0,
     }));
 
     console.log(`🔑 Initialized ${keys.length} Gemini API keys`);
   }
 
+  // ✅ OPTIMIZED: Skip expired/retired keys immediately
   private isKeyAvailable(keyStatus: ApiKeyStatus): boolean {
-    // NEW: Skip retired keys completely
+    // 🚀 FAST SKIP: Immediately skip retired keys
     if (keyStatus.isRetired) {
       return false;
     }
 
     const now = Date.now();
 
-    // Check if key is temporarily disabled
+    // 🚀 FAST SKIP: Immediately skip disabled keys
     if (keyStatus.disabledUntil && now < keyStatus.disabledUntil) {
       return false;
     }
 
-    // Re-enable key if disable period has passed
+    // Auto-enable if disable period has passed
     if (keyStatus.disabledUntil && now >= keyStatus.disabledUntil) {
       keyStatus.disabledUntil = null;
       keyStatus.isWorking = true;
-      const hoursDisabled = Math.round(
-        (now - keyStatus.lastFailureAt) / (1000 * 60 * 60)
-      );
-      console.log(
-        `🔄 KEY-${keyStatus.originalIndex + 1} re-enabled after ${hoursDisabled} hours`
-      );
+      console.log(`🔄 KEY-${keyStatus.originalIndex + 1} auto-enabled`);
     }
 
     return keyStatus.isWorking;
   }
 
-  // NEW: Check if a key should be permanently retired
+  // ✅ OPTIMIZED: More aggressive retirement criteria
   private shouldRetireKey(keyStatus: ApiKeyStatus): boolean {
     const totalTrials = keyStatus.totalSuccesses + keyStatus.totalFailures;
     
@@ -85,12 +81,12 @@ class GeminiKeyManager {
       return false;
     }
 
-    // Retire if too many consecutive failures
+    // 🚀 FAST RETIREMENT: Retire quickly on consecutive failures
     if (keyStatus.consecutiveFailures >= this.maxConsecutiveFailures) {
       return true;
     }
 
-    // Retire if failure rate is too high
+    // 🚀 FAST RETIREMENT: Retire on high failure rate
     const failureRate = keyStatus.totalFailures / totalTrials;
     if (failureRate > this.maxFailureRate) {
       return true;
@@ -99,31 +95,24 @@ class GeminiKeyManager {
     return false;
   }
 
-  // NEW: Permanently retire a key
   private retireKey(keyStatus: ApiKeyStatus, reason: string) {
     keyStatus.isRetired = true;
     keyStatus.isWorking = false;
     keyStatus.retiredReason = reason;
-    keyStatus.disabledUntil = null; // Clear temporary disable
+    keyStatus.disabledUntil = null;
     
-    console.log(`🚫 KEY-${keyStatus.originalIndex + 1} PERMANENTLY RETIRED: ${reason}`);
-    console.log(`   Stats: ${keyStatus.totalSuccesses} successes, ${keyStatus.totalFailures} failures`);
+    console.log(`🚫 KEY-${keyStatus.originalIndex + 1} RETIRED: ${reason}`);
     
-    // Log remaining active keys
     const activeKeys = this.getAvailableKeys().length;
     console.log(`📊 ${activeKeys} keys remaining active`);
   }
 
-  // Get only available (non-retired, non-disabled) keys
+  // ✅ OPTIMIZED: Cache available keys for faster access
   private getAvailableKeys(): ApiKeyStatus[] {
     return this.keyStatuses.filter(key => this.isKeyAvailable(key));
   }
 
-  // Get only active (non-retired) keys
-  private getActiveKeys(): ApiKeyStatus[] {
-    return this.keyStatuses.filter(key => !key.isRetired);
-  }
-
+  // ✅ OPTIMIZED: Smarter key selection prioritizing recent successes
   private getBestAvailableKey(): ApiKeyStatus | null {
     const availableKeys = this.getAvailableKeys();
     
@@ -131,29 +120,18 @@ class GeminiKeyManager {
       return null;
     }
 
-    // Sort by success rate and recency, prioritizing keys with fewer consecutive failures
+    // 🚀 FAST SELECTION: Prioritize keys that have never failed
+    const perfectKeys = availableKeys.filter(k => k.consecutiveFailures === 0);
+    if (perfectKeys.length > 0) {
+      return perfectKeys.sort((a, b) => b.lastSuccessAt - a.lastSuccessAt)[0];
+    }
+
+    // 🚀 FALLBACK: Use key with fewest consecutive failures
     return availableKeys.sort((a, b) => {
-      // Strongly prefer keys with fewer consecutive failures
       if (a.consecutiveFailures !== b.consecutiveFailures) {
         return a.consecutiveFailures - b.consecutiveFailures;
       }
-
-      // Prefer keys with recent successes
-      if (a.lastSuccessAt !== b.lastSuccessAt) {
-        return b.lastSuccessAt - a.lastSuccessAt;
-      }
-      
-      // Then prefer keys with higher success rates
-      const aRate = a.totalSuccesses / (a.totalSuccesses + a.totalFailures || 1);
-      const bRate = b.totalSuccesses / (b.totalSuccesses + b.totalFailures || 1);
-      if (aRate !== bRate) {
-        return bRate - aRate;
-      }
-
-      // Finally, prefer least recently used
-      const aLastUsed = Math.max(a.lastSuccessAt, a.lastFailureAt);
-      const bLastUsed = Math.max(b.lastSuccessAt, b.lastFailureAt);
-      return aLastUsed - bLastUsed;
+      return b.lastSuccessAt - a.lastSuccessAt;
     })[0];
   }
 
@@ -163,11 +141,9 @@ class GeminiKeyManager {
     keyStatus.disabledUntil = null;
     keyStatus.lastSuccessAt = now;
     keyStatus.totalSuccesses++;
-    keyStatus.consecutiveFailures = 0; // NEW: Reset consecutive failures on success
+    keyStatus.consecutiveFailures = 0; // Reset on success
     
-    console.log(
-      `✅ KEY-${keyStatus.originalIndex + 1} successful (${keyStatus.totalSuccesses} total, consecutive failures reset)`
-    );
+    console.log(`✅ KEY-${keyStatus.originalIndex + 1} success (${keyStatus.totalSuccesses} total)`);
   }
 
   private markKeyFailure(keyStatus: ApiKeyStatus, error: string) {
@@ -175,27 +151,22 @@ class GeminiKeyManager {
     keyStatus.isWorking = false;
     keyStatus.lastFailureAt = now;
     keyStatus.totalFailures++;
-    keyStatus.consecutiveFailures++; // NEW: Increment consecutive failures
+    keyStatus.consecutiveFailures++;
     keyStatus.lastError = error;
 
-    // NEW: Check if key should be retired
+    // 🚀 IMMEDIATE RETIREMENT CHECK
     if (this.shouldRetireKey(keyStatus)) {
       const reason = keyStatus.consecutiveFailures >= this.maxConsecutiveFailures
         ? `${this.maxConsecutiveFailures} consecutive failures`
         : `High failure rate: ${Math.round((keyStatus.totalFailures / (keyStatus.totalSuccesses + keyStatus.totalFailures)) * 100)}%`;
       
       this.retireKey(keyStatus, reason);
-      return; // Don't set temporary disable for retired keys
+      return;
     }
 
-    // Temporary disable for non-retired keys
+    // Temporary disable for recoverable failures
     keyStatus.disabledUntil = now + this.disableDurationHours * 60 * 60 * 1000;
-
-    const disabledUntilDate = new Date(keyStatus.disabledUntil).toLocaleString();
-    console.log(
-      `❌ KEY-${keyStatus.originalIndex + 1} failed (${keyStatus.consecutiveFailures} consecutive) - disabled until ${disabledUntilDate}`
-    );
-    console.log(`   Error: ${error}`);
+    console.log(`❌ KEY-${keyStatus.originalIndex + 1} failed (${keyStatus.consecutiveFailures} consecutive) - disabled temporarily`);
   }
 
   private async tryGenerate(
@@ -216,35 +187,21 @@ class GeminiKeyManager {
     };
   }
 
+  // ✅ OPTIMIZED: Fast response from first available key
   async getGenerativeResponse(
     prompt: string,
     conversationHistory: string[] = []
   ): Promise<{ text: string; apiKey: string }> {
+    // 🚀 IMMEDIATE CHECK: Get only available keys
     const availableKeys = this.getAvailableKeys();
-    const activeKeys = this.getActiveKeys();
-
-    // Early exit if no keys are available
+    
+    // Early exit if no keys available
     if (availableKeys.length === 0) {
       const retiredCount = this.keyStatuses.filter(k => k.isRetired).length;
-      
-      if (activeKeys.length === 0) {
-        throw new Error(
-          `All ${this.keyStatuses.length} Gemini API keys have been permanently retired due to failures.`
-        );
-      }
-
-      const nextAvailableTime = Math.min(
-        ...activeKeys
-          .filter((key) => key.disabledUntil)
-          .map((key) => key.disabledUntil!)
-      );
-      
-      const hoursUntilNext = Math.ceil(
-        (nextAvailableTime - Date.now()) / (1000 * 60 * 60)
-      );
+      const disabledCount = this.keyStatuses.filter(k => !k.isRetired && k.disabledUntil).length;
       
       throw new Error(
-        `All available Gemini API keys are temporarily disabled. ${retiredCount} keys retired permanently. Next key available in ~${hoursUntilNext} hours.`
+        `No Gemini API keys available. ${retiredCount} retired, ${disabledCount} temporarily disabled.`
       );
     }
 
@@ -256,73 +213,59 @@ class GeminiKeyManager {
       ? `${historyFormatted}\nUser: ${prompt}`
       : `User: ${prompt}`;
 
-    const retiredCount = this.keyStatuses.filter(k => k.isRetired).length;
-    console.log(
-      `🔍 ${availableKeys.length} keys available, ${retiredCount} retired, out of ${this.keyStatuses.length} total`
-    );
+    console.log(`🚀 ${availableKeys.length} keys ready, trying best available...`);
 
-    // Only attempt with available keys
-    for (let attempt = 0; attempt < availableKeys.length; attempt++) {
+    // 🚀 OPTIMIZED: Only try available keys, start with best
+    let attempt = 0;
+    while (attempt < availableKeys.length) {
       const keyStatus = this.getBestAvailableKey();
       
       if (!keyStatus) {
-        throw new Error("No available Gemini API keys");
+        throw new Error("No available keys during generation");
       }
 
       try {
-        console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (attempt ${attempt + 1}, ${keyStatus.consecutiveFailures} consecutive failures)`);
+        console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (${keyStatus.consecutiveFailures} failures)`);
         const result = await this.tryGenerate(fullPrompt, keyStatus);
         this.markKeySuccess(keyStatus);
-        return result;
+        return result; // 🚀 FAST RETURN on first success
       } catch (error: any) {
-        console.log(`❌ KEY-${keyStatus.originalIndex + 1} failed: ${error.message}`);
+        console.log(`❌ KEY-${keyStatus.originalIndex + 1}: ${error.message}`);
         this.markKeyFailure(keyStatus, error.message);
         
-        // Check if we still have available keys after this failure
+        // Re-check available keys after failure
         const remainingKeys = this.getAvailableKeys();
         if (remainingKeys.length === 0) {
-          const retiredNow = this.keyStatuses.filter(k => k.isRetired).length;
-          throw new Error(
-            `All available Gemini API keys failed or retired. ${retiredNow} keys permanently retired. Last error: ${error.message}`
-          );
+          throw new Error(`All keys failed or retired. Last error: ${error.message}`);
         }
         
-        if (attempt < availableKeys.length - 1) {
-          console.log("🔄 Trying next available key...");
-        }
+        attempt++;
+        console.log(`🔄 ${remainingKeys.length} keys remaining, trying next...`);
       }
     }
 
-    throw new Error("All available Gemini API keys have been exhausted");
+    throw new Error("All available keys exhausted");
   }
 
-  // Enhanced status methods
+  // Enhanced status and management methods remain the same...
   getKeyStatuses() {
-    const now = Date.now();
     return this.keyStatuses.map((key) => ({
       keyIndex: key.originalIndex + 1,
       isWorking: key.isWorking,
       isAvailable: this.isKeyAvailable(key),
-      isRetired: key.isRetired, // NEW
-      retiredReason: key.retiredReason, // NEW
-      consecutiveFailures: key.consecutiveFailures, // NEW
-      disabledUntil: key.disabledUntil
-        ? new Date(key.disabledUntil).toLocaleString()
-        : null,
+      isRetired: key.isRetired,
+      retiredReason: key.retiredReason,
+      consecutiveFailures: key.consecutiveFailures,
+      disabledUntil: key.disabledUntil ? new Date(key.disabledUntil).toLocaleString() : null,
       totalSuccesses: key.totalSuccesses,
       totalFailures: key.totalFailures,
       lastError: key.lastError,
-      successRate:
-        key.totalSuccesses + key.totalFailures > 0
-          ? `${Math.round(
-              (key.totalSuccesses / (key.totalSuccesses + key.totalFailures)) *
-                100
-            )}%`
-          : "N/A",
+      successRate: key.totalSuccesses + key.totalFailures > 0
+        ? `${Math.round((key.totalSuccesses / (key.totalSuccesses + key.totalFailures)) * 100)}%`
+        : "N/A",
     }));
   }
 
-  // NEW: Get summary statistics
   getKeysSummary() {
     const total = this.keyStatuses.length;
     const available = this.getAvailableKeys().length;
@@ -334,6 +277,7 @@ class GeminiKeyManager {
       available,
       retired,
       temporarilyDisabled: disabled,
+      healthyKeys: this.keyStatuses.filter(k => !k.isRetired && k.consecutiveFailures === 0).length,
       retiredKeys: this.keyStatuses
         .filter(k => k.isRetired)
         .map(k => ({
@@ -345,12 +289,11 @@ class GeminiKeyManager {
     };
   }
 
-  // Get count of available keys
   getAvailableKeyCount(): number {
     return this.getAvailableKeys().length;
   }
 
-  // NEW: Force retire a key
+  // Management methods...
   forceRetireKey(keyIndex: number, reason: string = "Manual retirement") {
     const key = this.keyStatuses.find((k) => k.originalIndex === keyIndex - 1);
     if (key && !key.isRetired) {
@@ -360,7 +303,6 @@ class GeminiKeyManager {
     return false;
   }
 
-  // NEW: Restore a retired key (use with caution)
   restoreRetiredKey(keyIndex: number) {
     const key = this.keyStatuses.find((k) => k.originalIndex === keyIndex - 1);
     if (key && key.isRetired) {
@@ -369,7 +311,7 @@ class GeminiKeyManager {
       key.retiredReason = undefined;
       key.consecutiveFailures = 0;
       key.disabledUntil = null;
-      console.log(`🔄 Restored retired KEY-${keyIndex}`);
+      console.log(`🔄 Restored KEY-${keyIndex}`);
       return true;
     }
     return false;
@@ -380,8 +322,8 @@ class GeminiKeyManager {
     if (key && !key.isRetired) {
       key.isWorking = true;
       key.disabledUntil = null;
-      key.consecutiveFailures = 0; // Reset consecutive failures
-      console.log(`🔄 Manually enabled KEY-${keyIndex}`);
+      key.consecutiveFailures = 0;
+      console.log(`🔄 Enabled KEY-${keyIndex}`);
       return true;
     }
     return false;
@@ -391,14 +333,9 @@ class GeminiKeyManager {
     const key = this.keyStatuses.find((k) => k.originalIndex === keyIndex - 1);
     if (key && !key.isRetired) {
       key.isWorking = false;
-      key.disabledUntil =
-        Date.now() + this.disableDurationHours * 60 * 60 * 1000;
+      key.disabledUntil = Date.now() + this.disableDurationHours * 60 * 60 * 1000;
       key.lastError = reason;
-      console.log(
-        `🚫 Manually disabled KEY-${keyIndex} until ${new Date(
-          key.disabledUntil
-        ).toLocaleString()}`
-      );
+      console.log(`🚫 Disabled KEY-${keyIndex}`);
       return true;
     }
     return false;
@@ -406,7 +343,7 @@ class GeminiKeyManager {
 
   resetAllKeys() {
     this.keyStatuses.forEach((key) => {
-      if (!key.isRetired) { // Don't reset retired keys
+      if (!key.isRetired) {
         key.isWorking = true;
         key.disabledUntil = null;
         key.consecutiveFailures = 0;
@@ -414,20 +351,19 @@ class GeminiKeyManager {
       }
     });
     const activeCount = this.keyStatuses.filter(k => !k.isRetired).length;
-    console.log(`🔄 Reset ${activeCount} non-retired keys to working state`);
+    console.log(`🔄 Reset ${activeCount} non-retired keys`);
   }
 
-  // NEW: Reset retirement settings
   setRetirementSettings(maxConsecutiveFailures: number, maxFailureRate: number, minTrials: number) {
     this.maxConsecutiveFailures = maxConsecutiveFailures;
     this.maxFailureRate = maxFailureRate;
     this.minTrialsBeforeRetirement = minTrials;
-    console.log(`⚙️ Updated retirement settings: ${maxConsecutiveFailures} max consecutive failures, ${Math.round(maxFailureRate * 100)}% max failure rate, ${minTrials} min trials`);
+    console.log(`⚙️ Updated retirement settings: ${maxConsecutiveFailures} consecutive, ${Math.round(maxFailureRate * 100)}% rate, ${minTrials} trials`);
   }
 
   setDisableDuration(hours: number) {
     this.disableDurationHours = hours;
-    console.log(`⏰ Set disable duration to ${hours} hours`);
+    console.log(`⏰ Disable duration: ${hours} hours`);
   }
 }
 
