@@ -1,47 +1,39 @@
-export function generateSingleDevResponse(dev: any, role?: string | string[], description?: string | string[]): string {
-  const roleStr = Array.isArray(role) ? role.join(' or ') : role;
-  const descriptionStr = Array.isArray(description) ? description.join(' or ') : description;
+import { DevInfo } from "@prisma/client";
 
-  if (roleStr && descriptionStr) {
-    return `The ${roleStr.toLowerCase()} with ${descriptionStr} is ${dev.dev_name}.`;
-  } else if (roleStr) {
-    return `The ${roleStr.toLowerCase()} is ${dev.dev_name}${dev.description ? ` (${dev.description})` : ''}.`;
-  } else if (descriptionStr) {
-    return `${dev.dev_name} is the ${dev.role}${dev.description ? ` - ${dev.description}` : ''}.`;
+export function formatDeveloper(data: DevInfo): string {
+  if (!data) {
+    return "Developer information is not available.";
   }
-  return `${dev.dev_name} has the role of ${dev.role}${dev.description ? ` - ${dev.description}` : ''}.`;
+
+  const parts: string[] = [];
+
+  if (data.dev_name) {
+    parts.push(`**${data.dev_name}**`);
+  }
+
+  if (data.role) {
+    parts.push(`is part of the team as a **${data.role}**.`);
+  }
+
+  if (data.description) {
+    parts.push(`${data.description}`);
+  }
+
+  if (data.image_url) {
+    parts.push(`You can view their photo here: ${data.image_url}`);
+  }
+
+  return parts.join(" ");
 }
 
-export function generateMultipleDevsResponse(devs: any[], role?: string | string[], description?: string | string[]): string {
-  const devsList = devs
-    .map(d => `• ${d.dev_name} - ${d.role}${d.description ? ` (${d.description})` : ''}`)
-    .join('\n');
-
-  const roleStr = Array.isArray(role) ? role.join(' or ') : role;
-  const descriptionStr = Array.isArray(description) ? description.join(' or ') : description;
-
-  if (roleStr && descriptionStr) {
-    return `I found multiple developers with the role "${roleStr}" related to ${descriptionStr}:\n${devsList}`;
-  } else if (roleStr) {
-    return `I found multiple developers with the role "${roleStr}":\n${devsList}`;
-  } else if (descriptionStr) {
-    return `Here are the developers with descriptions matching "${descriptionStr}":\n${devsList}`;
+export function formatDevelopersByRole(role: string, devs: DevInfo[]): string {
+  if (!devs || devs.length === 0) {
+    return `No developers found for the role: **${role}**.`;
   }
-  return `I found multiple developers:\n${devsList}`;
-}
 
-export function generateNotFoundMessage(role?: string | string[], description?: string | string[], dev_name?: string): string {
-  const roleStr = Array.isArray(role) ? role.join(' or ') : role;
-  const descriptionStr = Array.isArray(description) ? description.join(' or ') : description;
+  const names = devs.map((d) => `**${d.dev_name}**`).join(", ");
 
-  if (dev_name) {
-    return `I couldn't find any developer named "${dev_name}" in our records.`;
-  } else if (roleStr && descriptionStr) {
-    return `I couldn't find a ${roleStr.toLowerCase()} with ${descriptionStr}. Please check the role or description and try a different search.`;
-  } else if (roleStr) {
-    return `I couldn't find any developer with the role "${roleStr}".`;
-  } else if (descriptionStr) {
-    return `I couldn't find any developers matching "${descriptionStr}". Please check the description.`;
-  }
-  return "I couldn't find any matching developers. Please be more specific.";
+  const details = devs.map((d) => formatDeveloper(d)).join("\n\n");
+
+  return `The ${role}s in the team are ${names}.\n\n${details}`;
 }
