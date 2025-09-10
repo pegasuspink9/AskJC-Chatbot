@@ -178,3 +178,11 @@ model Navigation {
   dropdown_menu String
   link          String?
 }
+
+model DevInfo {
+  id                Int    @id @default(autoincrement())
+  dev_name          String
+  role              String
+  description       String?
+  image_url         String? @db.Text  
+}
