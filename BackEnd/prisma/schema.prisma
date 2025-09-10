@@ -180,9 +180,9 @@ model Navigation {
 }
 
 model DevInfo {
-  id                Int    @id @default(autoincrement())
-  dev_name          String
-  role              String
-  description       String?
-  image_url         String? @db.Text  
+  id          Int     @id @default(autoincrement())
+  dev_name    String
+  role        String
+  description String?
+  image_url   String?
 }
