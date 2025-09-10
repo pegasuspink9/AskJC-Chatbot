@@ -77,7 +77,6 @@ export const officeQuery = async (
             try {
               let prompt = "";
               
-              // Count numbered entries (1., 2., 3., etc.) to detect multiple offices
               const numberedEntries = (dbResult.match(/^\d+\./gm) || []).length;
               
               if (

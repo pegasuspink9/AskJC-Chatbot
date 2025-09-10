@@ -165,6 +165,8 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
+            intentName.includes("office") ||
+            intentName.includes("offices") ||
             intentName.includes("building") ||
             intentName.includes("location") ||
             intentName.includes("floor")
@@ -292,8 +294,6 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           }else if (
-            intentName.includes("office") ||
-            intentName.includes("offices") ||
             intentName.includes("facility") ||
             intentName.includes("facilities") ||
             intentName.includes("room") ||
