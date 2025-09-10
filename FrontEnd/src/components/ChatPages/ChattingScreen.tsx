@@ -254,20 +254,18 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   // Fixed input container - consistent across all platforms and screen sizes
   inputContainer: {
+    flex: 0.2,
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     borderTopWidth: 1,
     borderTopColor: Colors.borderSuggestion,
-    paddingHorizontal: Spacing?.md || 12,
+    paddingHorizontal: Spacing?.sm || 12,
     paddingTop: Spacing?.md || 12,
     paddingBottom: Spacing?.lg || 16,
     minHeight: 80,
-    maxHeight: 160,
-    // Prevent shrinking
+    maxHeight: 120,
     flexShrink: 0,
-    // Consistent positioning
-    position: 'relative',
     width: '100%',
     alignSelf: 'stretch',
   },
@@ -280,7 +278,6 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingVertical: Spacing?.sm || 8,
     minHeight: 52,
     maxHeight: 120,
-    // Prevent wrapper from shrinking
     flexShrink: 0,
     width: '100%',
   },
@@ -290,7 +287,8 @@ const styles = (Colors: any) => StyleSheet.create({
     fontFamily: FontFamilies?.regular || 'System',
     color: Colors.text,
     minHeight: 36,
-    maxHeight: 100,
+    // Allow input to use available height in the wrapper
+    maxHeight: '100%',
     paddingVertical: Platform.select({
       ios: 8,
       android: 8,
@@ -298,8 +296,8 @@ const styles = (Colors: any) => StyleSheet.create({
     }),
     paddingHorizontal: 0,
     textAlignVertical: Platform.select({
-      android: 'center',
-      default: 'center',
+      android: 'top',
+      default: 'top',
     }),
     lineHeight: Platform.select({
       web: 20,
@@ -319,7 +317,6 @@ const styles = (Colors: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: Spacing?.sm || 8,
-    // Prevent button from shrinking
     flexShrink: 0,
   },
   sendButtonActive: {
