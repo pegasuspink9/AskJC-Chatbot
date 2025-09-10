@@ -1,4 +1,4 @@
-export const suggestion = `After answering, suggest minimum of 2 short follow-up input inside brackets [ ] that the user can use to keep the conversation going. The suggestion should be a relevant, helpful question connected to the original query, starting with who, what, when, or where. Make sure it is phrased in the first person (I, me, myself) instead of "you". If the question is not related to the database, respond with "I'm sorry, I don't have that information." and do not give any suggestions.`;
+export const suggestion = `After answering, suggest minimum of 1 short follow-up input inside brackets [ ] that the user can use to keep the conversation going. The suggestion should be a relevant, helpful question connected to the original query, starting with who, what, when, or where. Make sure it is phrased in the first person (I, me, myself) instead of "you". If the question is not related to the database, respond with "I'm sorry, I don't have that information." and do not give any suggestions.`;
 
 export const botTalk = `
     Talk like a front desk assistant, make the conversation like you already talked before, conversational way as a helpful school assistant. Stop greetings. 
@@ -31,7 +31,7 @@ export const singleLinePrompt = (
     "${message}"
 
     talk like ${botTalk}
-    Make the highlight answer bold ** ** with new line. Make sure that the answer is direct to the point.
+    Make the highlight answer bold ** **. Make sure that the answer is direct to the point.
 
     if its a list or the response are two or more - present the list in a bulletin-style format with bullet points (•) and highlights the important answer from the database using only ** **
 
@@ -73,8 +73,8 @@ Student's question:
 "${message}"
 
 talk like ${botTalk}
-Present the results in a **Markdown table** 2-3 clear columns. 
-Make the table clean and easy to read. 
+Present the results in a **Markdown table** 2-3 clear columns only not exceeding 3. 
+Make the table clean and easy to read.
 
 - Make the table clean and easy to read. 
 - After the table, add one sentence summary highlighting the key info (bold important parts).
@@ -209,7 +209,7 @@ and ${suggestion}
 `;
 
 export const developerPrompt = (responseText: string, message: string) => `
-Information about the developers:
+Information about the developers: 
 ${responseText}
 
 Student's question:
@@ -217,13 +217,32 @@ Student's question:
 
 talk like ${botTalk}
 
-- Use the developer details exactly as they are (do not rephrase or shorten the descriptions).  
-- Present the developers in a clear and engaging way:  
-   • If one developer is mentioned, give a direct answer with their details.  
-   • If multiple developers are relevant, list them in bulletin-style with bullet points (•).  
-- Make the developer names and roles **bold** for clarity.  
-- If the student asks about "creators" or "who made this", refer to the developers as the creators.  
-- Keep it conversational, avoid sounding like a static profile dump.
+If a developer image or profile picture is available:
+- For image URLs, format them as: [IMAGE:URL_HERE] (e.g., [IMAGE:https://github.com/user-attachments/assets/69a932ed-d314-4c98-9535-67fca3ccfa47])
+- For regular links, display them as plain text (e.g., https://example.com) so they remain clickable
+- Do not bold any links or image URLs
+- If multiple developer images exist:
+   * Number or order them clearly (e.g., "The first image is for **John Doe - Lead Developer**. The second image is for **Jane Smith - UI/UX Designer**.").
+   * Make sure each image has a short description of who it represents
+- Highlight developer names and roles in ** **
+
+If no image is available, politely say so and provide only the developer’s details.
+
+Example format:
+**John Doe – Lead Developer**
+Here’s the developer profile image for your reference:
+The first image is for John Doe – Lead Developer.
+[IMAGE:https://github.com/user-attachments/assets/69a932ed-d314-4c98-9535-67fca3ccfa47]
+
+The second image is for Jane Smith – UI/UX Designer.
+[IMAGE:https://github.com/user-attachments/assets/example.png]
+
+You can also visit the developer’s portfolio: https://portfolio.example.com
+
+IMPORTANT FORMATTING RULES:
+- Use the developer details exactly as they are (do not rephrase or shorten the descriptions)
+- Give only the asked image link (avoid extra images)
+- Keep the tone conversational, not a static profile dump
 
 and ${suggestion}
 `;
