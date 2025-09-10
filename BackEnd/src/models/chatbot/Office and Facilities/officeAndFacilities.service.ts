@@ -108,6 +108,8 @@ export const officeFacilitiesQuery = async (
             break;
           }
 
+          //default
+
           default: {
             const { text, apiKey } = await getGenerativeResponse(
               message,
