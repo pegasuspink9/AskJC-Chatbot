@@ -35,7 +35,7 @@ function getBaseUrl(): string {
   
   // Fallback for mobile development
   console.log('Using mobile development URL');
-  return 'http://192.168.254.121:3000';
+  return 'http://192.168.254.116:3000';
 }
 
 export { getBaseUrl };
