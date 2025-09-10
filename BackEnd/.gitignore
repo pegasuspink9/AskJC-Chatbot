@@ -3,7 +3,7 @@
 .env.production
 
 # Google credentials
-*.json
+google_credentials.json
 credentials/
 
 # Dependencies

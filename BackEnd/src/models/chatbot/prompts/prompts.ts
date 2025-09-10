@@ -71,3 +71,23 @@ If no map is available, politely say so and guide the student with the next best
 
 and ${suggestion}
 `;
+
+export const developerPrompt = (responseText: string, message: string) => `
+Information about the developers:
+${responseText}
+
+Student's question:
+"${message}"
+
+talk like ${botTalk}
+
+- Use the developer details exactly as they are (do not rephrase or shorten the descriptions).  
+- Present the developers in a clear and engaging way:  
+   • If one developer is mentioned, give a direct answer with their details.  
+   • If multiple developers are relevant, list them in bulletin-style with bullet points (•).  
+- Make the developer names and roles **bold** for clarity.  
+- If the student asks about "creators" or "who made this", refer to the developers as the creators.  
+- Keep it conversational, avoid sounding like a static profile dump.
+
+and ${suggestion}
+`;

@@ -91,8 +91,7 @@ export const devInfoQuery = async (
             break;
           }
 
-          case "get_all_devs":
-          case "get_creator_info": {
+          case "get_all_devs": {
             const results = await prisma.devInfo.findMany({
               orderBy: { id: "asc" },
             });
