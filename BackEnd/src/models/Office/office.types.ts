@@ -7,7 +7,8 @@ export interface Office {
   contact_email?: string | null;
   contact_phone?: string | null;
   fb_page?: string | null;
-  image_url?: string | null;
+  office_url?: string | null;
+  map_url?: string | null;
 }
 
 export interface CreateOffice {
@@ -18,7 +19,8 @@ export interface CreateOffice {
   contact_email?: string | null;
   contact_phone?: string | null;
   fb_page?: string | null;
-  image_url?: string | null;
+  office_url?: string | null;
+  map_url?: string | null;
 }
 
 export interface UpdateOffice {
@@ -29,5 +31,6 @@ export interface UpdateOffice {
   contact_email?: string | null;
   contact_phone?: string | null;
   fb_page?: string | null;
-  image_url?: string | null;
+  office_url?: string | null;
+  map_url?: string | null;
 }

@@ -5,9 +5,7 @@ import { CreateOffice, UpdateOffice } from "./office.types";
 
 export const getOffice = async (_: Request, res: Response) => {
   try {
-    const offices = await prisma.office.findMany({
-      include: { officeAndFacilities: true },
-    });
+    const offices = await prisma.office.findMany();
     return successResponse(res, offices, "Offices fetched");
   } catch (error) {
     return errorResponse(res, error, "Failed to fetch offices");

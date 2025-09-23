@@ -37,7 +37,7 @@ export async function searchOfficeAndFacilities(
     }
     if (params.room_number) {
       conditions.push({
-        room_number: { contains: params.room_number, mode: "insensitive" },
+        room_number: { startsWith: params.room_number, mode: "insensitive" },
       });
     }
     if (params.building) {
@@ -54,10 +54,19 @@ export async function searchOfficeAndFacilities(
     const whereCondition =
       conditions.length > 1 ? { AND: conditions } : conditions[0] || {};
 
-    const results = await db.officeAndFacilities.findMany({
+    let results = await db.officeAndFacilities.findMany({
       where: whereCondition,
       orderBy: { id: "asc" },
     });
+
+    if (results.length === 0 && params.room_number) {
+      results = await db.officeAndFacilities.findMany({
+        where: {
+          room_number: { contains: params.room_number, mode: "insensitive" },
+        },
+        orderBy: { id: "asc" },
+      });
+    }
 
     if (results.length === 0) {
       return "No office, facility, or room matched your search.";

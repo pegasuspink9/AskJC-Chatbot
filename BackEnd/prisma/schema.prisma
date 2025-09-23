@@ -87,8 +87,10 @@ model Office {
   contact_phone          String?
   fb_page                String?
   office_name            String               @unique
-  officeAndFacilities_id Int?
-  officeAndFacilities    OfficeAndFacilities? @relation(fields: [officeAndFacilities_id], references: [id])
+  office_url             String?
+  map_url                String?
+
+  officeAndFacilities    OfficeAndFacilities[]
 }
 
 model OfficeAndFacilities {
@@ -102,7 +104,8 @@ model OfficeAndFacilities {
   facility_url     String?
   office_url       String?
   room_url         String?
-  office           Office[]
+  office_id        Int?
+  office           Office?      @relation(fields: [office_id], references: [id]) 
 }
 
 model StudentOrg {

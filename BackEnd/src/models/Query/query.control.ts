@@ -163,6 +163,8 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
+            intentName.includes("office") ||
+            intentName.includes("offices") ||
             intentName.includes("building") ||
             intentName.includes("location") ||
             intentName.includes("floor")
@@ -248,15 +250,10 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
-            intentName.includes("office") ||
-            intentName.includes("offices") ||
-            intentName.includes("building") ||
-            intentName.includes("location") ||
-            intentName.includes("floor") ||
             intentName.includes("facility") ||
             intentName.includes("facilities") ||
             intentName.includes("classroom") ||
-            intentName.includes("map")
+            intentName.includes("room")
           ) {
             console.log(
               "Routing to office and facilities service based on intent:",

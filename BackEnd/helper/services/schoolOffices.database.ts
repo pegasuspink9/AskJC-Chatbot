@@ -18,6 +18,8 @@ interface SearchOfficeParams {
   contact_email?: string;
   contact_phone?: string;
   fb_page?: string;
+  map_url?: string;
+  office_url?: string;
 }
 
 export async function searchOffices(
@@ -57,6 +59,10 @@ export async function searchOffices(
       conditions.push(addCondition("contact_phone", params.contact_phone));
     if (params.fb_page)
       conditions.push(addCondition("fb_page", params.fb_page));
+    if (params.map_url)
+      conditions.push(addCondition("map_url", params.map_url));
+    if (params.office_url)
+      conditions.push(addCondition("office_url", params.office_url));
 
     if (conditions.length === 0) {
       const allOffices = await db.office.findMany({
@@ -83,24 +89,28 @@ export async function searchOffices(
     }
 
     if (offices.length === 1) {
-  const office = offices[0];
-  
-  if (params.location_building || params.location_floor) {
-    return formatOfficeLocation(office);
-  } else if (params.contact_email || params.contact_phone || params.fb_page) {
-    return formatOfficeContact(office);
-  } else if (params.operating_hours) {
-    return formatOfficeHours(office);
-  } else if (params.description) {
-    return formatOfficeDescription(office);
-  } else {
-    return generateSingleOfficeResponse(office);
+      const office = offices[0];
+
+      if (params.location_building || params.location_floor) {
+        return formatOfficeLocation(office);
+      } else if (
+        params.contact_email ||
+        params.contact_phone ||
+        params.fb_page
+      ) {
+        return formatOfficeContact(office);
+      } else if (params.operating_hours) {
+        return formatOfficeHours(office);
+      } else if (params.description) {
+        return formatOfficeDescription(office);
+      } else {
+        return generateSingleOfficeResponse(office);
+      }
+    } else {
+      return generateMultipleOfficesResponse(offices);
+    }
+  } catch (error) {
+    console.error("Database search error:", error);
+    return "I'm sorry, there was an error searching for office information.";
   }
-} else {
-  return generateMultipleOfficesResponse(offices);
-}
-} catch (error) {
-  console.error("Database search error:", error);
-  return "I'm sorry, there was an error searching for office information.";
-}
 }
