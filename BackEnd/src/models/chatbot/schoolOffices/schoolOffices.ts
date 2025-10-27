@@ -2,10 +2,7 @@ import { prisma } from "../../../../prisma/client";
 import { searchOffices } from "../../../../helper/services/schoolOffices.database";
 import { getDialogflowResponse } from "../../../../helper/dialogflow";
 import { getGenerativeResponse } from "../../../../helper/gemini.service";
-import {
-  singleLinePrompt,
-  tablePrompts,
-} from "../prompts/prompts";
+import { singleLinePrompt, tablePrompts } from "../prompts/prompts";
 
 export const officeQuery = async (
   userId: number,
@@ -76,17 +73,17 @@ export const officeQuery = async (
 
             try {
               let prompt = "";
-              
+
               const numberedEntries = (dbResult.match(/^\d+\./gm) || []).length;
-              
+
               if (
                 dbResult.includes("No offices matched your search criteria.") ||
                 dbResult.includes("I need more specific information.")
               ) {
                 prompt = singleLinePrompt(dbResult, message);
               } else if (
-                numberedEntries >= 2 || // 2 or more numbered entries = multiple offices
-                dbResult.includes("Found") && dbResult.split('\n').length >= 4 // Multiple lines of data
+                numberedEntries >= 2 ||
+                (dbResult.includes("Found") && dbResult.split("\n").length >= 4)
               ) {
                 prompt = tablePrompts(dbResult, message);
               } else {

@@ -4,20 +4,18 @@ import { CreateQuery } from "./query.types";
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
-import { schoolOfficialsQuery } from "../../models/chatbot/Shool Official/schoolOfficials";
-import { scholarshipQuery } from "../../models/chatbot/Scholarship/scholarship.services";
+import { schoolOfficialsQuery } from "models/chatbot/Shool Official/schoolOfficials";
+import { scholarshipQuery } from "models/chatbot/Scholarship/scholarship.services";
 import { getDialogflowResponse } from "../../../helper/dialogflow";
-import { departmentOfficialsQuery } from "../../models/chatbot/School Department/schoolDepartment";
-import { contactQuery } from "../../models/chatbot/schoolContacts/schoolContact";
-import { officeQuery } from "../../models/chatbot/schoolOffices/schoolOffices";
-import { schoolDetailQuery } from "../../models/chatbot/School Details/schoolDetails.service";
-import { organizationQuery } from "../../models/chatbot/schoolOrganization/schoolOrganization";
-import { programQuery } from "../../models/chatbot/schoolProgram/schoolProgram";
-import {enrollmentQuery} from "../../models/chatbot/schoolEnrollment/schoolEnrollment"
-import { courseQuery } from "../../models/chatbot/schoolCourses/schoolCourses";
-import { navigationQuery } from "../chatbot/Navigation/navigation";
-import { officeFacilitiesQuery } from "../chatbot/Office and Facilities/officeAndFacilities.service";
-import { devInfoQuery } from "../chatbot/DevInfo/devInfo.services";
+import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
+import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
+import { officeQuery } from "models/chatbot/schoolOffices/schoolOffices";
+import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
+import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrganization";
+import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
+import { navigationQuery } from "models/chatbot/Navigation/navigation";
+import { officeFacilitiesQuery } from "models/chatbot/Office and Facilities/officeAndFacilities.service";
+import { devInfoQuery } from "models/chatbot/DevInfo/devInfo.services";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -178,6 +176,8 @@ export const createQuery = async (req: Request, res: Response) => {
             return await officeQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("program") ||
+            intentName.includes("course") ||
+            intentName.includes("courses") ||
             intentName.includes("tuition")
           ) {
             console.log(
@@ -215,28 +215,12 @@ export const createQuery = async (req: Request, res: Response) => {
             );
             return await contactQuery(user.id, query_text, conversationHistory);
           } else if (
-            intentName.includes("enroll") ||
-            intentName.includes("enrollment") ||
-            intentName.includes("admission") ||
-            intentName.includes("register") ||
-            intentName.includes("registration") 
-          ) {
-            console.log(
-              "Routing to enrollment service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await enrollmentQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
-          } else if (
             intentName.includes("organization") ||
             intentName.includes("organizations") ||
             intentName.includes("student org") ||
             intentName.includes("club") ||
             intentName.includes("society")
-          )  {
+          ) {
             console.log(
               "Routing to organization service based on intent:",
               dialogflowResponse.intent
@@ -246,19 +230,7 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }else if (
-            intentName.includes("course") || intentName.includes("courses") || intentName.includes("class") || intentName.includes("classes") || intentName.includes("subject") || intentName.includes("subjects") || intentName.includes("curriculum") || intentName.includes("syllabus")
-          ){
-            console.log(
-              "Routing to course service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await courseQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
-          }else if (
+          } else if (
             intentName.includes("detail") ||
             intentName.includes("details") ||
             intentName.includes("history") ||
@@ -277,31 +249,11 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }else if(
-            intentName.includes("navigation") ||
-            intentName.includes("navigate") ||
-            intentName.includes("home") ||
-            intentName.includes("page") ||
-            intentName.includes("link")
-          ){
-            console.log(
-              "Routing to navigation service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await navigationQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
-          }else if (
+          } else if (
             intentName.includes("facility") ||
             intentName.includes("facilities") ||
-            intentName.includes("room") ||
-            intentName.includes("building") ||
-            intentName.includes("location") ||
-            intentName.includes("floor") ||
             intentName.includes("classroom") ||
-            intentName.includes("map")
+            intentName.includes("room")
           ) {
             console.log(
               "Routing to office and facilities service based on intent:",
@@ -312,7 +264,23 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }else if (
+          } else if (
+            intentName.includes("navigation") ||
+            intentName.includes("menu") ||
+            intentName.includes("home") ||
+            intentName.includes("page") ||
+            intentName.includes("link")
+          ) {
+            console.log(
+              "Routing to navigation service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await navigationQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
             intentName.includes("developer") ||
             intentName.includes("created")
           ) {
@@ -321,7 +289,7 @@ export const createQuery = async (req: Request, res: Response) => {
               dialogflowResponse.intent
             );
             return await devInfoQuery(user.id, query_text, conversationHistory);
-          }else {
+          } else {
             console.log(
               "Routing to school official service based on intent:",
               dialogflowResponse.intent

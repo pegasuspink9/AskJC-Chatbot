@@ -7,6 +7,7 @@ export interface CreateFacilities {
   office_url?: string;
   facility_name?: string;
   facility_url?: string;
+  office_id?: number;
 }
 
 export interface UpdateFacilities {
@@ -18,4 +19,5 @@ export interface UpdateFacilities {
   office_url?: string;
   facility_name?: string;
   facility_url?: string;
+  office_id?: number;
 }
