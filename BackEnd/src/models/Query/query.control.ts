@@ -4,18 +4,18 @@ import { CreateQuery } from "./query.types";
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
-import { schoolOfficialsQuery } from "models/chatbot/Shool Official/schoolOfficials";
-import { scholarshipQuery } from "models/chatbot/Scholarship/scholarship.services";
+import { schoolOfficialsQuery } from "../chatbot/Shool Official/schoolOfficials";
+import { scholarshipQuery } from "../chatbot/Scholarship/scholarship.services";
 import { getDialogflowResponse } from "../../../helper/dialogflow";
-import { departmentOfficialsQuery } from "models/chatbot/School Department/schoolDepartment";
-import { contactQuery } from "models/chatbot/schoolContacts/schoolContact";
-import { officeQuery } from "models/chatbot/schoolOffices/schoolOffices";
-import { schoolDetailQuery } from "models/chatbot/School Details/schoolDetails.service";
-import { organizationQuery } from "models/chatbot/schoolOrganization/schoolOrganization";
-import { programQuery } from "models/chatbot/schoolProgram/schoolProgram";
-import { navigationQuery } from "models/chatbot/Navigation/navigation";
-import { officeFacilitiesQuery } from "models/chatbot/Office and Facilities/officeAndFacilities.service";
-import { devInfoQuery } from "models/chatbot/DevInfo/devInfo.services";
+import { departmentOfficialsQuery } from "../../models/chatbot/School Department/schoolDepartment";
+import { contactQuery } from "../../models/chatbot/schoolContacts/schoolContact";
+import { officeQuery } from "../../models/chatbot/schoolOffices/schoolOffices";
+import { schoolDetailQuery } from "../../models/chatbot/School Details/schoolDetails.service";
+import { organizationQuery } from "../../models/chatbot/schoolOrganization/schoolOrganization";
+import { programQuery } from "../../models/chatbot/schoolProgram/schoolProgram";
+import { navigationQuery } from "../../models/chatbot/Navigation/navigation";
+import { officeFacilitiesQuery } from "../../models/chatbot/Office and Facilities/officeAndFacilities.service";
+import { devInfoQuery } from "../../models/chatbot/DevInfo/devInfo.services";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
