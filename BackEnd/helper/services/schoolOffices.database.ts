@@ -111,6 +111,6 @@ export async function searchOffices(
     }
   } catch (error) {
     console.error("Database search error:", error);
-    return "I'm sorry, there was an error searching for office informationdfsdfsd.";
+    return "I'm sorry, there was an error searching for office information.";
   }
 }
