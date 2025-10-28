@@ -79,17 +79,18 @@ model Scholarship {
 }
 
 model Office {
-  id                Int     @id @default(autoincrement())
-  description       String?
-  location_building String?
-  location_floor    String?
-  operating_hours   String?
-  contact_email     String?
-  contact_phone     String?
-  fb_page           String?
-  office_name       String  @unique
-  map_url           String?
-  office_url        String?
+  id                  Int                   @id @default(autoincrement())
+  description         String?
+  location_building   String?
+  location_floor      String?
+  operating_hours     String?
+  contact_email       String?
+  contact_phone       String?
+  fb_page             String?
+  office_name         String                @unique
+  map_url             String?
+  office_url          String?
+  OfficeAndFacilities OfficeAndFacilities[]
 }
 
 model OfficeAndFacilities {
@@ -103,6 +104,8 @@ model OfficeAndFacilities {
   facility_url     String?
   office_url       String?
   room_url         String?
+  office_id        Int?
+  Office           Office? @relation(fields: [office_id], references: [id])
 }
 
 model StudentOrg {
