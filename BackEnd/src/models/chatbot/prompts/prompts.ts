@@ -41,6 +41,7 @@ export const singleLinePrompt = (
     - Write URLs as plain text (e.g., https://example.com/sjccollege)
     - DO NOT bold any contact information or if you find @gmail.com or a link of .com do not highlight or use ** ** for the contact information or link ever.
     
+    if it asks for where and the URL or link is available use this ${mapPrompt(fact, message)}
     and ${suggestion}
 `;
 
@@ -186,6 +187,7 @@ If a map URL or room image is available:
    * Number or order them clearly (e.g., "The first image is for Building A - Room 101. The second image is the floor plan.").
    * Make sure each image has a short description of what it shows
 - Highlight important location details (building, room number, office name) in ** **
+- make sure there are two images if available - one for the specific room/building and one for the overall floor plan or campus map
 
 If no map is available, politely say so and guide the student with the next best information (building/room).
 
