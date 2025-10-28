@@ -48,7 +48,7 @@ export const DarkColors = {
   background: '#000000',
   usermessage: 'rgba(5, 158, 2, 0.27)',
   botmessage: 'rgba(211, 192, 107, 0.27)',
-  surface: '#1C1C1E',
+  surface: '#000000ff',
   suggestionBackground: '#2c2c2e97',
   text: '#FFFFFF',
   textSecondary: '#8E8E93',

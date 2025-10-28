@@ -388,7 +388,7 @@ const styles = (Colors: any) => StyleSheet.create({
   messageText: {
     fontSize: 13.5,
     lineHeight: 21,
-    fontFamily: FontFamilies?.regular || 'System',
+    fontFamily: FontFamilies?.regular || 'System'
   },
   userMessageText: {
     color: Colors.text,

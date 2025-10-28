@@ -13,7 +13,6 @@ import { getColors, Spacing } from '../constants/theme';
 import { useTheme } from '../constants/ThemeContext';
 import { RootStackParamList } from '../navigation/StackNavigator';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Import new components
 import LandingScreen from '../components/ChatPages/LandingScreen';
@@ -186,7 +185,7 @@ const HomeScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor: Colors.background }]}>
+    <View style={[{ flex: 1, backgroundColor: Colors.background }]}>
  
       <KeyboardAvoidingView
         style={styles(Colors).container}
@@ -218,7 +217,7 @@ const HomeScreen: React.FC = () => {
           />
         )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 

@@ -13,7 +13,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface ChatScreenProps {
   Colors: any;
@@ -112,7 +111,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   }, [handleSendMessage, isInputValid]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Colors.background }}>
+    <View style={{ flex: 1, backgroundColor: Colors.background }}>
       <Animated.View style={[styles(Colors).container, animatedStyle]}>
         <KeyboardAvoidingView
           style={styles(Colors).keyboardAvoid}
@@ -197,7 +196,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
           </View>
         </KeyboardAvoidingView>
       </Animated.View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -252,76 +251,71 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingHorizontal: Spacing?.sm,
     paddingVertical: Spacing?.sm,
   },
-  // Fixed input container - consistent across all platforms and screen sizes
   inputContainer: {
-    flex: 0.2,
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderSuggestion,
-    paddingHorizontal: Spacing?.sm || 12,
-    paddingTop: Spacing?.md || 12,
-    paddingBottom: Spacing?.lg || 16,
-    minHeight: 80,
-    maxHeight: 120,
-    flexShrink: 0,
-    width: '100%',
-    alignSelf: 'stretch',
+  backgroundColor: Colors.surface,
+  borderTopWidth: 1,
+  borderTopColor: Colors.border,
+  paddingHorizontal: Spacing?.sm || 16,
+  paddingBottom: Spacing?.xxl || 12,
+  paddingTop: Spacing?.md || 8,
+  marginTop: 'auto', 
   },
   inputWrapper: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center', 
     backgroundColor: Colors.gray?.[50] || '#F9FAFB',
-    borderRadius: BorderRadius?.xl || 20,
-    paddingHorizontal: Spacing?.md || 12,
+    borderRadius: 50, 
+    paddingHorizontal: Spacing?.lg || 16,
     paddingVertical: Spacing?.sm || 8,
-    minHeight: 52,
-    maxHeight: 120,
-    flexShrink: 0,
-    width: '100%',
+    width: '100%', 
+    height: 48, 
+    borderWidth: 1,
+    borderColor: Colors.usermessage,
+    shadowColor: Colors.shadow || '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  textInput: {
+    textInput: {
     flex: 1,
     fontSize: FontSizes?.md || 16,
     fontFamily: FontFamilies?.regular || 'System',
     color: Colors.text,
-    minHeight: 36,
-    // Allow input to use available height in the wrapper
-    maxHeight: '100%',
-    paddingVertical: Platform.select({
-      ios: 8,
-      android: 8,
-      web: 8,
-    }),
-    paddingHorizontal: 0,
-    textAlignVertical: Platform.select({
-      android: 'top',
-      default: 'top',
-    }),
+    height: 40, 
+    paddingVertical: 0, 
+    paddingTop: 2,
+    textAlignVertical: 'center', 
     lineHeight: Platform.select({
       web: 20,
       default: undefined, 
     }),
-    // Prevent input from shrinking
+    // Prevent shrinking
     flexShrink: 0,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
       resize: 'none' as any,
     }),
   },
+  
   sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20, 
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: Spacing?.sm || 8,
+    marginLeft: Spacing?.md || 12, 
     flexShrink: 0,
   },
-  sendButtonActive: {
+    sendButtonActive: {
     backgroundColor: Colors.success,
+    shadowColor: Colors.success,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
+  
   sendButtonInactive: {
     backgroundColor: Colors.gray?.[200] || '#E5E7EB',
   },
