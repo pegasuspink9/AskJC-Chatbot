@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 interface ApiKeyStatus {
   key: string;
@@ -173,13 +173,21 @@ class GeminiKeyManager {
     fullPrompt: string,
     keyStatus: ApiKeyStatus
   ): Promise<{ text: string; apiKey: string }> {
-    const genAI = new GoogleGenerativeAI(keyStatus.key);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
+    const ai = new GoogleGenAI({ apiKey: keyStatus.key });
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: fullPrompt,
     });
 
-    const result = await model.generateContent(fullPrompt);
-    const text = result.response.text();
+    const text = response.text;
+
+    console.log("Full Gemini response:", JSON.stringify(response, null, 2));
+    console.log("Extracted text:", text);
+
+    if (!text || text.trim() === "") {
+      throw new Error("Empty response from Gemini");
+    }
 
     return {
       text,
