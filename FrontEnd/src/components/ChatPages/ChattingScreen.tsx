@@ -248,7 +248,6 @@ const styles = (Colors: any) => StyleSheet.create({
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: Spacing?.sm,
     paddingVertical: Spacing?.sm,
   },
   inputContainer: {
