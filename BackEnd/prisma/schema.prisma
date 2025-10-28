@@ -90,6 +90,7 @@ model Office {
   office_name       String  @unique
   map_url           String?
   office_url        String?
+  officeAndFacilities_id Int?             
 }
 
 model OfficeAndFacilities {
