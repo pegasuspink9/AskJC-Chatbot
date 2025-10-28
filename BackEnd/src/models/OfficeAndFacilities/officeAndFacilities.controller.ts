@@ -8,9 +8,7 @@ import { successResponse, errorResponse } from "../../../utils/response";
 
 export const getAllFacilities = async (req: Request, res: Response) => {
   try {
-    const facilities = await prisma.officeAndFacilities.findMany({
-      include: { office: true },
-    });
+    const facilities = await prisma.officeAndFacilities.findMany();
 
     return successResponse(res, facilities, "Facilities fetched");
   } catch (error) {
