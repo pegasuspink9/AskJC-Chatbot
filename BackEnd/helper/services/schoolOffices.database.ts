@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 const db = new PrismaClient();
+
 import {
   generateSingleOfficeResponse,
   generateMultipleOfficesResponse,
@@ -7,6 +8,8 @@ import {
   formatOfficeContact,
   formatOfficeHours,
   formatOfficeDescription,
+  formatOfficeByBuilding,
+  formatOfficeByFloor,
 } from "../utils/schoolOffices.helper";
 
 interface SearchOfficeParams {
@@ -28,54 +31,72 @@ export async function searchOffices(
   console.log("🔍 OFFICE SEARCH PARAMS:", params);
 
   try {
-    const addCondition = (field: string, value: string | string[]) => {
-      if (Array.isArray(value)) {
-        return {
-          OR: value.map((v) => ({
-            [field]: { contains: v, mode: "insensitive" },
-          })),
-        };
-      }
-      return { [field]: { contains: value, mode: "insensitive" } };
-    };
+    const conditions: Prisma.OfficeWhereInput[] = [];
 
-    const conditions = [];
-
-    if (params.office_name)
-      conditions.push(addCondition("office_name", params.office_name));
-    if (params.description)
-      conditions.push(addCondition("description", params.description));
-    if (params.location_building)
-      conditions.push(
-        addCondition("location_building", params.location_building)
-      );
-    if (params.location_floor)
-      conditions.push(addCondition("location_floor", params.location_floor));
-    if (params.operating_hours)
-      conditions.push(addCondition("operating_hours", params.operating_hours));
-    if (params.contact_email)
-      conditions.push(addCondition("contact_email", params.contact_email));
-    if (params.contact_phone)
-      conditions.push(addCondition("contact_phone", params.contact_phone));
-    if (params.fb_page)
-      conditions.push(addCondition("fb_page", params.fb_page));
-    if (params.map_url)
-      conditions.push(addCondition("map_url", params.map_url));
-    if (params.office_url)
-      conditions.push(addCondition("office_url", params.office_url));
-
-    if (conditions.length === 0) {
-      const allOffices = await db.office.findMany({
-        orderBy: { office_name: "asc" },
+    if (params.office_name) {
+      conditions.push({
+        office_name: { contains: params.office_name, mode: "insensitive" },
       });
-      if (allOffices.length > 0) {
-        return generateMultipleOfficesResponse(allOffices);
-      }
-      return "I need more specific information. Please ask about a specific office name, building, floor, or other details.";
+    }
+
+    if (params.location_building) {
+      conditions.push({
+        location_building: {
+          contains: params.location_building,
+          mode: "insensitive",
+        },
+      });
+    }
+    if (params.location_floor) {
+      conditions.push({
+        location_floor: {
+          contains: params.location_floor,
+          mode: "insensitive",
+        },
+      });
+    }
+
+    if (params.description) {
+      conditions.push({
+        description: { contains: params.description, mode: "insensitive" },
+      });
+    }
+    if (params.operating_hours) {
+      conditions.push({
+        operating_hours: {
+          contains: params.operating_hours,
+          mode: "insensitive",
+        },
+      });
+    }
+    if (params.contact_email) {
+      conditions.push({
+        contact_email: { contains: params.contact_email, mode: "insensitive" },
+      });
+    }
+    if (params.contact_phone) {
+      conditions.push({
+        contact_phone: { contains: params.contact_phone, mode: "insensitive" },
+      });
+    }
+    if (params.fb_page) {
+      conditions.push({
+        fb_page: { contains: params.fb_page, mode: "insensitive" },
+      });
+    }
+    if (params.map_url) {
+      conditions.push({
+        map_url: { contains: params.map_url, mode: "insensitive" },
+      });
+    }
+    if (params.office_url) {
+      conditions.push({
+        office_url: { contains: params.office_url, mode: "insensitive" },
+      });
     }
 
     const whereCondition =
-      conditions.length > 1 ? { AND: conditions } : conditions[0];
+      conditions.length > 1 ? { AND: conditions } : conditions[0] || {};
 
     const offices = await db.office.findMany({
       where: whereCondition,
@@ -88,16 +109,19 @@ export async function searchOffices(
       return "No offices matched your search criteria.";
     }
 
+    if (params.location_building || params.location_floor) {
+      if (params.location_building && !params.location_floor) {
+        return generateMultipleOfficesResponse(offices, "building");
+      } else if (params.location_floor && !params.location_building) {
+        return generateMultipleOfficesResponse(offices, "floor");
+      } else {
+        return generateMultipleOfficesResponse(offices, "location");
+      }
+    }
+
     if (offices.length === 1) {
       const office = offices[0];
-
-      if (params.location_building || params.location_floor) {
-        return formatOfficeLocation(office);
-      } else if (
-        params.contact_email ||
-        params.contact_phone ||
-        params.fb_page
-      ) {
+      if (params.contact_email || params.contact_phone || params.fb_page) {
         return formatOfficeContact(office);
       } else if (params.operating_hours) {
         return formatOfficeHours(office);
@@ -106,9 +130,9 @@ export async function searchOffices(
       } else {
         return generateSingleOfficeResponse(office);
       }
-    } else {
-      return generateMultipleOfficesResponse(offices);
     }
+
+    return generateMultipleOfficesResponse(offices);
   } catch (error) {
     console.error("Database search error:", error);
     return "I'm sorry, there was an error searching for office information.";
