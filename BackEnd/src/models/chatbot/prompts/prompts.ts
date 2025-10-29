@@ -106,7 +106,7 @@ Make the table clean and easy to read.
 
 CONTACT INFORMATION FORMATTING:
 - In tables, write email addresses as plain text (e.g., example@gmail.com)
-- In tables, write URLs as plain text (e.g., https://example.com/sjccollege)
+- **Do not include any URLs or links in tables. If a link is relevant, mention it separately after the table as plain text (e.g., Visit https://example.com for more info).**
 - DO NOT bold any contact information in tables
 
 FORMATTING RULES:
@@ -115,6 +115,7 @@ FORMATTING RULES:
 - Table cells should contain concise information
 - Summary sentence should be on a new line after the table
 - Use proper spacing for readability
+- If links are needed, place them after the summary for easy access
 
 and ${suggestion}
 `;

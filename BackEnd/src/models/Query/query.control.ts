@@ -163,7 +163,7 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }  else if (
+          } else if (
               intentName.includes("course") ||
               intentName.includes("courses") ||
               intentName.includes("subject") ||
@@ -171,8 +171,8 @@ export const createQuery = async (req: Request, res: Response) => {
               intentName.includes("class") || 
               intentName.includes("curriculum") ||
               intentName.includes("syllabus") || 
-            intentName.includes("majors") ||
-            intentName.includes("minor")
+              intentName.includes("majors") ||
+              intentName.includes("minor")
             ) {
               console.log(
                 "Routing to school course service based on intent:",
@@ -193,11 +193,9 @@ export const createQuery = async (req: Request, res: Response) => {
             return await officeQuery(user.id, query_text, conversationHistory);
           } else if (
             intentName.includes("program") ||
-            intentName.includes("tuition") || 
-            intentName.includes("course fee") ||
-            intentName.includes("programs") ||
-            intentName.includes("degrees") ||
-            intentName.includes("degree") 
+            intentName.includes("course") ||
+            intentName.includes("courses") ||
+            intentName.includes("tuition")
           ) {
             console.log(
               "Routing to school program service based on intent:",
