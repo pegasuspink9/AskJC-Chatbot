@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
+import { prisma } from "../prisma/client";
 
 import userRoutes from "./models/User/user.routes";
 import queryRoutes from "./models/Query/query.routes";
@@ -18,7 +19,7 @@ import scholarshipRoutes from "./models/Scholarship/scholarship.routes";
 import facilitiesRoutes from "./models/OfficeAndFacilities/officeAndFacilities.routes";
 import enrollmentRoutes from "./models/Enrollment/enrollment.routes";
 import navigationRoutes from "./models/Navigation/navigation.routes";
-import devRoutes from './models/DevInfo/devInfo.routes';
+import devRoutes from "./models/DevInfo/devInfo.routes";
 
 const app = express();
 
@@ -32,7 +33,7 @@ app.use(
       "http://localhost:8081",
       "http://localhost:3000",
       "http://localhost:19006",
-      "https://ask-jc-chatbot.vercel.app"
+      "https://ask-jc-chatbot.vercel.app",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -40,11 +41,9 @@ app.use(
   })
 );
 
-
-app.get('/', (req, res) => {
-  res.json({ message: 'AskJC Backend API is running!' });
+app.get("/", (req, res) => {
+  res.json({ message: "AskJC Backend API is running!" });
 });
-
 
 // Routes
 app.use("/dev", devRoutes);
@@ -65,5 +64,45 @@ app.use("/department", departmentRoutes);
 app.use("/program", programRoutes);
 app.use("/school-official", schoolOfficialRoutes);
 
-export default app;
+const INACTIVITY_THRESHOLD_MS = 1 * 60 * 1000;
+const CLEANUP_INTERVAL_MS = 60 * 1000;
 
+setInterval(async () => {
+  try {
+    const cutoff = new Date(Date.now() - INACTIVITY_THRESHOLD_MS);
+
+    const staleSessions = await prisma.chatbotSession.findMany({
+      where: {
+        response_time: { lt: cutoff },
+      },
+    });
+
+    if (staleSessions.length === 0) return;
+
+    for (const session of staleSessions) {
+      try {
+        await prisma.query.deleteMany({
+          where: { chatbot_session_id: session.id },
+        });
+
+        await prisma.chatbotSession.deleteMany({
+          where: { id: session.id },
+        });
+
+        await prisma.user.delete({
+          where: { id: session.user_id },
+        });
+
+        console.log(
+          `Cleanup: removed user ${session.user_id}, their queries, and session ${session.id} due to ${INACTIVITY_THRESHOLD_MS}ms inactivity`
+        );
+      } catch (innerErr) {
+        console.error(`Error cleaning session ${session.id}:`, innerErr);
+      }
+    }
+  } catch (err) {
+    console.error("Error running cleanup job:", err);
+  }
+}, CLEANUP_INTERVAL_MS);
+
+export default app;
