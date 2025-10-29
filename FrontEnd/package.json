@@ -7,7 +7,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "vercel-build": "chmod +x node_modules/.bin/expo && npx expo export --platform web"
+    "vercel-build": "npm install && chmod +x node_modules/.bin/expo && npx expo export --platform web"
   },
   "dependencies": {
     "@expo-google-fonts/poppins": "^0.4.0",
