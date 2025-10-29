@@ -17,7 +17,8 @@ const parseFormattedText = (
     return renderWithTable(text, baseTextStyle, Colors);
   }
 
-  if (text.match(/^\s*[-•]/m)) {
+  // Check for bullets: -, •, or * at the start of lines
+  if (text.match(/^\s*[-•*]/m)) {
     return renderWithBullets(text, baseTextStyle, Colors);
   }
 
@@ -104,8 +105,9 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
           return <View key={lineIndex} style={{ height: 8 }} />;
         }
         
+        // Updated regex to handle bold (**text**) but not single * at line start
         const combinedRegex =
-          /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+          /(\*\*.*?\*\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 
         const parts = line.split(combinedRegex);
 
@@ -264,8 +266,10 @@ const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
   return (
     <View>
       {lines.map((line, index) => {
-        const isBullet = /^[-•]\s*/.test(line.trim());
-        const trimmed = line.trim().replace(/^[-•]\s*/, ''); 
+        // Check if line starts with -, •, or *
+        const isBullet = /^[-•*]\s*/.test(line.trim());
+        // Remove the bullet marker and any following space
+        const trimmed = line.trim().replace(/^[-•*]\s*/, ''); 
 
         return (
           <View
