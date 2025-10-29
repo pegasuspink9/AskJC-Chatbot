@@ -60,8 +60,7 @@ export const singleLinePrompt = (
     - Bold text should be part of the flowing sentence, not isolated
     - Keep the response organized and easy to scan
     
-    if it asks for where and the URL or link is available use this ${mapPrompt(fact, message)}
-    and ${suggestion}
+    if it asks for where and the URL or link starts with ![Image] is available use this ${mapPrompt(fact, message)}
 `;
 
 export const bulletinPrompts = (
@@ -84,6 +83,8 @@ FORMATTING RULES:
 - Add a line break between the introduction and the bullet list
 - Ensure readability with clear visual separation
 
+
+if it asks for where and the URL or link starts with ![Image] is available use this ${mapPrompt(responseText, message)}
 and ${suggestion}
 `;
 
@@ -117,6 +118,7 @@ FORMATTING RULES:
 - Use proper spacing for readability
 - If links are needed, place them after the summary for easy access
 
+if it asks for where and the URL or link starts with ![Image] is available use this ${mapPrompt(responseText, message)}
 and ${suggestion}
 `;
 
