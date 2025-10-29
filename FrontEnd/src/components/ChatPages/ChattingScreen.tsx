@@ -250,6 +250,7 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   messagesContent: {
     paddingVertical: Spacing?.sm,
+    paddingHorizontal: Spacing?.sm,
   },
   inputContainer: {
   backgroundColor: Colors.surface,

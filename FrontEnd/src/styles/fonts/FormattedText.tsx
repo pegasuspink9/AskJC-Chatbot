@@ -13,7 +13,6 @@ const parseFormattedText = (
     return renderWithMarkdownImages(text, baseTextStyle, Colors);
   }
 
-
   if (text.includes('|')) {
     return renderWithTable(text, baseTextStyle, Colors);
   }
@@ -27,12 +26,10 @@ const parseFormattedText = (
 
 
 const renderWithMarkdownImages = (text: string, baseTextStyle: any, Colors: any) => {
-  // Regex to match ![alt text](URL) format
   const markdownImageRegex = /!\[([^\]]*)\]\((https?:\/\/[^\)]+)\)/g;
   const parts = text.split(markdownImageRegex);
   
   return parts.map((part, index) => {
-    // Every 3rd element starting from index 2 is a URL
     if ((index - 2) % 3 === 0 && index > 0) {
       const imageUrl = part.trim();
       return (
@@ -50,12 +47,10 @@ const renderWithMarkdownImages = (text: string, baseTextStyle: any, Colors: any)
       );
     }
     
-    // Every 3rd element starting from index 1 is alt text (skip it)
     if ((index - 1) % 3 === 0 && index > 0) {
       return null;
     }
     
-    // Regular text parts
     if (part && part.trim()) {
       return (
         <View key={index}>
@@ -70,166 +65,151 @@ const renderWithMarkdownImages = (text: string, baseTextStyle: any, Colors: any)
 
 
 const handleEmailPress = async (email: string) => {
-    try {
-      const cleanEmail = email.trim().replace(/[.,;:]$/, '');
-      
-      const mailtoUrl = `mailto:${cleanEmail}`;
-      
-      console.log('📧 Attempting to open email:', mailtoUrl);
-      
-      const supported = await Linking.canOpenURL(mailtoUrl);
-      
-      if (supported) {
-        await Linking.openURL(mailtoUrl);
-        console.log('✅ Email app opened successfully');
-      } else {
-        Alert.alert(
-          "Email App", 
-          `No email app found. Please copy this email address:\n\n${cleanEmail}`,
-          [
-            { 
-              text: "OK", 
-              style: "default" 
-            }
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('💥 Error opening email:', error);
+  try {
+    const cleanEmail = email.trim().replace(/[.,;:]$/, '');
+    const mailtoUrl = `mailto:${cleanEmail}`;
+    
+    console.log('📧 Attempting to open email:', mailtoUrl);
+    
+    const supported = await Linking.canOpenURL(mailtoUrl);
+    
+    if (supported) {
+      await Linking.openURL(mailtoUrl);
+      console.log('✅ Email app opened successfully');
+    } else {
       Alert.alert(
-        "Email Error", 
-        "Something went wrong while trying to open the email app.",
+        "Email App", 
+        `No email app found. Please copy this email address:\n\n${cleanEmail}`,
         [{ text: "OK", style: "default" }]
       );
     }
-  };
-
+  } catch (error) {
+    console.error('💥 Error opening email:', error);
+    Alert.alert(
+      "Email Error", 
+      "Something went wrong while trying to open the email app.",
+      [{ text: "OK", style: "default" }]
+    );
+  }
+};
 
   
 const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
-  const combinedRegex =
-    /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
-
-  const parts = text.split(combinedRegex);
-
-  return parts
-    .map((part, index) => {
-      if (!part) return null;
-
-      let textStyle = { ...baseTextStyle };
-      let content = part;
-
-      if (part.startsWith('**') && part.endsWith('**')) {
-        content = part.slice(2, -2).trim();
-
-        if (content.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleEmailPress(content)}
-              activeOpacity={0.7}
-              style={{ flexShrink: 1 }}
-            >
-              <Text
-                style={{
-                  ...textStyle,
-                  color: Colors?.primary || '#0066cc',
-                  fontWeight: '500',
-                  textDecorationLine: 'underline',
-                }}
-              >
-                {content}
-              </Text>
-            </TouchableOpacity>
-          );
+  const lines = text.split('\n');
+  
+  return (
+    <View>
+      {lines.map((line, lineIndex) => {
+        if (line.trim() === '') {
+          return <View key={lineIndex} style={{ height: 8 }} />;
         }
+        
+        const combinedRegex =
+          /(\*\*.*?\*\*|\*.*?\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 
-        if (content.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/)) {
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleUrlPress(content)}
-              activeOpacity={0.7}
-              style={{ flexShrink: 1 }}
-            > 
-              <Text
-                style={{
-                  ...textStyle,
-                  color: Colors?.primary || '#0066cc',
-                  fontWeight: '500',
-                }}
-              >
-                {content}
-              </Text>
-            </TouchableOpacity>
-          );
-        }
+        const parts = line.split(combinedRegex);
 
-        // 🔹 Normal bold text
         return (
-          <Text
-            key={index}
-            style={{
-              ...textStyle,
-              fontFamily: FontFamilies?.bold || 'System',
-            }}
-          >
-            {content}
+          <Text key={lineIndex} style={{ ...baseTextStyle, marginBottom: 4 }}>
+            {parts.map((part, index) => {
+              if (!part) return null;
+
+              let textStyle = { ...baseTextStyle };
+              let content = part;
+
+              if (part.startsWith('**') && part.endsWith('**')) {
+                content = part.slice(2, -2).trim();
+
+                if (content.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+                  return (
+                    <Text
+                      key={index}
+                      onPress={() => handleEmailPress(content)}
+                      style={{
+                        ...textStyle,
+                        color: Colors?.primary || '#0066cc',
+                        fontWeight: '500',
+                        textDecorationLine: 'underline',
+                      }}
+                    >
+                      {content}
+                    </Text>
+                  );
+                }
+
+                if (content.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/)) {
+                  return (
+                    <Text
+                      key={index}
+                      onPress={() => handleUrlPress(content)}
+                      style={{
+                        ...textStyle,
+                        color: Colors?.primary || '#0066cc',
+                        fontWeight: '500',
+                      }}
+                    >
+                      {content}
+                    </Text>
+                  );
+                }
+
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      ...textStyle,
+                      fontFamily: FontFamilies?.bold || 'System',
+                    }}
+                  >
+                    {content}
+                  </Text>
+                );
+              }
+
+              if (part.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+                return (
+                  <Text
+                    key={index}
+                    onPress={() => handleEmailPress(part)}
+                    style={{
+                      ...textStyle,
+                      color: Colors?.primary || '#0066cc',
+                      fontWeight: '500',
+                      textDecorationLine: 'underline',
+                    }}
+                  >
+                    {part}
+                  </Text>
+                );
+              }
+
+              if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
+                return (
+                  <Text
+                    key={index}
+                    onPress={() => handleUrlPress(part)}
+                    style={{
+                      ...textStyle,
+                      color: Colors?.primary || '#0066cc',
+                      fontWeight: '500',
+                    }}
+                  >
+                    {part}
+                  </Text>
+                );
+              }
+
+              return (
+                <Text key={index} style={textStyle}>
+                  {content}
+                </Text>
+              );
+            }).filter(Boolean)}
           </Text>
         );
-      }
-
-      if (part.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
-        return (
-          <TouchableOpacity
-            key={index}
-            onPress={() => handleEmailPress(part)}
-            activeOpacity={0.7}
-            style={{ flexShrink: 1 }}
-          >
-            <Text
-              style={{
-                ...textStyle,
-                color: Colors?.primary || '#0066cc',
-                fontWeight: '500',
-                textDecorationLine: 'underline',
-              }}
-            >
-              {part}
-            </Text>
-          </TouchableOpacity>
-        );
-      }
-
-      if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
-        return (
-          <TouchableOpacity
-            key={index}
-            onPress={() => handleUrlPress(part)}
-            activeOpacity={0.7}
-            style={{ flexShrink: 1 }}
-          >
-            <Text
-              style={{
-                ...textStyle,
-                color: Colors?.primary || '#0066cc',
-                fontWeight: '500',
-              }}
-            >
-              {part}
-            </Text>
-          </TouchableOpacity>
-        );
-      }
-
-      // ✅ Normal text
-      return (
-        <Text key={index} style={textStyle}>
-          {content}
-        </Text>
-      );
-    })
-    .filter(Boolean);
+      })}
+    </View>
+  );
 };
 
 
@@ -254,10 +234,7 @@ const handleUrlPress = async (url: string) => {
         console.log('❌ Direct open failed, trying canOpenURL check');
       }
     }
-
-   
     
-    // Fallback for both platforms
     const supported = await Linking.canOpenURL(fullUrl);
     console.log('🔍 URL supported:', supported);
     
@@ -285,7 +262,7 @@ const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
   const lines = text.split('\n').filter(line => line.trim().length > 0);
 
   return (
-    <View style={{ width: '100%' }}>
+    <View>
       {lines.map((line, index) => {
         const isBullet = /^[-•]\s*/.test(line.trim());
         const trimmed = line.trim().replace(/^[-•]\s*/, ''); 
@@ -293,10 +270,10 @@ const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
         return (
           <View
             key={index}
-            style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4 }}
+            style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}
           >
             {isBullet && (
-              <Text style={{ ...baseTextStyle, marginRight: 20 }}>•</Text>
+              <Text style={{ ...baseTextStyle, marginRight: 8, marginTop: 2 }}>•</Text>
             )}
 
             <View style={{ flex: 1 }}>
@@ -330,7 +307,7 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
   const rows = tableLines.filter((_, i) => i !== 1);
 
   return (
-    <View style={{ width: '100%' }}>
+    <View>
       {intro ? (
         <View style={{ marginBottom: 8 }}>
           {renderFormattedText(intro, baseTextStyle, Colors)}
@@ -339,7 +316,6 @@ const renderWithTable = (text: string, baseTextStyle: any, Colors: any) => {
 
       <View
         style={{
-          width: '100%',
           borderWidth: 1,
           borderColor: Colors?.line,
           marginVertical: 8,
