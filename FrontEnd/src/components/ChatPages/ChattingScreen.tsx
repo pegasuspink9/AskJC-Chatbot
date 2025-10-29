@@ -255,7 +255,7 @@ const styles = (Colors: any) => StyleSheet.create({
   borderTopWidth: 1,
   borderTopColor: Colors.border,
   paddingHorizontal: Spacing?.sm || 16,
-  paddingBottom: Platform.OS === 'web' ? 40 : Spacing?.xxl || 12, 
+  paddingBottom: Platform.OS === 'web' ? 40 : 80,
   paddingTop: Spacing?.md || 8,
   marginTop: 'auto', 
   },
