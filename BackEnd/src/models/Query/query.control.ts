@@ -15,8 +15,8 @@ import { organizationQuery } from "../../models/chatbot/schoolOrganization/schoo
 import { programQuery } from "../../models/chatbot/schoolProgram/schoolProgram";
 import { navigationQuery } from "../../models/chatbot/Navigation/navigation";
 import { officeFacilitiesQuery } from "../../models/chatbot/Office and Facilities/officeAndFacilities.service";
-import { devInfoQuery } from "../../models/chatbot/DevInfo/devInfo.services";
 import { courseQuery } from "../chatbot/schoolCourses/schoolCourses";
+import { devInfoQuery } from "../../models/chatbot/DevInfo/devInfo.services";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -163,23 +163,22 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
+          }  else if(
+            intentName.includes("course") ||
+            intentName.includes("classes") ||
+            intentName.includes("schedule") ||
+            intentName.includes("subject")
+          ){
+            console.log(
+              "Routing to course service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await courseQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
           } else if (
-              intentName.includes("course") ||
-              intentName.includes("courses") ||
-              intentName.includes("subject") ||
-              intentName.includes("classes") ||
-              intentName.includes("class") || 
-              intentName.includes("curriculum") ||
-              intentName.includes("syllabus") || 
-              intentName.includes("majors") ||
-              intentName.includes("minor")
-            ) {
-              console.log(
-                "Routing to school course service based on intent:",
-                dialogflowResponse.intent
-              );
-              return await courseQuery(user.id, query_text, conversationHistory); 
-            } else if (
             intentName.includes("office") ||
             intentName.includes("offices") ||
             intentName.includes("building") ||
@@ -281,7 +280,7 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          } else if (
+          }else if (
             intentName.includes("navigation") ||
             intentName.includes("menu") ||
             intentName.includes("home") ||
