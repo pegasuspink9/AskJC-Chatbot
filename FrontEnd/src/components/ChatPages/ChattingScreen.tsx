@@ -9,6 +9,7 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
@@ -255,9 +256,15 @@ const styles = (Colors: any) => StyleSheet.create({
   borderTopWidth: 1,
   borderTopColor: Colors.border,
   paddingHorizontal: Spacing?.sm || 16,
-  paddingBottom: Platform.OS === 'web' ? 40 : 80,
+  paddingBottom: (() => {
+    const screenWidth = Dimensions.get('window').width;
+    if (Platform.OS === 'web') {
+      return screenWidth < 768 ? 80 : 40; 
+    }
+    return 80; 
+  })(),
   paddingTop: Spacing?.md || 8,
-  marginTop: 'auto', 
+  marginTop: 'auto',
   },
   inputWrapper: {
     flexDirection: 'row',
