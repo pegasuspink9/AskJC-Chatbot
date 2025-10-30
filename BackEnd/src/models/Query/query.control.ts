@@ -17,6 +17,7 @@ import { navigationQuery } from "../../models/chatbot/Navigation/navigation";
 import { officeFacilitiesQuery } from "../../models/chatbot/Office and Facilities/officeAndFacilities.service";
 import { courseQuery } from "../chatbot/schoolCourses/schoolCourses";
 import { devInfoQuery } from "../../models/chatbot/DevInfo/devInfo.services";
+import { enrollmentQuery } from "../chatbot/schoolEnrollment/schoolEnrollment";
 
 export const getQueryById = async (req: Request, res: Response) => {
   try {
@@ -280,7 +281,24 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }else if (
+          } else if (
+            intentName.includes("enroll") ||
+            intentName.includes("enrollment") ||
+            intentName.includes("admission") ||
+            intentName.includes("apply") ||
+            intentName.includes("registration")
+          ) {
+            console.log(
+              "Routing to enrollment service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await enrollmentQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          }      
+          else if (
             intentName.includes("navigation") ||
             intentName.includes("menu") ||
             intentName.includes("home") ||

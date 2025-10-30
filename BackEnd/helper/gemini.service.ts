@@ -13,14 +13,22 @@ interface ApiKeyStatus {
   consecutiveFailures: number;
   lastError?: string;
   retiredReason?: string;
+  avgResponseTime?: number; // 🚀 NEW: Track response speed
 }
 
 class GeminiKeyManager {
   private keyStatuses: ApiKeyStatus[];
   private disableDurationHours: number = 24;
-  private maxConsecutiveFailures: number = 3; // Reduced for faster retirement
-  private maxFailureRate: number = 0.7; // Lowered threshold
-  private minTrialsBeforeRetirement: number = 5; // Reduced for faster decisions
+  private maxConsecutiveFailures: number = 3;
+  private maxFailureRate: number = 0.7;
+  private minTrialsBeforeRetirement: number = 5;
+  
+  // 🚀 NEW: Response cache for identical prompts
+  private responseCache: Map<string, { text: string; timestamp: number }> = new Map();
+  private cacheExpiryMs: number = 5 * 60 * 1000; // 5 minutes
+  
+  // 🚀 NEW: Reuse AI instances per key
+  private aiInstances: Map<string, GoogleGenAI> = new Map();
 
   constructor() {
     const keys = (process.env.GEMINI_API_KEYS || "")
@@ -43,26 +51,23 @@ class GeminiKeyManager {
       totalSuccesses: 0,
       totalFailures: 0,
       consecutiveFailures: 0,
+      avgResponseTime: 0, // 🚀 NEW
     }));
 
     console.log(`🔑 Initialized ${keys.length} Gemini API keys`);
   }
 
-  // ✅ OPTIMIZED: Skip expired/retired keys immediately
   private isKeyAvailable(keyStatus: ApiKeyStatus): boolean {
-    // 🚀 FAST SKIP: Immediately skip retired keys
     if (keyStatus.isRetired) {
       return false;
     }
 
     const now = Date.now();
 
-    // 🚀 FAST SKIP: Immediately skip disabled keys
     if (keyStatus.disabledUntil && now < keyStatus.disabledUntil) {
       return false;
     }
 
-    // Auto-enable if disable period has passed
     if (keyStatus.disabledUntil && now >= keyStatus.disabledUntil) {
       keyStatus.disabledUntil = null;
       keyStatus.isWorking = true;
@@ -72,21 +77,17 @@ class GeminiKeyManager {
     return keyStatus.isWorking;
   }
 
-  // ✅ OPTIMIZED: More aggressive retirement criteria
   private shouldRetireKey(keyStatus: ApiKeyStatus): boolean {
     const totalTrials = keyStatus.totalSuccesses + keyStatus.totalFailures;
     
-    // Don't retire until minimum trials
     if (totalTrials < this.minTrialsBeforeRetirement) {
       return false;
     }
 
-    // 🚀 FAST RETIREMENT: Retire quickly on consecutive failures
     if (keyStatus.consecutiveFailures >= this.maxConsecutiveFailures) {
       return true;
     }
 
-    // 🚀 FAST RETIREMENT: Retire on high failure rate
     const failureRate = keyStatus.totalFailures / totalTrials;
     if (failureRate > this.maxFailureRate) {
       return true;
@@ -107,12 +108,11 @@ class GeminiKeyManager {
     console.log(`📊 ${activeKeys} keys remaining active`);
   }
 
-  // ✅ OPTIMIZED: Cache available keys for faster access
   private getAvailableKeys(): ApiKeyStatus[] {
     return this.keyStatuses.filter(key => this.isKeyAvailable(key));
   }
 
-  // ✅ OPTIMIZED: Smarter key selection prioritizing recent successes
+  // 🚀 OPTIMIZED: Select fastest key based on response time
   private getBestAvailableKey(): ApiKeyStatus | null {
     const availableKeys = this.getAvailableKeys();
     
@@ -120,13 +120,20 @@ class GeminiKeyManager {
       return null;
     }
 
-    // 🚀 FAST SELECTION: Prioritize keys that have never failed
+    // 🚀 SPEED PRIORITY: Use keys with fastest average response time
     const perfectKeys = availableKeys.filter(k => k.consecutiveFailures === 0);
     if (perfectKeys.length > 0) {
-      return perfectKeys.sort((a, b) => b.lastSuccessAt - a.lastSuccessAt)[0];
+      // Sort by response time (fastest first), then by success count
+      return perfectKeys.sort((a, b) => {
+        const aTime = a.avgResponseTime || 999999;
+        const bTime = b.avgResponseTime || 999999;
+        if (Math.abs(aTime - bTime) < 100) { // Within 100ms, prefer more successful
+          return b.totalSuccesses - a.totalSuccesses;
+        }
+        return aTime - bTime; // Faster is better
+      })[0];
     }
 
-    // 🚀 FALLBACK: Use key with fewest consecutive failures
     return availableKeys.sort((a, b) => {
       if (a.consecutiveFailures !== b.consecutiveFailures) {
         return a.consecutiveFailures - b.consecutiveFailures;
@@ -135,15 +142,23 @@ class GeminiKeyManager {
     })[0];
   }
 
-  private markKeySuccess(keyStatus: ApiKeyStatus) {
+  // 🚀 NEW: Track response time
+  private markKeySuccess(keyStatus: ApiKeyStatus, responseTimeMs: number) {
     const now = Date.now();
     keyStatus.isWorking = true;
     keyStatus.disabledUntil = null;
     keyStatus.lastSuccessAt = now;
     keyStatus.totalSuccesses++;
-    keyStatus.consecutiveFailures = 0; // Reset on success
+    keyStatus.consecutiveFailures = 0;
     
-    console.log(`✅ KEY-${keyStatus.originalIndex + 1} success (${keyStatus.totalSuccesses} total)`);
+    // Calculate rolling average response time
+    if (keyStatus.avgResponseTime) {
+      keyStatus.avgResponseTime = (keyStatus.avgResponseTime * 0.7) + (responseTimeMs * 0.3);
+    } else {
+      keyStatus.avgResponseTime = responseTimeMs;
+    }
+    
+    console.log(`✅ KEY-${keyStatus.originalIndex + 1} success (${responseTimeMs}ms, avg: ${Math.round(keyStatus.avgResponseTime)}ms)`);
   }
 
   private markKeyFailure(keyStatus: ApiKeyStatus, error: string) {
@@ -154,7 +169,6 @@ class GeminiKeyManager {
     keyStatus.consecutiveFailures++;
     keyStatus.lastError = error;
 
-    // 🚀 IMMEDIATE RETIREMENT CHECK
     if (this.shouldRetireKey(keyStatus)) {
       const reason = keyStatus.consecutiveFailures >= this.maxConsecutiveFailures
         ? `${this.maxConsecutiveFailures} consecutive failures`
@@ -164,46 +178,87 @@ class GeminiKeyManager {
       return;
     }
 
-    // Temporary disable for recoverable failures
     keyStatus.disabledUntil = now + this.disableDurationHours * 60 * 60 * 1000;
     console.log(`❌ KEY-${keyStatus.originalIndex + 1} failed (${keyStatus.consecutiveFailures} consecutive) - disabled temporarily`);
   }
 
+  // 🚀 NEW: Get or create cached AI instance
+  private getAIInstance(key: string): GoogleGenAI {
+    if (!this.aiInstances.has(key)) {
+      this.aiInstances.set(key, new GoogleGenAI({ apiKey: key }));
+    }
+    return this.aiInstances.get(key)!;
+  }
+
+  // 🚀 NEW: Generate cache key
+  private getCacheKey(prompt: string, history: string[]): string {
+    return `${history.slice(-4).join('|')}|${prompt}`;
+  }
+
+  // 🚀 OPTIMIZED: Faster generation with caching and reused instances
   private async tryGenerate(
     fullPrompt: string,
-    keyStatus: ApiKeyStatus
-  ): Promise<{ text: string; apiKey: string }> {
-    const ai = new GoogleGenAI({ apiKey: keyStatus.key });
+    keyStatus: ApiKeyStatus,
+    cacheKey: string
+  ): Promise<{ text: string; apiKey: string; responseTime: number; fromCache: boolean }> {
+    const startTime = Date.now();
+    
+    // 🚀 Check cache first
+    const cached = this.responseCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < this.cacheExpiryMs)) {
+      console.log(`⚡ Cache hit! (${Date.now() - startTime}ms)`);
+      return {
+        text: cached.text,
+        apiKey: `KEY-${keyStatus.originalIndex + 1}`,
+        responseTime: Date.now() - startTime,
+        fromCache: true,
+      };
+    }
 
+    // 🚀 Reuse AI instance instead of creating new one
+    const ai = this.getAIInstance(keyStatus.key);
+
+    // Use the correct API structure for @google/genai
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash-exp", // 🚀 Faster experimental model
       contents: fullPrompt,
     });
 
     const text = response.text;
 
-    console.log("Full Gemini response:", JSON.stringify(response, null, 2));
-    console.log("Extracted text:", text);
-
     if (!text || text.trim() === "") {
       throw new Error("Empty response from Gemini");
+    }
+
+    const responseTime = Date.now() - startTime;
+
+    // 🚀 Cache the response
+    this.responseCache.set(cacheKey, { text, timestamp: Date.now() });
+    
+    // 🚀 Clean old cache entries (keep cache size manageable)
+    if (this.responseCache.size > 100) {
+      const now = Date.now();
+      for (const [key, value] of this.responseCache.entries()) {
+        if (now - value.timestamp > this.cacheExpiryMs) {
+          this.responseCache.delete(key);
+        }
+      }
     }
 
     return {
       text,
       apiKey: `KEY-${keyStatus.originalIndex + 1}`,
+      responseTime,
+      fromCache: false,
     };
   }
 
-  // ✅ OPTIMIZED: Fast response from first available key
   async getGenerativeResponse(
     prompt: string,
     conversationHistory: string[] = []
   ): Promise<{ text: string; apiKey: string }> {
-    // 🚀 IMMEDIATE CHECK: Get only available keys
     const availableKeys = this.getAvailableKeys();
     
-    // Early exit if no keys available
     if (availableKeys.length === 0) {
       const retiredCount = this.keyStatuses.filter(k => k.isRetired).length;
       const disabledCount = this.keyStatuses.filter(k => !k.isRetired && k.disabledUntil).length;
@@ -213,7 +268,10 @@ class GeminiKeyManager {
       );
     }
 
-    const historyFormatted = conversationHistory
+    // 🚀 OPTIMIZED: Limit history to last 6 messages (3 exchanges) for speed
+    const recentHistory = conversationHistory.slice(-6);
+    
+    const historyFormatted = recentHistory
       .map((turn, index) => `${index % 2 === 0 ? "User" : "Chatbot"}: ${turn}`)
       .join("\n");
 
@@ -221,9 +279,11 @@ class GeminiKeyManager {
       ? `${historyFormatted}\nUser: ${prompt}`
       : `User: ${prompt}`;
 
+    // 🚀 Generate cache key
+    const cacheKey = this.getCacheKey(prompt, recentHistory);
+
     console.log(`🚀 ${availableKeys.length} keys ready, trying best available...`);
 
-    // 🚀 OPTIMIZED: Only try available keys, start with best
     let attempt = 0;
     while (attempt < availableKeys.length) {
       const keyStatus = this.getBestAvailableKey();
@@ -233,15 +293,19 @@ class GeminiKeyManager {
       }
 
       try {
-        console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (${keyStatus.consecutiveFailures} failures)`);
-        const result = await this.tryGenerate(fullPrompt, keyStatus);
-        this.markKeySuccess(keyStatus);
-        return result; // 🚀 FAST RETURN on first success
+        console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (avg: ${Math.round(keyStatus.avgResponseTime || 0)}ms)`);
+        
+        const result = await this.tryGenerate(fullPrompt, keyStatus, cacheKey);
+        
+        if (!result.fromCache) {
+          this.markKeySuccess(keyStatus, result.responseTime);
+        }
+        
+        return { text: result.text, apiKey: result.apiKey };
       } catch (error: any) {
         console.log(`❌ KEY-${keyStatus.originalIndex + 1}: ${error.message}`);
         this.markKeyFailure(keyStatus, error.message);
         
-        // Re-check available keys after failure
         const remainingKeys = this.getAvailableKeys();
         if (remainingKeys.length === 0) {
           throw new Error(`All keys failed or retired. Last error: ${error.message}`);
@@ -255,7 +319,12 @@ class GeminiKeyManager {
     throw new Error("All available keys exhausted");
   }
 
-  // Enhanced status and management methods remain the same...
+  // 🚀 NEW: Clear cache manually
+  clearCache() {
+    this.responseCache.clear();
+    console.log('🧹 Response cache cleared');
+  }
+
   getKeyStatuses() {
     return this.keyStatuses.map((key) => ({
       keyIndex: key.originalIndex + 1,
@@ -268,6 +337,7 @@ class GeminiKeyManager {
       totalSuccesses: key.totalSuccesses,
       totalFailures: key.totalFailures,
       lastError: key.lastError,
+      avgResponseTime: key.avgResponseTime ? `${Math.round(key.avgResponseTime)}ms` : 'N/A', // 🚀 NEW
       successRate: key.totalSuccesses + key.totalFailures > 0
         ? `${Math.round((key.totalSuccesses / (key.totalSuccesses + key.totalFailures)) * 100)}%`
         : "N/A",
@@ -286,6 +356,7 @@ class GeminiKeyManager {
       retired,
       temporarilyDisabled: disabled,
       healthyKeys: this.keyStatuses.filter(k => !k.isRetired && k.consecutiveFailures === 0).length,
+      cacheSize: this.responseCache.size, // 🚀 NEW
       retiredKeys: this.keyStatuses
         .filter(k => k.isRetired)
         .map(k => ({
@@ -301,7 +372,6 @@ class GeminiKeyManager {
     return this.getAvailableKeys().length;
   }
 
-  // Management methods...
   forceRetireKey(keyIndex: number, reason: string = "Manual retirement") {
     const key = this.keyStatuses.find((k) => k.originalIndex === keyIndex - 1);
     if (key && !key.isRetired) {
@@ -373,6 +443,12 @@ class GeminiKeyManager {
     this.disableDurationHours = hours;
     console.log(`⏰ Disable duration: ${hours} hours`);
   }
+
+  // 🚀 NEW: Set cache expiry time
+  setCacheExpiry(minutes: number) {
+    this.cacheExpiryMs = minutes * 60 * 1000;
+    console.log(`⏱️ Cache expiry: ${minutes} minutes`);
+  }
 }
 
 const geminiManager = new GeminiKeyManager();
@@ -422,4 +498,13 @@ export function setRetirementSettings(maxConsecutiveFailures: number, maxFailure
 
 export function setDisableDuration(hours: number) {
   return geminiManager.setDisableDuration(hours);
+}
+
+// 🚀 NEW: Cache management
+export function clearCache() {
+  return geminiManager.clearCache();
+}
+
+export function setCacheExpiry(minutes: number) {
+  return geminiManager.setCacheExpiry(minutes);
 }
