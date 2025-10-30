@@ -21,7 +21,8 @@ export const botTalk = `
     - Do not mix languages unless the question itself is mixed, then mirror the mix naturally.
 
     IMPORTANT FORMATTING RULES:
-    - remove the <br> as a text and do not write it.
+    - do not include any word like <br> 
+    - remove the <br> <br> as a text and do not write it.
     - **Use bold only for key answers, not for contacts**
     - When including URLs, write them as plain text (e.g., https://example.com) so they remain clickable.
     - When including email addresses, write them as plain text (e.g., sjccollegelibrary@gmail.com) so they remain clickable.
@@ -61,7 +62,7 @@ export const singleLinePrompt = (
     - Bold text should be part of the flowing sentence, not isolated
     - Keep the response organized and easy to scan
     
-    if it asks for where and the URL or link starts with ![Image] is available use this ${mapPrompt(fact, message)}
+    if it asks for where and the URL or link starts with ![Image] is available make sure to use this ${mapPrompt(fact, message)}
 `;
 
 export const bulletinPrompts = (

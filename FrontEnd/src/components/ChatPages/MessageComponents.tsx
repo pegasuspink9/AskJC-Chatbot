@@ -8,7 +8,8 @@
     TouchableOpacity,
     Image,
     Dimensions,
-    ActivityIndicator
+    ActivityIndicator,
+     Modal
   } from 'react-native';
   import { getColors, Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
   import { Message as ChatMessage } from '../../types/index';
@@ -34,6 +35,7 @@
     width?: number;
     height?: number;
     borderRadius?: number;
+    onPress?: () => void;
   }
 
   const extractSuggestions = (text: string): string[] => {
@@ -103,7 +105,8 @@
     uri, 
     width = 300, 
     height = 200, 
-    borderRadius = 8 
+    borderRadius = 8,
+    onPress
   }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -111,7 +114,8 @@
     const optimizedUri = optimizeImageUrl(uri, width, height, 75);
 
     return (
-      <View style={{ width, height, borderRadius, position: 'relative' }}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.8}> 
+        <View style={{ width, height, borderRadius, position: 'relative' }}>
         {loading && (
           <View style={{
             position: 'absolute',
@@ -154,7 +158,8 @@
             }}
           />
         )}
-      </View>
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -164,6 +169,10 @@
     onSuggestionPress,
     shouldShowSuggestions 
   }) => {
+    const [modalVisible, setModalVisible] = useState(false);  
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);  
+
+
     const formatTime = (timestamp: Date): string => {
       try {
         return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -237,6 +246,10 @@
                   width={280}
                   height={180}
                   borderRadius={8}
+                  onPress={() => {
+                    setSelectedImage(imageUrl);
+                    setModalVisible(true);
+                  }}
                 />
               </View>
 
@@ -266,8 +279,8 @@
                 >
                   <Text 
                     style={styles(Colors).suggestionText}
-                    numberOfLines={2} // Limit to 2 lines
-                    ellipsizeMode="tail" // Add ... if text is too long
+                    numberOfLines={2} 
+                    ellipsizeMode="tail"
                   >
                     {suggestion}
                   </Text>
@@ -276,6 +289,39 @@
             </View>
           </View>
         )}
+
+
+      <Modal
+      visible={modalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setModalVisible(false)}
+      >
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)' }}>
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: Platform.OS === 'ios' ? 50 : 20,
+            right: 20,
+            zIndex: 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            borderRadius: 20,
+            padding: 10,
+          }}
+          onPress={() => setModalVisible(false)}
+        >
+          <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>✕</Text>
+        </TouchableOpacity>
+
+        {selectedImage && (
+          <Image
+            source={{ uri: selectedImage }}
+            style={{ flex: 1, width: Dimensions.get('window').width, height: Dimensions.get('window').height }}
+            resizeMode="contain"
+          />
+        )}
+      </View>
+      </Modal>
       </>
     );
   }, (prevProps, nextProps) => {
