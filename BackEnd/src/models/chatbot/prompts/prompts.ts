@@ -119,6 +119,8 @@ FORMATTING RULES:
 - Summary sentence should be on a new line after the table
 - Use proper spacing for readability
 - If links are needed, place them after the summary for easy access
+- do not include any word like <br> 
+- remove the <br> <br> as a text and do not write it.
 
 if it asks for where and the URL or link starts with ![Image] is available use this ${mapPrompt(responseText, message)}
 and ${suggestion}
@@ -176,6 +178,10 @@ FORMATTING RULES:
 
 IMPORTANT NOTE:
 ALWAYS refer to the provided source (${responseText}) or the database. Do not invent steps or add unsupported information.${suggestionLine}
+
+
+if it asks for where and the URL or link starts with ![Image] is available make sure to use this ${mapPrompt(responseText, message)}
+
 `;
 };
 

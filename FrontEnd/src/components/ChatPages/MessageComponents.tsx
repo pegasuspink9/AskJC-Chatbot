@@ -110,8 +110,23 @@
   }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
-    
+    const [retryCount, setRetryCount] = useState(0);
+    const maxRetries = 3;
+
+
     const optimizedUri = optimizeImageUrl(uri, width, height, 75);
+
+    React.useEffect(() => {
+    if (error && retryCount < maxRetries) {
+      const timer = setTimeout(() => {
+        setError(false);
+        setLoading(true);
+      }, 2000);  
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, retryCount, maxRetries]);
+
 
     return (
       <TouchableOpacity onPress={onPress} activeOpacity={0.8}> 
@@ -142,8 +157,8 @@
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-            <Text style={{ color: '#666', fontSize: 12, textAlign: 'center' }}>
-              Failed to load image
+            <Text style={{ color: '#b4b4b4ff', fontSize: 12, textAlign: 'center' }}>
+              {retryCount < maxRetries ? 'Failed to load image. Retrying...' : 'Failed to load image'}
             </Text>
           </View>
         ) : (
@@ -151,10 +166,14 @@
             source={{ uri: optimizedUri }}
             style={{ width, height, borderRadius }}
             resizeMode="cover"
-            onLoad={() => setLoading(false)}
+            onLoad={() => {
+              setLoading(false);
+              setRetryCount(0); 
+            }}
             onError={() => {
               setLoading(false);
               setError(true);
+              setRetryCount(prev => prev + 1);
             }}
           />
         )}
