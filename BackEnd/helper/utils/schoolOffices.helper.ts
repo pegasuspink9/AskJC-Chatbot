@@ -1,3 +1,57 @@
+export function formatOfficeByBuilding(office: any): string {
+  if (office.location_building) {
+    let response = `The ${office.office_name} is located in the ${office.location_building}`;
+
+    if (office.location_floor) {
+      response += ` on the ${office.location_floor}`;
+    }
+
+    response += ".";
+
+    if (office.operating_hours) {
+      response += ` It is open ${office.operating_hours}.`;
+    }
+
+    if (office.map_url) {
+      response += `\n\nView the location on the map: ${office.map_url}`;
+    }
+
+    if (office.office_url) {
+      response += `\nView the office image: ${office.office_url}`;
+    }
+
+    return response;
+  }
+  return `Building information for the ${office.office_name} is not available.`;
+}
+
+export function formatOfficeByFloor(office: any): string {
+  if (office.location_floor) {
+    let response = `The ${office.office_name} is located on the ${office.location_floor}`;
+
+    if (office.location_building) {
+      response += ` of the ${office.location_building}`;
+    }
+
+    response += ".";
+
+    if (office.operating_hours) {
+      response += ` It is open ${office.operating_hours}.`;
+    }
+
+    if (office.map_url) {
+      response += `\n\nView the location on the map: ${office.map_url}`;
+    }
+
+    if (office.office_url) {
+      response += `\nView the office image: ${office.office_url}`;
+    }
+
+    return response;
+  }
+  return `Floor information for the ${office.office_name} is not available.`;
+}
+
 export function formatOfficeLocation(office: any): string {
   const location = [];
   if (office.location_floor) location.push(`Floor: ${office.location_floor}`);
@@ -152,43 +206,56 @@ export function generateSingleOfficeResponse(office: any): string {
   }
 }
 
-export function generateMultipleOfficesResponse(offices: any[]): string {
-  if (offices.length <= 3) {
-    const header = `Saint Joseph College offices:\n\n`;
-    const list = offices
-      .map((office) => generateSingleOfficeResponse(office))
-      .join("\n\n");
-    return header + list;
-  } else {
-    const header = `Saint Joseph College offices:\nFound ${offices.length} offices:\n`;
-    const list = offices
-      .map((office, i) => {
-        const details = [];
-        if (office.description)
-          details.push(`Purpose: ${office.description.substring(0, 50)}...`);
-        if (office.location_building)
-          details.push(`Building: ${office.location_building}`);
-        if (office.location_floor)
-          details.push(`Floor: ${office.location_floor}`);
-        if (office.operating_hours)
-          details.push(`Hours: ${office.operating_hours.split(",")[0]}...`);
-        if (office.contact_phone)
-          details.push(`Phone: ${office.contact_phone}`);
-        if (office.map_url) details.push(`Map: ${office.map_url}`);
-        if (office.office_url)
-          details.push(`Office Image: ${office.office_url}`);
-
-        const detailsStr = details.length > 0 ? ` (${details.join(", ")})` : "";
-        return `${i + 1}. **${office.office_name}**${detailsStr}`;
-      })
-      .join("\n");
-
+export function generateMultipleOfficesResponse(
+  offices: any[],
+  queryType?: "building" | "floor" | "location"
+): string {
+  if (queryType === "building") {
     return (
-      header +
-      list +
-      "\n\n💡 **Tip:** Ask about specific offices for detailed location, hours, and contact information!"
+      `Offices in the ${offices[0].location_building}:\n\n` +
+      offices.map((office) => formatOfficeByBuilding(office)).join("\n\n")
     );
   }
+
+  if (queryType === "floor") {
+    return (
+      `Offices on the ${offices[0].location_floor}:\n\n` +
+      offices.map((office) => formatOfficeByFloor(office)).join("\n\n")
+    );
+  }
+
+  if (queryType === "location") {
+    return (
+      `Office locations found:\n\n` +
+      offices.map((office) => formatOfficeLocation(office)).join("\n\n")
+    );
+  }
+
+  if (offices.length <= 3) {
+    return (
+      `Saint Joseph College offices:\n\n` +
+      offices.map((office) => generateSingleOfficeResponse(office)).join("\n\n")
+    );
+  }
+
+  const details = offices
+    .map((office, i) => {
+      const info = [];
+      if (office.description)
+        info.push(`Purpose: ${office.description.substring(0, 50)}...`);
+      if (office.location_building)
+        info.push(`Building: ${office.location_building}`);
+      if (office.location_floor) info.push(`Floor: ${office.location_floor}`);
+      if (office.operating_hours)
+        info.push(`Hours: ${office.operating_hours.split(",")[0]}...`);
+      if (office.contact_phone) info.push(`Phone: ${office.contact_phone}`);
+
+      const detailsStr = info.length > 0 ? ` (${info.join(", ")})` : "";
+      return `${i + 1}. **${office.office_name}**${detailsStr}`;
+    })
+    .join("\n");
+
+  return `Saint Joseph College offices:\nFound ${offices.length} offices:\n${details}\n\n💡 **Tip:** Ask about specific offices for detailed location, hours, and contact information!`;
 }
 
 export function generateNotFoundOfficeMessage(

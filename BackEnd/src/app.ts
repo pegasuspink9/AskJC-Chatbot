@@ -64,7 +64,7 @@ app.use("/department", departmentRoutes);
 app.use("/program", programRoutes);
 app.use("/school-official", schoolOfficialRoutes);
 
-const INACTIVITY_THRESHOLD_MS = 1 * 60 * 1000;
+const INACTIVITY_THRESHOLD_MS = 5 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 60 * 1000;
 
 setInterval(async () => {
