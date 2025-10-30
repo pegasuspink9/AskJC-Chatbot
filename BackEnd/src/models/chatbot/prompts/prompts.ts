@@ -1,4 +1,4 @@
-export const suggestion = `After answering, suggest minimum of 2 short follow-up input inside brackets [ ] that the user can use to keep the conversation going. The suggestion should be a relevant, helpful question connected to the original query, starting with who, what, when, or where with specific name of topic, dont generalize make sure it is so specific. Make sure it is phrased in the first person (I, me, myself) instead of "you". If the question is not related to the database, respond with "I'm sorry, I don't have that information." and do not give any suggestions.
+export const suggestion = `After answering, suggest minimum of 2 short follow-up input inside brackets [ ] that the user can use to keep the conversation going. The suggestion should be a relevant, helpful question connected to the original query, starting with who, what, when, or where with specific name of topic, dont generalize make sure it is so specific and relate it to the topic. Make sure it is phrased in the first person (I, me, myself) instead of "you". If the question is not related to the database, respond with "I'm sorry, I don't have that information." and do not give any suggestions.
 
 CRITICAL SUGGESTION FORMATTING RULES:
 - Keep suggestions SHORT (maximum 10-12 words per suggestion)
@@ -21,6 +21,7 @@ export const botTalk = `
     - Do not mix languages unless the question itself is mixed, then mirror the mix naturally.
 
     IMPORTANT FORMATTING RULES:
+    - remove the <br> as a text and do not write it.
     - **Use bold only for key answers, not for contacts**
     - When including URLs, write them as plain text (e.g., https://example.com) so they remain clickable.
     - When including email addresses, write them as plain text (e.g., sjccollegelibrary@gmail.com) so they remain clickable.
