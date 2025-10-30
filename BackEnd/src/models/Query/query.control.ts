@@ -164,22 +164,7 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          }  else if(
-            intentName.includes("course") ||
-            intentName.includes("classes") ||
-            intentName.includes("schedule") ||
-            intentName.includes("subject")
-          ){
-            console.log(
-              "Routing to course service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await courseQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
-          } else if (
+          }  else if (
             intentName.includes("office") ||
             intentName.includes("offices") ||
             intentName.includes("building") ||
@@ -281,7 +266,22 @@ export const createQuery = async (req: Request, res: Response) => {
               query_text,
               conversationHistory
             );
-          } else if (
+          }  else if(
+            intentName.includes("course") ||
+            intentName.includes("classes") ||
+            intentName.includes("schedule") ||
+            intentName.includes("subject")
+          ){
+            console.log(
+              "Routing to course service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await courseQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          }else if (
             intentName.includes("enroll") ||
             intentName.includes("enrollment") ||
             intentName.includes("admission") ||
