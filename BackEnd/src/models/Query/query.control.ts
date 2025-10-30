@@ -315,6 +315,23 @@ export const createQuery = async (req: Request, res: Response) => {
               conversationHistory
             );
           } else if (
+            intentName.includes("dean") ||
+            intentName.includes("principal") ||
+            intentName.includes("director") || 
+            intentName.includes("chancellor") ||
+            intentName.includes("president") ||
+            intentName.includes("official")
+          ) {
+            console.log(
+              "Routing to school official service based on intent:",
+              dialogflowResponse.intent
+            );
+            return await schoolOfficialsQuery(
+              user.id,
+              query_text,
+              conversationHistory
+            );
+          } else if (
             intentName.includes("developer") ||
             intentName.includes("created")
           ) {
