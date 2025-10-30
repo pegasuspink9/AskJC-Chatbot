@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, JSX } from 'react';
+import React, { useRef, useCallback, useState, JSX, useEffect } from 'react';
 import {
   View,
   Text,
@@ -44,6 +44,23 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 }) => {
   const flatListRef = useRef<FlatList>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const scrollPositionRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  const layoutHeightRef = useRef(0);
+  const isUserScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 🚀 FIX: Track previous message count to detect new messages
+  const prevMessageCountRef = useRef(messages.length);
+  const isNewMessageRef = useRef(false);
+
+  // 🚀 FIX: Detect when new messages are added
+  useEffect(() => {
+    if (messages.length > prevMessageCountRef.current) {
+      isNewMessageRef.current = true;
+      prevMessageCountRef.current = messages.length;
+    }
+  }, [messages.length]);
 
   // Scroll to bottom helper
   const scrollToBottom = useCallback(() => {
@@ -56,6 +73,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const handleSendMessage = useCallback(() => {
     onSendMessage();
     setShouldAutoScroll(true);
+    isUserScrollingRef.current = false;
     scrollToBottom();
   }, [onSendMessage, scrollToBottom]);
 
@@ -72,26 +90,85 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
 
-  // Scroll event handlers
-  const onContentSizeChange = useCallback(() => {
-    if (shouldAutoScroll) {
-      scrollToBottom();
+  // 🚀 FIX: Only auto-scroll if user is at bottom AND it's a new message
+  const onContentSizeChange = useCallback((width: number, height: number) => {
+    contentHeightRef.current = height;
+    
+    // Only auto-scroll if:
+    // 1. User is not manually scrolling
+    // 2. User is near bottom
+    // 3. It's a new message being added
+    if (!isUserScrollingRef.current && shouldAutoScroll && isNewMessageRef.current) {
+      const isAtBottom = 
+        scrollPositionRef.current + layoutHeightRef.current >= 
+        contentHeightRef.current - 50; // 50px threshold
+      
+      if (isAtBottom) {
+        scrollToBottom();
+      }
+      isNewMessageRef.current = false;
     }
   }, [shouldAutoScroll, scrollToBottom]);
 
+  // 🚀 FIX: Mark user as scrolling when they touch the list
   const onScrollBeginDrag = useCallback(() => {
+    isUserScrollingRef.current = true;
     setShouldAutoScroll(false);
+    
+    // Clear any pending timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
   }, []);
 
+  // 🚀 FIX: Improved scroll detection
   const onScroll = useCallback((event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 20;
-    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= 
-                           contentSize.height - paddingToBottom;
+    
+    scrollPositionRef.current = contentOffset.y;
+    layoutHeightRef.current = layoutMeasurement.height;
+    contentHeightRef.current = contentSize.height;
+    
+    const paddingToBottom = 100; // Increased threshold
+    const isCloseToBottom = 
+      layoutMeasurement.height + contentOffset.y >= 
+      contentSize.height - paddingToBottom;
+    
+    if (isCloseToBottom && !isUserScrollingRef.current) {
+      setShouldAutoScroll(true);
+    }
+  }, []);
+
+  // 🚀 FIX: Reset scroll state after user stops scrolling
+  const onScrollEndDrag = useCallback(() => {
+    // Wait a bit before allowing auto-scroll again
+    scrollTimeoutRef.current = setTimeout(() => {
+      isUserScrollingRef.current = false;
+    }, 500); // Half second delay
+  }, []);
+
+  // 🚀 FIX: Also handle momentum scroll end
+  const onMomentumScrollEnd = useCallback((event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    
+    const paddingToBottom = 100;
+    const isCloseToBottom = 
+      layoutMeasurement.height + contentOffset.y >= 
+      contentSize.height - paddingToBottom;
     
     if (isCloseToBottom) {
       setShouldAutoScroll(true);
+      isUserScrollingRef.current = false;
     }
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, []);
 
   // Animation styles
@@ -150,17 +227,22 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
             ListFooterComponent={memoizedRenderTypingIndicator}
             onContentSizeChange={onContentSizeChange}
             onScrollBeginDrag={onScrollBeginDrag}
+            onScrollEndDrag={onScrollEndDrag}
+            onMomentumScrollEnd={onMomentumScrollEnd}
             onScroll={onScroll}
             scrollEventThrottle={16}
-            removeClippedSubviews={true}
+            removeClippedSubviews={Platform.OS === 'android'}
             maxToRenderPerBatch={10}
-            updateCellsBatchingPeriod={50}
-            initialNumToRender={10}
-            windowSize={10}
-            getItemLayout={undefined}
+            updateCellsBatchingPeriod={100}
+            initialNumToRender={15}
+            windowSize={21}
+            maintainVisibleContentPosition={{
+              minIndexForVisible: 0,
+              autoscrollToTopThreshold: 10,
+            }}
           />
 
-          {/* Input Container - Fixed positioning and sizing */}
+          {/* Input Container */}
           <View style={styles(Colors).inputContainer}>
             <View style={styles(Colors).inputWrapper}>
               <TextInput
@@ -253,19 +335,19 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingHorizontal: Spacing?.sm,
   },
   inputContainer: {
-  backgroundColor: Colors.surface,
-  borderTopWidth: 1,
-  borderTopColor: Colors.border,
-  paddingHorizontal: Spacing?.sm || 16,
-  paddingBottom: (() => {
-    const screenWidth = Dimensions.get('window').width;
-    if (Platform.OS === 'web') {
-      return screenWidth < 768 ? 80 : 40; 
-    }
-    return 80; 
-  })(),
-  paddingTop: Spacing?.md || 8,
-  marginTop: 'auto',
+    backgroundColor: Colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    paddingHorizontal: Spacing?.sm || 16,
+    paddingBottom: (() => {
+      const screenWidth = Dimensions.get('window').width;
+      if (Platform.OS === 'web') {
+        return screenWidth < 768 ? 80 : 40; 
+      }
+      return 80; 
+    })(),
+    paddingTop: Spacing?.md || 8,
+    marginTop: 'auto',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -284,7 +366,7 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-    textInput: {
+  textInput: {
     flex: 1,
     fontSize: FontSizes?.md || 16,
     fontFamily: FontFamilies?.regular || 'System',
@@ -297,7 +379,6 @@ const styles = (Colors: any) => StyleSheet.create({
       web: 20,
       default: undefined, 
     }),
-    // Prevent shrinking
     flexShrink: 0,
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
@@ -314,7 +395,7 @@ const styles = (Colors: any) => StyleSheet.create({
     marginLeft: Spacing?.md || 12, 
     flexShrink: 0,
   },
-    sendButtonActive: {
+  sendButtonActive: {
     backgroundColor: Colors.success,
     shadowColor: Colors.success,
     shadowOffset: { width: 0, height: 2 },
