@@ -82,19 +82,19 @@ export const contactQuery = async (
                 dbResult.includes("No contacts matched your search criteria.") ||
                 dbResult.includes("I need more specific information.")
               ) {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               } else if (
                 dbResult.includes("Found") && 
                 dbResult.split('\n').length >= 4  // 3 or more data lines (plus header = 4+ total lines)
               ) {
-                prompt = tablePrompts(dbResult, message);
+                prompt = tablePrompts(dbResult, message, conversationHistory);
               } else if (
                 dbResult.includes("Found") || 
                 dbResult.split('\n').length > 1
               ) {
-                prompt = tablePrompts(dbResult, message);
+                prompt = tablePrompts(dbResult, message, conversationHistory);
               } else {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               }
 
               const { text, apiKey } = await getGenerativeResponse(

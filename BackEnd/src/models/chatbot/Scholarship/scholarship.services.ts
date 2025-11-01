@@ -88,19 +88,19 @@ export const scholarshipQuery = async (
                 ) ||
                 dbResult.includes("I need more specific information.")
               ) {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               } else if (
                 action === "list_scholarships_by_category" ||
                 dbResult.includes("Found")
               ) {
-                prompt = bulletinPrompts(dbResult, message);
+                prompt = bulletinPrompts(dbResult, message, conversationHistory);
               } else if (
                 action === "get_scholarship_detail" ||
                 mappedParameters.query_type
               ) {
-                prompt = bulletinPrompts(dbResult, message);
+                prompt = bulletinPrompts(dbResult, message, conversationHistory);
               } else {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               }
 
               const { text, apiKey } = await getGenerativeResponse(

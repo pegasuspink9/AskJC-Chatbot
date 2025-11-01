@@ -137,7 +137,7 @@ export const schoolOfficialsQuery = async (
     } catch (geminiError) {
       console.error("Gemini fallback also failed:", geminiError);
       responseText =
-        "I apologize, but I'm experiencing technical difficulties. Please try again later.";
+        ", but I'm experiencing technical difficulties. Please try again later.";
       responseSource = "error-complete-fallback";
     }
   }

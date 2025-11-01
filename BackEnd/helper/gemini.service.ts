@@ -197,11 +197,13 @@ class GeminiKeyManager {
 
   // 🚀 OPTIMIZED: Faster generation with caching and reused instances
   private async tryGenerate(
-    fullPrompt: string,
+    prompt: string,  // Changed from fullPrompt: string
+    history: string[],  // Added history parameter
     keyStatus: ApiKeyStatus,
     cacheKey: string
   ): Promise<{ text: string; apiKey: string; responseTime: number; fromCache: boolean }> {
     const startTime = Date.now();
+  
     
     // 🚀 Check cache first
     const cached = this.responseCache.get(cacheKey);
@@ -218,10 +220,29 @@ class GeminiKeyManager {
     // 🚀 Reuse AI instance instead of creating new one
     const ai = this.getAIInstance(keyStatus.key);
 
+
+    const contents = [];
+
+    for (let i = 0; i < history.length; i++) {
+    if (history[i] && history[i].trim().length > 0) { 
+      contents.push({
+        role: i % 2 === 0 ? 'user' : 'model', 
+        parts: [{ text: history[i] }],
+      });
+    }
+    }
+
+    contents.push({
+      role: 'user',
+      parts: [{ text: prompt }],
+    });
+
+    console.log(`📝 Sending ${contents.length} messages (${history.length} history + current prompt)`);
+
     // Use the correct API structure for @google/genai
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-exp", // 🚀 Faster experimental model
-      contents: fullPrompt,
+      contents: contents,
     });
 
     const text = response.text;
@@ -253,71 +274,69 @@ class GeminiKeyManager {
     };
   }
 
-  async getGenerativeResponse(
-    prompt: string,
-    conversationHistory: string[] = []
-  ): Promise<{ text: string; apiKey: string }> {
-    const availableKeys = this.getAvailableKeys();
+async getGenerativeResponse(
+  prompt: string,
+  conversationHistory: string[] = []
+): Promise<{ text: string; apiKey: string }> {
+  const availableKeys = this.getAvailableKeys();
+  
+  if (availableKeys.length === 0) {
+    const retiredCount = this.keyStatuses.filter(k => k.isRetired).length;
+    const disabledCount = this.keyStatuses.filter(k => !k.isRetired && k.disabledUntil).length;
     
-    if (availableKeys.length === 0) {
-      const retiredCount = this.keyStatuses.filter(k => k.isRetired).length;
-      const disabledCount = this.keyStatuses.filter(k => !k.isRetired && k.disabledUntil).length;
-      
-      throw new Error(
-        `No Gemini API keys available. ${retiredCount} retired, ${disabledCount} temporarily disabled.`
-      );
-    }
-
-    // 🚀 OPTIMIZED: Limit history to last 6 messages (3 exchanges) for speed
-    const recentHistory = conversationHistory.slice(-6);
-    
-    const historyFormatted = recentHistory
-      .map((turn, index) => `${index % 2 === 0 ? "User" : "Chatbot"}: ${turn}`)
-      .join("\n");
-
-    const fullPrompt = historyFormatted
-      ? `${historyFormatted}\nUser: ${prompt}`
-      : `User: ${prompt}`;
-
-    // 🚀 Generate cache key
-    const cacheKey = this.getCacheKey(prompt, recentHistory);
-
-    console.log(`🚀 ${availableKeys.length} keys ready, trying best available...`);
-
-    let attempt = 0;
-    while (attempt < availableKeys.length) {
-      const keyStatus = this.getBestAvailableKey();
-      
-      if (!keyStatus) {
-        throw new Error("No available keys during generation");
-      }
-
-      try {
-        console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (avg: ${Math.round(keyStatus.avgResponseTime || 0)}ms)`);
-        
-        const result = await this.tryGenerate(fullPrompt, keyStatus, cacheKey);
-        
-        if (!result.fromCache) {
-          this.markKeySuccess(keyStatus, result.responseTime);
-        }
-        
-        return { text: result.text, apiKey: result.apiKey };
-      } catch (error: any) {
-        console.log(`❌ KEY-${keyStatus.originalIndex + 1}: ${error.message}`);
-        this.markKeyFailure(keyStatus, error.message);
-        
-        const remainingKeys = this.getAvailableKeys();
-        if (remainingKeys.length === 0) {
-          throw new Error(`All keys failed or retired. Last error: ${error.message}`);
-        }
-        
-        attempt++;
-        console.log(`🔄 ${remainingKeys.length} keys remaining, trying next...`);
-      }
-    }
-
-    throw new Error("All available keys exhausted");
+    throw new Error(
+      `No Gemini API keys available. ${retiredCount} retired, ${disabledCount} temporarily disabled.`
+    );
   }
+
+  // 🚀 OPTIMIZED: Limit history to last 20 messages (10 exchanges)
+  const recentHistory = conversationHistory.slice(-20);
+
+  console.log(`🗣️ Conversation History (${recentHistory.length} messages):`);
+  recentHistory.forEach((msg, idx) => {
+    console.log(`  [${idx % 2 === 0 ? 'USER' : 'BOT'}] ${msg.substring(0, 100)}...`);
+  });
+
+  // 🚀 Generate cache key
+  const cacheKey = this.getCacheKey(prompt, recentHistory);
+
+  console.log(`🚀 ${availableKeys.length} keys ready, trying best available...`);
+
+  let attempt = 0;
+  while (attempt < availableKeys.length) {
+    const keyStatus = this.getBestAvailableKey();
+    
+    if (!keyStatus) {
+      throw new Error("No available keys during generation");
+    }
+
+    try {
+      console.log(`🔑 Trying KEY-${keyStatus.originalIndex + 1} (avg: ${Math.round(keyStatus.avgResponseTime || 0)}ms)`);
+      
+      // 🚀 Fixed: Pass prompt, history, keyStatus, cacheKey (4 arguments)
+      const result = await this.tryGenerate(prompt, recentHistory, keyStatus, cacheKey);
+      
+      if (!result.fromCache) {
+        this.markKeySuccess(keyStatus, result.responseTime);
+      }
+      
+      return { text: result.text, apiKey: result.apiKey };
+    } catch (error: any) {
+      console.log(`❌ KEY-${keyStatus.originalIndex + 1}: ${error.message}`);
+      this.markKeyFailure(keyStatus, error.message);
+      
+      const remainingKeys = this.getAvailableKeys();
+      if (remainingKeys.length === 0) {
+        throw new Error(`All keys failed or retired. Last error: ${error.message}`);
+      }
+      
+      attempt++;
+      console.log(`🔄 ${remainingKeys.length} keys remaining, trying next...`);
+    }
+  }
+
+  throw new Error("All available keys exhausted");
+}
 
   // 🚀 NEW: Clear cache manually
   clearCache() {

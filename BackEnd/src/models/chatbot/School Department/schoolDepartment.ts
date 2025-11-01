@@ -84,14 +84,14 @@ export const departmentOfficialsQuery = async (
                 dbResult.includes("No departments matched your search criteria.") ||
                 dbResult.includes("I need more specific information.")
               ) {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               } else if (
                 numberedEntries >= 2 || 
                 dbResult.includes("Found") && dbResult.split('\n').length >= 4 
               ) {
-                prompt = tablePrompts(dbResult, message);
+                prompt = tablePrompts(dbResult, message, conversationHistory);
               } else {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               }
 
               const { text, apiKey } = await getGenerativeResponse(
@@ -119,7 +119,7 @@ export const departmentOfficialsQuery = async (
 
             try {
               // Always use tablePrompts for comprehensive display
-              const prompt = tablePrompts(dbResult, message);
+              const prompt = tablePrompts(dbResult, message, conversationHistory);
               const { text, apiKey } = await getGenerativeResponse(
                 prompt,
                 conversationHistory

@@ -33,8 +33,13 @@ export const botTalk = `
 
 export const singleLinePrompt = (
   fact: string,
-  message: string
+  message: string,
+  conversationHistory: string[] = []
 ) => `
+
+    ${conversationHistory.length > 0 ? `Previous conversation context:\n${conversationHistory.slice(-6).join('\n')}\n\n` : ''}
+
+
     Use this only information to answer the question: 
     ${fact}
 
@@ -64,8 +69,12 @@ export const singleLinePrompt = (
 
 export const bulletinPrompts = (
   responseText: string,
-  message: string
+  message: string,
+  conversationHistory: string[] = []
 ) => `
+
+${conversationHistory.length > 0 ? `Previous conversation:\n${conversationHistory.slice(-6).join('\n')}\n\n` : ''}
+
 Information you can use: 
 ${responseText}
 
@@ -89,8 +98,12 @@ and ${suggestion}
 
 export const tablePrompts = (
   responseText: string,
-  message: string
+  message: string,
+  conversationHistory: string[] = [] 
 ) => `
+
+${conversationHistory.length > 0 ? `Previous conversation:\n${conversationHistory.slice(-6).join('\n')}\n\n` : ''}
+
 Information you can use: 
 ${responseText}
 
@@ -128,12 +141,11 @@ and ${suggestion}
 export const stepByStepPrompt = (
   responseText: string,
   message: string,
-  botTalk: string = "clear and helpful",
-  suggestion: string = ""
+  conversationHistory: string[] = []
 ): string => {
-  const suggestionLine = suggestion ? `\n\nAdditional suggestion: ${suggestion}` : "";
+  return `${conversationHistory.length > 0 ? `Previous conversation:\n${conversationHistory.slice(-6).join('\n')}\n\n` : ''}
 
-  return `Use ONLY the information below to answer the student's question.
+  Use ONLY the information below to answer the student's question.
 
 Source / database:
 ${responseText}
@@ -173,8 +185,6 @@ FORMATTING RULES:
 - Add line breaks between steps for visual clarity
 - Step headers should be followed by the action items with proper indentation
 
-IMPORTANT NOTE:
-ALWAYS refer to the provided source (${responseText}) or the database. Do not invent steps or add unsupported information.${suggestionLine}
 
 
 if it asks for where and the URL or link starts with ![Image] is available make sure to use this ${mapPrompt(responseText, message)}
@@ -184,8 +194,11 @@ if it asks for where and the URL or link starts with ![Image] is available make 
 
 export const coursesPrompt = (
   responseText: string,
-  message: string
+  message: string,
+  conversationHistory: string[] = []
 ) => `
+
+${conversationHistory.length > 0 ? `Previous conversation:\n${conversationHistory.slice(-6).join('\n')}\n\n` : ''}
 
 Use the information from the database to answer the question or here:
 ${responseText}
@@ -213,7 +226,10 @@ and ${suggestion}
 
 
 
-export const mapPrompt = (responseText: string, message: string) => `
+export const mapPrompt = (responseText: string, message: string, conversationHistory: string[] = []) => `
+
+${conversationHistory.length > 0 ? `Previous conversation:\n${conversationHistory.slice(-6).join('\n')}\n\n` : ''}
+
 Information you can use: 
 ${responseText}
 

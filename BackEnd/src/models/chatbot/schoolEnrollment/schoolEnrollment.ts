@@ -85,14 +85,14 @@ export const enrollmentQuery = async (
                 dbResult.includes("No enrollment information") ||
                 dbResult.includes("not found")
               ) {
-                prompt = stepByStepPrompt(dbResult, message);
+                prompt = stepByStepPrompt(dbResult, message, conversationHistory);
               } else if (
                 numberedEntries >= 2 ||
                 (dbResult.includes("Found") && dbResult.split('\n').length >= 4)
               ) {
-                prompt = stepByStepPrompt(dbResult, message);
+                prompt = stepByStepPrompt(dbResult, message, conversationHistory);
               } else {
-                prompt = stepByStepPrompt(dbResult, message);
+                prompt = stepByStepPrompt(dbResult, message, conversationHistory);
               }
 
               const { text, apiKey } = await getGenerativeResponse(

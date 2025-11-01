@@ -72,11 +72,11 @@ export const navigationQuery = async (
             try {
               let prompt = "";
               if (dbResult.includes("No navigation items matched")) {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               } else if (dbResult.includes("Found")) {
-                prompt = bulletinPrompts(dbResult, message);
+                prompt = bulletinPrompts(dbResult, message, conversationHistory);
               } else {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               }
 
               const { text, apiKey } = await getGenerativeResponse(

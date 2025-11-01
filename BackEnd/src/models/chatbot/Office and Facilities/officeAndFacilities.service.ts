@@ -89,9 +89,9 @@ export const officeFacilitiesQuery = async (
                 dbResult.includes("No facilities") ||
                 dbResult.includes("I need the office")
               ) {
-                prompt = singleLinePrompt(dbResult, message);
+                prompt = singleLinePrompt(dbResult, message, conversationHistory);
               } else {
-                prompt = mapPrompt(dbResult, message);
+                prompt = mapPrompt(dbResult, message, conversationHistory);
               }
 
               const { text, apiKey } = await getGenerativeResponse(
