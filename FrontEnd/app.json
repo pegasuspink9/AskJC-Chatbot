@@ -1,36 +1,40 @@
 {
   "expo": {
-    "name": "AskJC-Chatbot",
-    "slug": "AskJC-Chatbot",
+    "name": "AskJC Chatbot",
+    "slug": "askjc-chatbot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "icon": "./assets/icon-192.png",
+    "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/icon-192.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "ios": {
-      "supportsTablet": true
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png",
+      "manifest": {
+        "name": "AskJC Chatbot",
+        "short_name": "AskJC",
+        "description": "AI-powered chatbot assistant",
+        "theme_color": "#10b981",
+        "background_color": "#ffffff",
+        "display": "standalone",
+        "orientation": "portrait",
+        "scope": "/",
+        "start_url": "/"
+      },
+      "themeColor": "#10b981"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icon-192.png",
         "backgroundColor": "#ffffff"
-      },
-      "permissions": [
-          "android.permission.INTERNET",
-          "android.permission.QUERY_ALL_PACKAGES"
-        ],
-      "edgeToEdgeEnabled": true
+      }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-font"
-    ]
+    "ios": {
+      "supportsTablet": true
+    }
   }
 }

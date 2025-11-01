@@ -1,32 +1,52 @@
 {
   "version": 2,
-  "installCommand": "npm install && chmod +x node_modules/.bin/*",
+  "buildCommand": "npx expo export -p web",
+  "outputDirectory": "dist",
+  "devCommand": "npx expo start --web",
+  "framework": "expo",
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/dist/$1"
+      "destination": "/index.html"
     }
   ],
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "EXPO_PUBLIC_API_BASE_URL": "https://askjc-chatbot.onrender.com"
-  },
   "headers": [
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
         {
-          "key": "Cross-Origin-Embedder-Policy",
-          "value": "cross-origin"
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     }

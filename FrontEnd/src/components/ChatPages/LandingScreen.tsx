@@ -6,12 +6,14 @@ import {
   TextInput,
   StyleSheet,
   Animated,
-  Dimensions
+  Dimensions,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getColors, Spacing, FontSizes } from '../../constants/theme';
 import SimpleLottie from '../../LottieAnimation/SimpleLottie';
 import { useTheme } from '../../constants/ThemeContext';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,7 +34,8 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
   setIntroInput,
   onSubmit,
 }) => {
-  const { isDark, toggleTheme } = useTheme(); 
+  const { isDark, toggleTheme } = useTheme();
+  const { isInstallable, isInstalled, handleInstallClick } = usePWAInstall();
 
   return (
     <Animated.View
@@ -44,6 +47,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
         }
       ]}
     >
+      {/* Theme Toggle Button */}
       <TouchableOpacity
         style={styles(Colors).themeToggle}
         onPress={toggleTheme} 
@@ -55,6 +59,34 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
           color={Colors.primary}
         />
       </TouchableOpacity>
+
+      {/* PWA Install Button - Show only on web when installable */}
+      {Platform.OS === 'web' && isInstallable && !isInstalled && (
+        <TouchableOpacity
+          style={styles(Colors).installButton}
+          onPress={handleInstallClick}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name="download-outline"
+            size={20}
+            color={Colors.white}
+          />
+          <Text style={styles(Colors).installButtonText}>Install App</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Already Installed Badge */}
+      {Platform.OS === 'web' && isInstalled && (
+        <View style={styles(Colors).installedBadge}>
+          <Ionicons
+            name="checkmark-circle"
+            size={16}
+            color={Colors.success}
+          />
+          <Text style={styles(Colors).installedText}>App Installed</Text>
+        </View>
+      )}
 
       <SimpleLottie
         source={{ uri: 'https://lottie.host/9c5ce41b-6089-4da6-97d8-b6c9106f2f3c/coLSHGaNNi.lottie' }}
@@ -186,6 +218,51 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+  },
+  // 🆕 PWA Install Button Styles
+  installButton: {
+    position: 'absolute',
+    top: height * 0.064,
+    left: width * 0.05,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.success,
+    borderRadius: 24,
+    paddingVertical: Spacing?.sm || 8,
+    paddingHorizontal: Spacing?.md || 12,
+    elevation: 3,
+    shadowColor: Colors.black || '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  installButtonText: {
+    color: Colors.white,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
+    marginLeft: 6,
+  },
+  // 🆕 Already Installed Badge
+  installedBadge: {
+    position: 'absolute',
+    top: height * 0.064,
+    left: width * 0.05,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    paddingVertical: Spacing?.sm || 8,
+    paddingHorizontal: Spacing?.md || 12,
+    borderWidth: 1,
+    borderColor: Colors.success,
+  },
+  installedText: {
+    color: Colors.success,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 12,
+    marginLeft: 6,
   },
 });
 

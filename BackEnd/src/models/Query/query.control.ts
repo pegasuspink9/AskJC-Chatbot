@@ -1,6 +1,7 @@
 import { prisma } from "../../../prisma/client";
 import { Request, Response } from "express";
 import { CreateQuery } from "./query.types";
+import { correctGrammar, isSignificantlyDifferent } from '../chatbot/prompts/grammarCorrector';
 import { getOrCreateUserFromRequest } from "../User/user.controller";
 import { successResponse, errorResponse } from "../../../utils/response";
 import { measureResponseTime } from "../../../utils/responseTimeCounter";
@@ -112,12 +113,28 @@ export const createQuery = async (req: Request, res: Response) => {
       -CONTEXT_WINDOW_SIZE
     );
 
+    // 🚀 ADD GRAMMAR CORRECTION HERE
+    let correctedQueryText = query_text;
+    let wasCorrected = false;
+
+    try {
+      correctedQueryText = await correctGrammar(query_text);
+      wasCorrected = isSignificantlyDifferent(query_text, correctedQueryText);
+      
+      if (wasCorrected) {
+        console.log(`✏️ Grammar corrected: "${query_text}" → "${correctedQueryText}"`);
+      }
+    } catch (correctionError) {
+      console.error('⚠️ Grammar correction failed, using original:', correctionError);
+      correctedQueryText = query_text;
+    }
+
     const query = await prisma.query.create({
       data: {
         user_id: user.id,
         chatbot_session_id: chatbotSession.id,
-        query_text: query_text,
-        users_data_inputed: [query_text],
+        query_text: correctedQueryText, // 🚀 Use corrected text
+        users_data_inputed: [query_text], // 🚀 Keep original in inputed
         chatbot_response: [],
         created_at: new Date(),
       },
@@ -128,8 +145,9 @@ export const createQuery = async (req: Request, res: Response) => {
         try {
           const dialogflowSessionPath = `projects/${process.env.DIALOGFLOW_PROJECT_ID}/agent/sessions/${user.id}`;
 
+          // 🚀 Use corrected text for Dialogflow
           const dialogflowResponse = await getDialogflowResponse(
-            query_text,
+            correctedQueryText, // 🚀 Changed from query_text
             dialogflowSessionPath,
             conversationHistory
           );
@@ -138,7 +156,7 @@ export const createQuery = async (req: Request, res: Response) => {
             console.log("No Dialogflow response, using default service");
             return await schoolOfficialsQuery(
               user.id,
-              query_text,
+              correctedQueryText, // 🚀 Changed from query_text
               conversationHistory
             );
           }
@@ -161,7 +179,7 @@ export const createQuery = async (req: Request, res: Response) => {
             );
             return await scholarshipQuery(
               user.id,
-              query_text,
+              correctedQueryText, // 🚀 Use corrected everywhere
               conversationHistory
             );
           }  else if (
@@ -175,7 +193,7 @@ export const createQuery = async (req: Request, res: Response) => {
               "Routing to school office service based on intent:",
               dialogflowResponse.intent
             );
-            return await officeQuery(user.id, query_text, conversationHistory);
+            return await officeQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("program") ||
             intentName.includes("course") ||
@@ -186,8 +204,10 @@ export const createQuery = async (req: Request, res: Response) => {
               "Routing to school program service based on intent:",
               dialogflowResponse.intent
             );
-            return await programQuery(user.id, query_text, conversationHistory);
-          } else if (
+            return await programQuery(user.id, correctedQueryText, conversationHistory);
+          } 
+          // ... continue with all other intents using correctedQueryText ...
+          else if (
             intentName.includes("department") ||
             intentName.includes("departments") ||
             intentName.includes("head") ||
@@ -195,15 +215,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("faculty") ||
             intentName.includes("faculty members")
           ) {
-            console.log(
-              "Routing to school department service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await departmentOfficialsQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await departmentOfficialsQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("contact") ||
             intentName.includes("contacts") ||
@@ -211,11 +223,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("phone") ||
             intentName.includes("facebook")
           ) {
-            console.log(
-              "Routing to school contact service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await contactQuery(user.id, query_text, conversationHistory);
+            return await contactQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("organization") ||
             intentName.includes("organizations") ||
@@ -223,15 +231,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("club") ||
             intentName.includes("society")
           ) {
-            console.log(
-              "Routing to organization service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await organizationQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await organizationQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("detail") ||
             intentName.includes("details") ||
@@ -242,45 +242,21 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("address") ||
             intentName.includes("accreditation")
           ) {
-            console.log(
-              "Routing to school detail service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await schoolDetailQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await schoolDetailQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("facility") ||
             intentName.includes("facilities") ||
             intentName.includes("classroom") ||
             intentName.includes("room")
           ) {
-            console.log(
-              "Routing to office and facilities service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await officeFacilitiesQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await officeFacilitiesQuery(user.id, correctedQueryText, conversationHistory);
           }  else if(
             intentName.includes("course") ||
             intentName.includes("classes") ||
             intentName.includes("schedule") ||
             intentName.includes("subject")
           ){
-            console.log(
-              "Routing to course service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await courseQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await courseQuery(user.id, correctedQueryText, conversationHistory);
           }else if (
             intentName.includes("enroll") ||
             intentName.includes("enrollment") ||
@@ -288,15 +264,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("apply") ||
             intentName.includes("registration")
           ) {
-            console.log(
-              "Routing to enrollment service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await enrollmentQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await enrollmentQuery(user.id, correctedQueryText, conversationHistory);
           }      
           else if (
             intentName.includes("navigation") ||
@@ -305,15 +273,7 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("page") ||
             intentName.includes("link")
           ) {
-            console.log(
-              "Routing to navigation service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await navigationQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await navigationQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("dean") ||
             intentName.includes("principal") ||
@@ -322,34 +282,14 @@ export const createQuery = async (req: Request, res: Response) => {
             intentName.includes("president") ||
             intentName.includes("official")
           ) {
-            console.log(
-              "Routing to school official service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await schoolOfficialsQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await schoolOfficialsQuery(user.id, correctedQueryText, conversationHistory);
           } else if (
             intentName.includes("developer") ||
             intentName.includes("created")
           ) {
-            console.log(
-              "Routing to dev info based on intent: ",
-              dialogflowResponse.intent
-            );
-            return await devInfoQuery(user.id, query_text, conversationHistory);
+            return await devInfoQuery(user.id, correctedQueryText, conversationHistory);
           } else {
-            console.log(
-              "Routing to school official service based on intent:",
-              dialogflowResponse.intent
-            );
-            return await schoolOfficialsQuery(
-              user.id,
-              query_text,
-              conversationHistory
-            );
+            return await schoolOfficialsQuery(user.id, correctedQueryText, conversationHistory);
           }
         } catch (dialogflowError) {
           console.error("Dialogflow processing failed:", dialogflowError);
@@ -358,7 +298,7 @@ export const createQuery = async (req: Request, res: Response) => {
           );
           return await schoolOfficialsQuery(
             user.id,
-            query_text,
+            correctedQueryText,
             conversationHistory
           );
         }
@@ -368,7 +308,7 @@ export const createQuery = async (req: Request, res: Response) => {
       where: { id: chatbotSession.id },
       data: {
         chatbot_response: {
-          push: [query_text, chatbotData.answer],
+          push: [correctedQueryText, chatbotData.answer], // 🚀 Use corrected
         },
         response_time: new Date(),
         total_queries: { increment: 1 },
@@ -388,6 +328,8 @@ export const createQuery = async (req: Request, res: Response) => {
         queryId: query.id,
         chatbotResponse: chatbotData.answer,
         responseTime,
+        wasCorrected, // 🚀 Include correction info
+        originalQuery: wasCorrected ? query_text : undefined, // 🚀 Show original if corrected
       },
       "Query created"
     );

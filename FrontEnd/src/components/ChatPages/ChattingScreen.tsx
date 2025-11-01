@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ChatScreenProps {
   Colors: any;
@@ -50,11 +51,13 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const isUserScrollingRef = useRef(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // 🚀 FIX: Track previous message count to detect new messages
+  //  FIX: Track previous message count to detect new messages
   const prevMessageCountRef = useRef(messages.length);
   const isNewMessageRef = useRef(false);
 
-  // 🚀 FIX: Detect when new messages are added
+  const insets = useSafeAreaInsets();
+
+  //  FIX: Detect when new messages are added
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current) {
       isNewMessageRef.current = true;
@@ -90,7 +93,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const keyExtractor = useCallback((item: ChatMessage) => item.id, []);
 
-  // 🚀 FIX: Only auto-scroll if user is at bottom AND it's a new message
+  //  FIX: Only auto-scroll if user is at bottom AND it's a new message
   const onContentSizeChange = useCallback((width: number, height: number) => {
     contentHeightRef.current = height;
     
@@ -110,7 +113,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   }, [shouldAutoScroll, scrollToBottom]);
 
-  // 🚀 FIX: Mark user as scrolling when they touch the list
+  //  FIX: Mark user as scrolling when they touch the list
   const onScrollBeginDrag = useCallback(() => {
     isUserScrollingRef.current = true;
     setShouldAutoScroll(false);
@@ -121,7 +124,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   }, []);
 
-  // 🚀 FIX: Improved scroll detection
+  //  FIX: Improved scroll detection
   const onScroll = useCallback((event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     
@@ -139,7 +142,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   }, []);
 
-  // 🚀 FIX: Reset scroll state after user stops scrolling
+  //  FIX: Reset scroll state after user stops scrolling
   const onScrollEndDrag = useCallback(() => {
     // Wait a bit before allowing auto-scroll again
     scrollTimeoutRef.current = setTimeout(() => {
@@ -147,7 +150,7 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }, 500); // Half second delay
   }, []);
 
-  // 🚀 FIX: Also handle momentum scroll end
+  //  FIX: Also handle momentum scroll end
   const onMomentumScrollEnd = useCallback((event: any) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
     
@@ -188,104 +191,109 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   }, [handleSendMessage, isInputValid]);
 
-  return (
-    <View style={{ flex: 1, backgroundColor: Colors.background }}>
-      <Animated.View style={[styles(Colors).container, animatedStyle]}>
-        <KeyboardAvoidingView
-          style={styles(Colors).keyboardAvoid}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          {/* Header */}
-          <View style={styles(Colors).header}>
-            <TouchableOpacity style={styles(Colors).backButton} onPress={onResetChat}>
-              <Ionicons name="arrow-back" size={24} color={Colors.text} />
-            </TouchableOpacity>
-            <View style={styles(Colors).headerContent}>
-              <View style={styles(Colors).headerInfo}>
-                <Text style={[styles(Colors).headerTitle, styles(Colors).welcomeAsk]}>
-                  Ask<Text style={styles(Colors).welcomeJC}>JC</Text>
-                </Text>
-                <Text style={styles(Colors).headerSubtitle}>
-                  {isTyping ? 'Typing...' : 'Online'}
-                </Text>
-              </View>
-            </View>
+return (
+  <View style={{ flex: 1, backgroundColor: Colors.background }}>
+    <Animated.View style={[styles(Colors).container, animatedStyle]}>
+      {/* Header */}
+      <View style={styles(Colors).header}>
+        <TouchableOpacity style={styles(Colors).backButton} onPress={onResetChat}>
+          <Ionicons name="arrow-back" size={24} color={Colors.text} />
+        </TouchableOpacity>
+        <View style={styles(Colors).headerContent}>
+          <View style={styles(Colors).headerInfo}>
+            <Text style={[styles(Colors).headerTitle, styles(Colors).welcomeAsk]}>
+              Ask<Text style={styles(Colors).welcomeJC}>JC</Text>
+            </Text>
+            <Text style={styles(Colors).headerSubtitle}>
+              {isTyping ? 'Typing...' : 'Online'}
+            </Text>
           </View>
+        </View>
+      </View>
 
-          {/* Messages */}
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            renderItem={memoizedRenderMessage}
-            keyExtractor={keyExtractor}
-            style={styles(Colors).messagesList}
-            contentContainerStyle={[
-              styles(Colors).messagesContent,
-              { flexGrow: 1 }
-            ]}
-            showsVerticalScrollIndicator={false}
-            ListFooterComponent={memoizedRenderTypingIndicator}
-            onContentSizeChange={onContentSizeChange}
-            onScrollBeginDrag={onScrollBeginDrag}
-            onScrollEndDrag={onScrollEndDrag}
-            onMomentumScrollEnd={onMomentumScrollEnd}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            removeClippedSubviews={Platform.OS === 'android'}
-            maxToRenderPerBatch={10}
-            updateCellsBatchingPeriod={100}
-            initialNumToRender={15}
-            windowSize={21}
-            maintainVisibleContentPosition={{
-              minIndexForVisible: 0,
-              autoscrollToTopThreshold: 10,
-            }}
+      {/* Messages - Now has paddingBottom to account for input */}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={memoizedRenderMessage}
+        keyExtractor={keyExtractor}
+        style={styles(Colors).messagesList}
+        contentContainerStyle={[
+          styles(Colors).messagesContent,
+          { flexGrow: 1 }
+        ]}
+        showsVerticalScrollIndicator={false}
+        ListFooterComponent={memoizedRenderTypingIndicator}
+        onContentSizeChange={onContentSizeChange}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEndDrag}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        removeClippedSubviews={Platform.OS === 'android'}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={100}
+        initialNumToRender={15}
+        windowSize={21}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 10,
+        }}
+      />
+
+      {/* Input Container - Now absolutely positioned at bottom */}
+      <View style={[
+        styles(Colors).inputContainer,
+        { paddingBottom: Math.max(insets.bottom, 12) } 
+      ]}>
+        <View style={styles(Colors).inputWrapper}>
+          <TextInput
+            style={styles(Colors).textInput}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type your messages..."
+            placeholderTextColor={Colors.gray?.[400] || '#9CA3AF'}
+            multiline
+            maxLength={500}
+            onSubmitEditing={handleSendMessage}
+            blurOnSubmit={false}
+            onKeyPress={handleKeyPress}
+            returnKeyType="send"
+            enablesReturnKeyAutomatically={true}
           />
-
-          {/* Input Container */}
-          <View style={styles(Colors).inputContainer}>
-            <View style={styles(Colors).inputWrapper}>
-              <TextInput
-                style={styles(Colors).textInput}
-                value={inputText}
-                onChangeText={setInputText}
-                placeholder="Type your messages..."
-                placeholderTextColor={Colors.gray?.[400] || '#9CA3AF'}
-                multiline
-                maxLength={500}
-                onSubmitEditing={handleSendMessage}
-                blurOnSubmit={false}
-                onKeyPress={handleKeyPress}
-                returnKeyType="send"
-                enablesReturnKeyAutomatically={true}
-              />
-              <TouchableOpacity
-                style={[
-                  styles(Colors).sendButton,
-                  isInputValid 
-                    ? styles(Colors).sendButtonActive 
-                    : styles(Colors).sendButtonInactive
-                ]}
-                onPress={handleSendMessage}
-                disabled={!isInputValid}
-              >
-                <Ionicons
-                  name="send"
-                  size={20}
-                  color={isInputValid ? Colors.white : Colors.gray?.[400] || '#9CA3AF'}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Animated.View>
-    </View>
-  );
+          <TouchableOpacity
+            style={[
+              styles(Colors).sendButton,
+              isInputValid 
+                ? styles(Colors).sendButtonActive 
+                : styles(Colors).sendButtonInactive
+            ]}
+            onPress={handleSendMessage}
+            disabled={!isInputValid}
+          >
+            <Ionicons
+              name="send"
+              size={20}
+              color={isInputValid ? Colors.white : Colors.gray?.[400] || '#9CA3AF'}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
+  </View>
+);
 };
 
 const styles = (Colors: any) => StyleSheet.create({
   container: {
     flex: 1,
+    height: '100%', //  Ensure full height
+    maxHeight: '100%', //  Don't exceed viewport
+    overflow: 'hidden', //  Prevent overflow
+    ...(Platform.OS === 'web' && {
+      display: 'flex' as any,
+      flexDirection: 'column' as any,
+    }),
   },
   keyboardAvoid: {
     flex: 1,
@@ -297,6 +305,13 @@ const styles = (Colors: any) => StyleSheet.create({
     paddingHorizontal: Spacing?.lg || 16,
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0, //  Prevent header from shrinking
+    ...(Platform.OS === 'web' && {
+      position: 'sticky' as any,
+      top: 0,
+      zIndex: 10,
+      backgroundColor: Colors.surface,
+    }),
   },
   backButton: {
     marginRight: Spacing?.md || 12,
@@ -329,35 +344,50 @@ const styles = (Colors: any) => StyleSheet.create({
   },
   messagesList: {
     flex: 1,
+    ...(Platform.OS === 'web' && {
+      overflow: 'auto' as any, //  Enable scrolling on web
+      height: '100%',
+    }),
   },
   messagesContent: {
     paddingVertical: Spacing?.sm,
     paddingHorizontal: Spacing?.sm,
+    paddingBottom: Platform.select({
+      web: 100, //  Extra padding for web to account for input
+      ios: 90,
+      android: 90,
+      default: 90,
+    }),
   },
   inputContainer: {
+    position: 'absolute', 
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: Colors.surface,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     paddingHorizontal: Spacing?.sm || 16,
-    paddingBottom: (() => {
-      const screenWidth = Dimensions.get('window').width;
-      if (Platform.OS === 'web') {
-        return screenWidth < 768 ? 80 : 40; 
-      }
-      return 80; 
-    })(),
-    paddingTop: Spacing?.md || 8,
-    marginTop: 'auto',
+    paddingTop: Spacing?.md || 12,
+    paddingBottom: Platform.select({
+      ios: 20,
+      android: 12,
+      web: 16, //  Consistent web padding
+      default: 12,
+    }),
+    flexShrink: 0, //  Prevent input from shrinking
+    zIndex: 20, //  Ensure input stays on top
+    ...(Platform.OS === 'web' && {
+      maxHeight: 120, //  Limit input container height on web
+    }),
   },
   inputWrapper: {
     flexDirection: 'row',
-    alignItems: 'center', 
+    alignItems: 'center',
     backgroundColor: Colors.background || '#000000',
-    borderRadius: 50, 
-    paddingHorizontal: Spacing?.lg || 16,
+    borderRadius: 24, 
+    paddingHorizontal: Spacing?.sm || 12,
     paddingVertical: Spacing?.sm || 8,
-    width: '100%', 
-    height: 48, 
     borderWidth: 1,
     borderColor: Colors.usermessage,
     shadowColor: Colors.shadow || '#000',
@@ -371,28 +401,28 @@ const styles = (Colors: any) => StyleSheet.create({
     fontSize: FontSizes?.md || 16,
     fontFamily: FontFamilies?.regular || 'System',
     color: Colors.text,
-    height: 40, 
-    paddingVertical: 0, 
-    paddingTop: 2,
-    textAlignVertical: 'center', 
-    lineHeight: Platform.select({
-      web: 20,
-      default: undefined, 
+    maxHeight: Platform.select({
+      web: 80, //  Limit max height on web
+      ios: 100,
+      android: 100,
+      default: 100,
     }),
-    flexShrink: 0,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    textAlignVertical: 'center',
     ...(Platform.OS === 'web' && {
       outlineStyle: 'none' as any,
       resize: 'none' as any,
+      overflow: 'auto' as any, //  Allow scroll in text input if needed
     }),
   },
-  
   sendButton: {
     width: 40,
     height: 40,
-    borderRadius: 20, 
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: Spacing?.md || 12, 
+    marginLeft: Spacing?.sm || 8,
     flexShrink: 0,
   },
   sendButtonActive: {
@@ -403,7 +433,6 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  
   sendButtonInactive: {
     backgroundColor: Colors.gray?.[200] || '#E5E7EB',
   },
