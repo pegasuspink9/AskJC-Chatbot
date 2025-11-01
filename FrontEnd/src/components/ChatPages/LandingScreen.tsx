@@ -76,17 +76,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
         </TouchableOpacity>
       )}
 
-      {/* Already Installed Badge */}
-      {Platform.OS === 'web' && isInstalled && (
-        <View style={styles(Colors).installedBadge}>
-          <Ionicons
-            name="checkmark-circle"
-            size={16}
-            color={Colors.success}
-          />
-          <Text style={styles(Colors).installedText}>App Installed</Text>
-        </View>
-      )}
+   
 
       <SimpleLottie
         source={{ uri: 'https://lottie.host/9c5ce41b-6089-4da6-97d8-b6c9106f2f3c/coLSHGaNNi.lottie' }}
