@@ -39,8 +39,21 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    maxAge: 86400, // Cache preflight for 24 hours
   })
 );
+
+// 🚀 REMOVE the app.options('*', cors()) line - it's causing the error
+
+// 🚀 Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "ok", 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    message: "Server is healthy and running"
+  });
+});
 
 app.get("/", (req, res) => {
   res.json({ message: "AskJC Backend API is running!" });

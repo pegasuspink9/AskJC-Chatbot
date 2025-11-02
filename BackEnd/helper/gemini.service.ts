@@ -241,7 +241,7 @@ class GeminiKeyManager {
 
     // Use the correct API structure for @google/genai
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp", // 🚀 Faster experimental model
+      model: "gemini-2.0-flash-exp", 
       contents: contents,
     });
 
