@@ -17,8 +17,8 @@ const parseFormattedText = (
     return renderWithTable(text, baseTextStyle, Colors);
   }
 
-  if (text.match(/^[ \t]*[-•]\s+(?!\*\*)/m) || text.match(/^\d+\.\s+/m)) {
-    return renderWithBullets(text, baseTextStyle, Colors);
+  if (text.match(/^[ \t]*[-•]\s+(?!\*\*)/m) || text.match(/^\d+\.\s+/m) || text.match(/^\*\s+\*\*/m)) {
+  return renderWithBullets(text, baseTextStyle, Colors);
   }
 
   return renderFormattedText(text, baseTextStyle, Colors);
@@ -299,20 +299,16 @@ const handleUrlPress = async (url: string) => {
   }
 };
 
-//  FIXED: Updated bullet rendering to handle both - and • but NOT * followed by *
 const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
   const lines = text.split('\n').filter(line => line.trim().length > 0);
 
   return (
     <View>
       {lines.map((line, index) => {
-        //  FIXED: More specific bullet detection
-        // Matches: "- text", "• text", "1. text", "2. text" etc.
-        // Does NOT match: "**bold**" or "* **bold**"
-        const bulletMatch = line.trim().match(/^([-•]|\d+\.)\s+(.*)$/);
+        const bulletMatch = line.trim().match(/^([-•\*]|\d+\.)\s+(.*)$/);
         
         if (bulletMatch) {
-          const trimmed = bulletMatch[2]; // Get text after bullet
+          const trimmed = bulletMatch[2]; 
 
           return (
             <View
@@ -320,7 +316,7 @@ const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
               style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}
             >
               <Text style={{ ...baseTextStyle, marginRight: 8, marginTop: 2 }}>
-                {bulletMatch[1] === '-' || bulletMatch[1] === '•' ? '•' : bulletMatch[1]}
+                {bulletMatch[1] === '-' || bulletMatch[1] === '•' || bulletMatch[1] === '*' ? '•' : bulletMatch[1]}
               </Text>
 
               <View style={{ flex: 1 }}>
@@ -330,7 +326,6 @@ const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
           );
         }
 
-        // Not a bullet line, render normally
         return (
           <View key={index} style={{ marginBottom: 6 }}>
             {renderFormattedText(line, baseTextStyle, Colors)}
