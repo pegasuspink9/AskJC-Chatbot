@@ -34,6 +34,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:19006",
       "https://ask-jc-chatbot.vercel.app",
+      "https://askjc-chatbot.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
