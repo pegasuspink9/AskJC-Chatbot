@@ -4,42 +4,47 @@
   <meta charset="utf-8" />
   <meta 
     name="viewport" 
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no" 
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" 
   />
   <meta name="theme-color" content="#10b981" />
   
-  <!--  iOS PWA Meta Tags -->
+  <!-- iOS PWA Meta Tags -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="AskJC" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   
-  <!--  Icons for iOS -->
+  <!-- Icons -->
   <link rel="apple-touch-icon" href="/icon-192.png" />
-  <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
-  <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
-  
-  <!--  Icons for Android and Desktop -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-  
-  <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json" />
-  
-  <!--  iOS startup images (optional but recommended) -->
-  <link 
-    rel="apple-touch-startup-image" 
-    href="/icon-192.png"
-    media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" 
-  />
   
   <title>AskJC - AI Chatbot Assistant</title>
   <meta name="description" content="AI-powered chatbot assistant for Saint Joseph College Maasin City" />
   
-  <!-- Service Worker Registration -->
+  <!-- Service Worker -->
   <script src="/register-sw.js"></script>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
+  
+  <!-- 🚀 Fix viewport height on mobile browsers -->
+  <script>
+    // Set CSS custom property for actual viewport height
+    function setVH() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      
+      // Also set for visual viewport (mobile browsers)
+      if (window.visualViewport) {
+        const vvh = window.visualViewport.height * 0.01;
+        document.documentElement.style.setProperty('--vvh', `${vvh}px`);
+      }
+    }
+    
+    setVH();
+    window.addEventListener('resize', setVH);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', setVH);
+    }
+  </script>
 </head>
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>

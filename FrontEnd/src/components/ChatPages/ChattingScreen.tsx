@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Spacing, BorderRadius, FontSizes, FontFamilies } from '../../constants/theme';
 import { Message as ChatMessage } from '../../types/index';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Keyboard } from 'react-native';
 
 interface ChatScreenProps {
   Colors: any;
@@ -50,7 +51,10 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const layoutHeightRef = useRef(0);
   const isUserScrollingRef = useRef(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(
+    Platform.OS === 'web' ? window.innerHeight : Dimensions.get('window').height
+  );
   //  FIX: Track previous message count to detect new messages
   const prevMessageCountRef = useRef(messages.length);
   const isNewMessageRef = useRef(false);
@@ -58,10 +62,12 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
   const insets = useSafeAreaInsets();
 
   const safeBottomPadding = Platform.select({
-    web: Math.max(insets.bottom, 16), // At least 16px on web
-    ios: Math.max(insets.bottom, 20),
-    android: Math.max(insets.bottom, 12),
-    default: 12,
+  web: Platform.OS === 'web' && window.innerWidth < 768 
+    ? Math.max(insets.bottom, 20) 
+    : Math.max(insets.bottom, 16),
+  ios: Math.max(insets.bottom, 34), 
+  android: Math.max(insets.bottom, 16),
+  default: 16,
   });
 
   //  FIX: Detect when new messages are added
@@ -71,6 +77,28 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
       prevMessageCountRef.current = messages.length;
     }
   }, [messages.length]);
+
+  useEffect(() => {
+  if (Platform.OS === 'web') {
+    const handleResize = () => {
+      setViewportHeight(window.innerHeight);
+    };
+    
+    const handleVisualViewport = () => {
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('resize', handleVisualViewport);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleVisualViewport);
+    };
+  }
+}, []);
 
   // Scroll to bottom helper
   const scrollToBottom = useCallback(() => {
@@ -258,7 +286,13 @@ return (
       {/* Input Container - Now absolutely positioned at bottom */}
       <View style={[
         styles(Colors).inputContainer,
-        { paddingBottom: safeBottomPadding } 
+        { paddingBottom: safeBottomPadding, 
+          ...(Platform.OS === 'web' && {
+              // Force position at bottom on mobile web
+              position: 'fixed' as any,
+              bottom: 0,
+            })
+         } 
       ]}>
         <View style={styles(Colors).inputWrapper}>
           <TextInput

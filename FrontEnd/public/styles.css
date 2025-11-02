@@ -1,0 +1,139 @@
+
+:root {
+  --vh: 1vh;
+  --vvh: 1vh;
+}
+
+/* Update mobile styles to use custom properties */
+@media screen and (max-width: 767px) {
+  html {
+    height: calc(var(--vh, 1vh) * 100);
+  }
+  
+  body {
+    height: calc(var(--vh, 1vh) * 100);
+    position: fixed;
+    overflow: hidden;
+  }
+  
+  #root {
+    height: calc(var(--vh, 1vh) * 100);
+    overflow: hidden;
+  }
+  
+  .responsive-container {
+    height: calc(var(--vh, 1vh) * 100) !important;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 🚀 Fix for mobile browsers with dynamic UI */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari */
+  html, body {
+    height: -webkit-fill-available;
+  }
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  overscroll-behavior-y: contain;
+}
+
+/* 🚀 CRITICAL: Force input to stay above mobile nav bars */
+@media screen and (max-width: 767px) {
+  /* Fix for mobile browsers */
+  html {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
+  }
+  
+  body {
+    height: 100vh;
+    height: 100dvh;
+    position: fixed;
+    overflow: hidden;
+  }
+  
+  #root {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+}
+
+/* Responsive Container Styles */
+.responsive-container {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Mobile (< 768px) - Full screen with safe area */
+@media screen and (max-width: 767px) {
+  .responsive-container {
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important; /* Dynamic viewport height */
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+  }
+}
+
+/* Tablet (768px - 1023px) */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .responsive-container {
+    max-width: 600px !important;
+    width: 90% !important;
+    height: 98vh !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+    margin: 1vh auto !important;
+  }
+}
+
+/* Desktop (>= 1024px) */
+@media screen and (min-width: 1024px) {
+  .responsive-container {
+    max-width: 500px !important;
+    width: 500px !important;
+    height: 95vh !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    margin: 2.5vh auto !important;
+  }
+}
+
+/* 🚀 Landscape mode on mobile */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  .responsive-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+}
