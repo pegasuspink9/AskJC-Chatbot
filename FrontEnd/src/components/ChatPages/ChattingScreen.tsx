@@ -57,6 +57,13 @@ const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const insets = useSafeAreaInsets();
 
+  const safeBottomPadding = Platform.select({
+    web: Math.max(insets.bottom, 16), // At least 16px on web
+    ios: Math.max(insets.bottom, 20),
+    android: Math.max(insets.bottom, 12),
+    default: 12,
+  });
+
   //  FIX: Detect when new messages are added
   useEffect(() => {
     if (messages.length > prevMessageCountRef.current) {
@@ -220,31 +227,38 @@ return (
         style={styles(Colors).messagesList}
         contentContainerStyle={[
           styles(Colors).messagesContent,
-          { flexGrow: 1 }
+          { flexGrow: 1,
+             paddingBottom: Platform.select({
+                web: safeBottomPadding + 100,
+                ios: safeBottomPadding + 90,
+                android: safeBottomPadding + 90,
+                default: 100,
+            }),
+          }
         ]}
-        showsVerticalScrollIndicator={false}
-        ListFooterComponent={memoizedRenderTypingIndicator}
-        onContentSizeChange={onContentSizeChange}
-        onScrollBeginDrag={onScrollBeginDrag}
-        onScrollEndDrag={onScrollEndDrag}
-        onMomentumScrollEnd={onMomentumScrollEnd}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        removeClippedSubviews={Platform.OS === 'android'}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={100}
-        initialNumToRender={15}
-        windowSize={21}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-          autoscrollToTopThreshold: 10,
-        }}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={memoizedRenderTypingIndicator}
+          onContentSizeChange={onContentSizeChange}
+          onScrollBeginDrag={onScrollBeginDrag}
+          onScrollEndDrag={onScrollEndDrag}
+          onMomentumScrollEnd={onMomentumScrollEnd}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          removeClippedSubviews={Platform.OS === 'android'}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={100}
+          initialNumToRender={15}
+          windowSize={21}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
       />
 
       {/* Input Container - Now absolutely positioned at bottom */}
       <View style={[
         styles(Colors).inputContainer,
-        { paddingBottom: Math.max(insets.bottom, 12) } 
+        { paddingBottom: safeBottomPadding } 
       ]}>
         <View style={styles(Colors).inputWrapper}>
           <TextInput
@@ -287,9 +301,9 @@ return (
 const styles = (Colors: any) => StyleSheet.create({
   container: {
     flex: 1,
-    height: '100%', //  Ensure full height
-    maxHeight: '100%', //  Don't exceed viewport
-    overflow: 'hidden', //  Prevent overflow
+    height: '100%',
+    maxHeight: '100%',
+    overflow: 'hidden',
     ...(Platform.OS === 'web' && {
       display: 'flex' as any,
       flexDirection: 'column' as any,
@@ -345,19 +359,13 @@ const styles = (Colors: any) => StyleSheet.create({
   messagesList: {
     flex: 1,
     ...(Platform.OS === 'web' && {
-      overflow: 'auto' as any, //  Enable scrolling on web
+      overflow: 'auto' as any,
       height: '100%',
     }),
   },
-  messagesContent: {
+    messagesContent: {
     paddingVertical: Spacing?.sm,
     paddingHorizontal: Spacing?.sm,
-    paddingBottom: Platform.select({
-      web: 100, //  Extra padding for web to account for input
-      ios: 90,
-      android: 90,
-      default: 90,
-    }),
   },
   inputContainer: {
     position: 'absolute', 
@@ -369,16 +377,10 @@ const styles = (Colors: any) => StyleSheet.create({
     borderTopColor: Colors.border,
     paddingHorizontal: Spacing?.sm || 16,
     paddingTop: Spacing?.md || 12,
-    paddingBottom: Platform.select({
-      ios: 20,
-      android: 12,
-      web: 16, //  Consistent web padding
-      default: 12,
-    }),
-    flexShrink: 0, //  Prevent input from shrinking
-    zIndex: 20, //  Ensure input stays on top
+    flexShrink: 0,
+    zIndex: 20,
     ...(Platform.OS === 'web' && {
-      maxHeight: 120, //  Limit input container height on web
+      maxHeight: 120,
     }),
   },
   inputWrapper: {

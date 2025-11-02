@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context'; 
 import StackNavigator from './src/navigation/StackNavigator';
 import { ThemeProvider, useTheme } from './src/constants/ThemeContext';
 import WebContainer from './src/components/ChatPages/webContainer';
@@ -30,34 +31,36 @@ const AppContent: React.FC = () => {
     return null;
   }
 
-  const lightTheme = {
+  const Colors = getColors(isDark);
+
+  const customLightTheme = {
     ...DefaultTheme,
     colors: {
       ...DefaultTheme.colors,
-      background: '#FFFFFF',
-      card: '#FFFFFF',
-      text: '#1C1C1E',
-      border: '#E5E7EB',
-      primary: '#007AFF',
+      primary: Colors.primary,
+      background: Colors.background,
+      card: Colors.surface,
+      text: Colors.text,
+      border: Colors.border,
     },
   };
 
-  const darkTheme = {
+  const customDarkTheme = {
     ...DarkTheme,
     colors: {
       ...DarkTheme.colors,
-      background: '#000000',
-      card: '#1C1C1E',
-      text: '#FFFFFF',
-      border: '#38383A',
-      primary: '#0A84FF',
+      primary: Colors.primary,
+      background: Colors.background,
+      card: Colors.surface,
+      text: Colors.text,
+      border: Colors.border,
     },
   };
 
   return (
-    <WebContainer Colors={getColors(isDark)}>
-      <NavigationContainer theme={isDark ? darkTheme : lightTheme}>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
+    <WebContainer Colors={Colors}>
+      <NavigationContainer theme={isDark ? customDarkTheme : customLightTheme}>
+        <StatusBar style={isDark ? "light" : "dark"} />
         <StackNavigator />
       </NavigationContainer>
     </WebContainer>
@@ -66,8 +69,11 @@ const AppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    //  Wrap entire app in SafeAreaProvider
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

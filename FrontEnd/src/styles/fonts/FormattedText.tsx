@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, Linking, TouchableOpacity, Alert, Platform, Image, Dimensions } from 'react-native';
+import { Text, View, Linking, Alert, Platform, Image } from 'react-native';
 import { FontFamilies } from '../../constants/theme';
 
 const parseFormattedText = (
@@ -17,8 +17,7 @@ const parseFormattedText = (
     return renderWithTable(text, baseTextStyle, Colors);
   }
 
-  // Check for bullets: -, •, or * at the start of lines
-  if (text.match(/^\s*[-•*]/m)) {
+  if (text.match(/^[ \t]*[-•]\s+(?!\*\*)/m) || text.match(/^\d+\.\s+/m)) {
     return renderWithBullets(text, baseTextStyle, Colors);
   }
 
@@ -105,9 +104,9 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
           return <View key={lineIndex} style={{ height: 8 }} />;
         }
         
-        // Updated regex to handle bold (**text**) but not single * at line start
+        //  FIXED: Updated regex to handle **bold**, _italic_, and ***bold+italic***
         const combinedRegex =
-          /(\*\*.*?\*\*|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+          /(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|_[^_]+_|https?:\/\/[^\s\)]+|www\.[^\s\)]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
 
         const parts = line.split(combinedRegex);
 
@@ -119,9 +118,28 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
               let textStyle = { ...baseTextStyle };
               let content = part;
 
+              //  Handle ***bold+italic***
+              if (part.startsWith('***') && part.endsWith('***')) {
+                content = part.slice(3, -3).trim();
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      ...textStyle,
+                      fontFamily: FontFamilies?.bold || 'System',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {content}
+                  </Text>
+                );
+              }
+
+              //  Handle **bold**
               if (part.startsWith('**') && part.endsWith('**')) {
                 content = part.slice(2, -2).trim();
 
+                // Check if it's an email inside bold
                 if (content.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
                   return (
                     <Text
@@ -130,7 +148,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                       style={{
                         ...textStyle,
                         color: Colors?.primary || '#0066cc',
-                        fontWeight: '500',
+                        fontFamily: FontFamilies?.bold || 'System',
                         textDecorationLine: 'underline',
                       }}
                     >
@@ -139,6 +157,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                   );
                 }
 
+                // Check if it's a URL inside bold
                 if (content.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/)) {
                   return (
                     <Text
@@ -147,7 +166,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                       style={{
                         ...textStyle,
                         color: Colors?.primary || '#0066cc',
-                        fontWeight: '500',
+                        fontFamily: FontFamilies?.bold || 'System',
                       }}
                     >
                       {content}
@@ -155,6 +174,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                   );
                 }
 
+                // Regular bold text
                 return (
                   <Text
                     key={index}
@@ -168,6 +188,23 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                 );
               }
 
+              //  Handle _italic_
+              if (part.startsWith('_') && part.endsWith('_')) {
+                content = part.slice(1, -1).trim();
+                return (
+                  <Text
+                    key={index}
+                    style={{
+                      ...textStyle,
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {content}
+                  </Text>
+                );
+              }
+
+              // Handle email links
               if (part.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
                 return (
                   <Text
@@ -185,6 +222,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                 );
               }
 
+              // Handle URLs
               if (part.match(/^(https?:\/\/[^\s\)]+|www\.[^\s\)]+)$/) && !part.includes('IMAGE:')) {
                 return (
                   <Text
@@ -201,6 +239,7 @@ const renderFormattedText = (text: string, baseTextStyle: any, Colors: any) => {
                 );
               }
 
+              // Regular text
               return (
                 <Text key={index} style={textStyle}>
                   {content}
@@ -260,29 +299,41 @@ const handleUrlPress = async (url: string) => {
   }
 };
 
+//  FIXED: Updated bullet rendering to handle both - and • but NOT * followed by *
 const renderWithBullets = (text: string, baseTextStyle: any, Colors: any) => {
   const lines = text.split('\n').filter(line => line.trim().length > 0);
 
   return (
     <View>
       {lines.map((line, index) => {
-        // Check if line starts with -, •, or *
-        const isBullet = /^[-•*]\s*/.test(line.trim());
-        // Remove the bullet marker and any following space
-        const trimmed = line.trim().replace(/^[-•*]\s*/, ''); 
+        //  FIXED: More specific bullet detection
+        // Matches: "- text", "• text", "1. text", "2. text" etc.
+        // Does NOT match: "**bold**" or "* **bold**"
+        const bulletMatch = line.trim().match(/^([-•]|\d+\.)\s+(.*)$/);
+        
+        if (bulletMatch) {
+          const trimmed = bulletMatch[2]; // Get text after bullet
 
-        return (
-          <View
-            key={index}
-            style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}
-          >
-            {isBullet && (
-              <Text style={{ ...baseTextStyle, marginRight: 8, marginTop: 2 }}>•</Text>
-            )}
+          return (
+            <View
+              key={index}
+              style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 }}
+            >
+              <Text style={{ ...baseTextStyle, marginRight: 8, marginTop: 2 }}>
+                {bulletMatch[1] === '-' || bulletMatch[1] === '•' ? '•' : bulletMatch[1]}
+              </Text>
 
-            <View style={{ flex: 1 }}>
-              {renderFormattedText(trimmed, baseTextStyle, Colors)}
+              <View style={{ flex: 1 }}>
+                {renderFormattedText(trimmed, baseTextStyle, Colors)}
+              </View>
             </View>
+          );
+        }
+
+        // Not a bullet line, render normally
+        return (
+          <View key={index} style={{ marginBottom: 6 }}>
+            {renderFormattedText(line, baseTextStyle, Colors)}
           </View>
         );
       })}

@@ -35,7 +35,7 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
   onSubmit,
 }) => {
   const { isDark, toggleTheme } = useTheme();
-  const { isInstallable, isInstalled, handleInstallClick } = usePWAInstall();
+  const { isInstallable, isInstalled, isIOS, handleInstallClick } = usePWAInstall(); //  Get isIOS
 
   return (
     <Animated.View
@@ -60,23 +60,28 @@ const LandingScreen: React.FC<LandingScreenProps> = ({
         />
       </TouchableOpacity>
 
-      {/* PWA Install Button - Show only on web when installable */}
+      {/* PWA Install Button - Show on Web when installable */}
       {Platform.OS === 'web' && isInstallable && !isInstalled && (
         <TouchableOpacity
-          style={styles(Colors).installButton}
+          style={[
+            styles(Colors).installButton,
+            isIOS && styles(Colors).iOSInstallButton //  Different style for iOS
+          ]}
           onPress={handleInstallClick}
           activeOpacity={0.7}
         >
           <Ionicons
-            name="download-outline"
+            name={isIOS ? "share-social" : "download-outline"} //  Different icon for iOS
             size={20}
             color={Colors.white}
           />
-          <Text style={styles(Colors).installButtonText}>Install App</Text>
+          <Text style={styles(Colors).installButtonText}>
+            {isIOS ? "Add to Home Screen" : "Install App"} {/*  Different text for iOS */}
+          </Text>
         </TouchableOpacity>
       )}
 
-   
+     
 
       <SimpleLottie
         source={{ uri: 'https://lottie.host/9c5ce41b-6089-4da6-97d8-b6c9106f2f3c/coLSHGaNNi.lottie' }}
@@ -209,7 +214,7 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  // 🆕 PWA Install Button Styles
+  //  PWA Install Button Styles
   installButton: {
     position: 'absolute',
     top: height * 0.064,
@@ -227,13 +232,17 @@ const styles = (Colors: any) => StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
+  //  iOS-specific styling
+  iOSInstallButton: {
+    backgroundColor: Colors.primary || '#3B82F6', // Different color for iOS
+  },
   installButtonText: {
     color: Colors.white,
     fontFamily: 'Poppins-SemiBold',
     fontSize: 14,
     marginLeft: 6,
   },
-  // 🆕 Already Installed Badge
+  //  Already Installed Badge
   installedBadge: {
     position: 'absolute',
     top: height * 0.064,

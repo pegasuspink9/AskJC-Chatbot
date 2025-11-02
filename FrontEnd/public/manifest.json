@@ -1,12 +1,29 @@
 {
   "name": "AskJC Chatbot",
   "short_name": "AskJC",
-  "description": "AI-powered chatbot assistant for Saint Joseph College",
+  "description": "AI-powered chatbot assistant for Saint Joseph's College - Maasin City (SJC-MC)",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#10b981",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "screenshots": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -21,27 +38,12 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-desktop.png",
-      "sizes": "1920x1080",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
-  "categories": ["education", "productivity"],
   "shortcuts": [
     {
       "name": "New Chat",
       "short_name": "Chat",
-      "description": "Start a new conversation",
-      "url": "/",
+      "description": "Start a new chat conversation",
+      "url": "/?action=new-chat",
       "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
